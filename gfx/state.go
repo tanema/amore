@@ -56,6 +56,14 @@ func SetScissor(x, y, width, height int32) {
 	gl.Scissor(x, y, width, height)
 }
 
+func SetShader(shader *Shader) {
+	shader.Use()
+}
+
+func ClearShader() {
+	gl.UseProgram(0)
+}
+
 func SetColor(r, g, b, a float32) {
 	gl.Color4f(r/255.0, g/255.0, b/255.0, a/255.0)
 }
