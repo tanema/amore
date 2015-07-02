@@ -27,12 +27,9 @@ func Start(title string, load LoadCb, update UpdateCb, draw DrawCb) (err error) 
 		return err
 	}
 
-	if err = gl.Init(); err != nil {
+	if err = setupGL(); err != nil {
 		return err
 	}
-	gl.Ortho(0, float64(window.GetWidth()), float64(window.GetHeight()), 0, -1, 1)
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	load()
 
@@ -44,7 +41,7 @@ func Start(title string, load LoadCb, update UpdateCb, draw DrawCb) (err error) 
 		current_time = time
 
 		// draw
-		gfx.Clear(gfx.Color{0.0, 0.0, 0.0, 0.0})
+		gfx.Reset()
 		draw()
 		current_window.SwapBuffers()
 
@@ -53,6 +50,18 @@ func Start(title string, load LoadCb, update UpdateCb, draw DrawCb) (err error) 
 	}
 
 	return
+}
+
+func setupGL() error {
+	if err := gl.Init(); err != nil {
+		return err
+	}
+	gl.Enable(gl.BLEND)
+	// Auto-generated mipmaps should be the best quality possible
+	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
+	// Set pixel row alignment
+	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+	return nil
 }
 
 func Quit() {

@@ -17,17 +17,16 @@ func NewImage(path string) (*Image, error) {
 }
 
 func (image *Image) Draw(x, y, angle, sx, sy, ox, oy, kx, ky float32) {
-	gl.Enable(gl.TEXTURE_2D)
-	image.texture.Bind()
-	gl.Begin(gl.QUADS)
-	gl.TexCoord2f(0, 0) // top-left
-	gl.Vertex2f(x, y)
-	gl.TexCoord2f(0, 1) // bottom-left
-	gl.Vertex2f(x, y+image.texture.Height)
-	gl.TexCoord2f(1, 1) // bottom-right
-	gl.Vertex2f(x+image.texture.Width, y+image.texture.Height)
-	gl.TexCoord2f(1, 0) // top-right
-	gl.Vertex2f(x+image.texture.Width, y)
-	gl.End()
-	gl.Disable(gl.TEXTURE_2D)
+	image.texture.Bind(func() {
+		gl.Begin(gl.QUADS)
+		gl.TexCoord2f(0, 0) // top-left
+		gl.Vertex2f(x, y)
+		gl.TexCoord2f(0, 1) // bottom-left
+		gl.Vertex2f(x, y+image.texture.Height)
+		gl.TexCoord2f(1, 1) // bottom-right
+		gl.Vertex2f(x+image.texture.Width, y+image.texture.Height)
+		gl.TexCoord2f(1, 0) // top-right
+		gl.Vertex2f(x+image.texture.Width, y)
+		gl.End()
+	})
 }

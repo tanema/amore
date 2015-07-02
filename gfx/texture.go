@@ -10,6 +10,8 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 )
 
+type BindCB func()
+
 var filters = map[string]int32{"linear": gl.LINEAR, "nearest": gl.NEAREST}
 var wraps = map[string]int32{"clamp": gl.CLAMP_TO_EDGE, "repeat": gl.REPEAT}
 
@@ -38,12 +40,12 @@ func NewTexture(file string) (*Texture, error) {
 		Height:    float32(img.Bounds().Size().Y),
 	}
 
-	new_texture.Bind()
-
-	//generate a uniform image and upload to vram
-	rgba := image.NewRGBA(img.Bounds())
-	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(new_texture.Width), int32(new_texture.Height), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
+	new_texture.Bind(func() {
+		//generate a uniform image and upload to vram
+		rgba := image.NewRGBA(img.Bounds())
+		draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(new_texture.Width), int32(new_texture.Height), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
+	})
 
 	new_texture.SetFilter("nearest", "nearest")
 	new_texture.SetWrap("clamp", "clamp")
@@ -51,8 +53,11 @@ func NewTexture(file string) (*Texture, error) {
 	return new_texture, nil
 }
 
-func (texture *Texture) Bind() {
+func (texture *Texture) Bind(draw_cb BindCB) {
+	gl.Enable(gl.TEXTURE_2D)
 	gl.BindTexture(gl.TEXTURE_2D, texture.textureId)
+	draw_cb()
+	gl.Disable(gl.TEXTURE_2D)
 }
 
 func (texture *Texture) SetWrap(wrap_s, wrap_t string) {

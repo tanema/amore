@@ -4,19 +4,6 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 )
 
-func Clear(c Color) {
-	gl.ClearColor(c.R/255.0, c.G/255.0, c.B/255.0, c.A/255.0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-}
-
-func SetColor(c Color) {
-	SetColorf(c.R, c.G, c.B, c.A)
-}
-
-func SetColorf(r, g, b, a float32) {
-	gl.Color4f(r/255.0, g/255.0, b/255.0, a/255.0)
-}
-
 func Line(x1, y1, x2, y2 float32) {
 	PolyLine([]float32{x1, y1, x2, y2})
 }

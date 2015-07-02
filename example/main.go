@@ -25,13 +25,14 @@ func update(deltaTime float64) {
 }
 
 func draw() {
+	gfx.Translate(100, 20)
 	// rectangle
-	gfx.SetColorf(0.0, 170.0, 0.0, 155.0)
+	gfx.SetColor(0.0, 170.0, 0.0, 155.0)
 	gfx.Rect("fill", 20.0, 20.0, 400.0, 200.0)
 	// line
-	gfx.SetColorf(255.0, 170.0, 0.0, 255.0)
+	gfx.SetColor(255.0, 170.0, 0.0, 255.0)
 	gfx.Line(800.0, 100.0, 900.0, 100.0)
 	// image
-	gfx.SetColorf(255.0, 255.0, 255.0, 255.0)
+	gfx.SetColor(255.0, 255.0, 255.0, 255.0)
 	gfx.DrawS(img, 500, 100)
 }
