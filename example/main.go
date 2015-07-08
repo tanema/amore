@@ -8,7 +8,9 @@ import (
 )
 
 var (
-	tree *gfx.Image
+	tree       *gfx.Image
+	ttf        *gfx.Font
+	image_font *gfx.Font
 )
 
 func main() {
@@ -21,9 +23,14 @@ func load() {
 	if err != nil {
 		panic(err)
 	}
+	ttf, _ = gfx.NewFont("assets/fonts/arial.ttf", 20)
+	image_font, _ = gfx.NewImageFont("assets/fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 }
 
+var fps float64
+
 func update(deltaTime float64) {
+	fps = 1 / deltaTime
 }
 
 func draw() {
@@ -52,4 +59,12 @@ func draw() {
 	// image
 	gfx.SetColor(255.0, 255.0, 255.0, 255.0)
 	gfx.DrawS(tree, 500, 100)
+
+	// font
+	gfx.SetFont(image_font)
+	gfx.Printf(20, 20, "test one two")
+	gfx.SetFont(ttf)
+	gfx.Printf(20, 100, "test one two")
+	gfx.SetColor(0.0, 170.0, 170.0, 255.0)
+	gfx.Printf(1200, 10, "fps: %v", int(fps))
 }

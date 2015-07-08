@@ -25,26 +25,32 @@ func NewTexture(file string) (*Texture, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer imgFile.Close()
 
 	img, _, err := image.Decode(imgFile)
 	if err != nil {
 		return nil, err
 	}
 
+	return NewImageTexture(img)
+}
+
+func NewImageTexture(img image.Image) (*Texture, error) {
 	var texture_id uint32
 	gl.GenTextures(1, &texture_id)
 
+	bounds := img.Bounds()
 	new_texture := &Texture{
 		textureId: texture_id,
-		Width:     float32(img.Bounds().Size().X),
-		Height:    float32(img.Bounds().Size().Y),
+		Width:     float32(bounds.Dx()),
+		Height:    float32(bounds.Dy()),
 	}
 
 	new_texture.Bind(func() {
 		//generate a uniform image and upload to vram
 		rgba := image.NewRGBA(img.Bounds())
-		draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
-		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(new_texture.Width), int32(new_texture.Height), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
+		draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
+		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(bounds.Dx()), int32(bounds.Dy()), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
 	})
 
 	new_texture.SetFilter("nearest", "nearest")
@@ -68,4 +74,8 @@ func (texture *Texture) SetWrap(wrap_s, wrap_t string) {
 func (texture *Texture) SetFilter(min, mag string) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filters[min])
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filters[mag])
+}
+
+func (texture *Texture) Release() {
+	gl.DeleteTextures(1, &texture.textureId)
 }
