@@ -19,7 +19,7 @@ var (
 	current_time   = float64(0)
 )
 
-func Start(title string, load LoadCb, update UpdateCb, draw DrawCb) (err error) {
+func Start(load LoadCb, update UpdateCb, draw DrawCb) (err error) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	runtime.LockOSThread()
 
