@@ -4,9 +4,9 @@ import (
 	"runtime"
 
 	"github.com/go-gl/gl/v2.1/gl"
-	"github.com/go-gl/glfw/v3.1/glfw"
 
 	"github.com/tanema/amore/gfx"
+	"github.com/tanema/amore/timer"
 	"github.com/tanema/amore/window"
 )
 
@@ -15,8 +15,7 @@ type UpdateCb func(float64)
 type DrawCb func()
 
 var (
-	current_window *glfw.Window
-	current_time   = float64(0)
+	current_window *window.Window
 )
 
 func Start(load LoadCb, update UpdateCb, draw DrawCb) (err error) {
@@ -26,6 +25,7 @@ func Start(load LoadCb, update UpdateCb, draw DrawCb) (err error) {
 	if current_window, err = window.New(); err != nil {
 		return err
 	}
+	defer current_window.Destroy()
 
 	if err = setupGL(); err != nil {
 		return err
@@ -33,12 +33,11 @@ func Start(load LoadCb, update UpdateCb, draw DrawCb) (err error) {
 
 	load()
 
-	defer glfw.Terminate()
 	for !current_window.ShouldClose() {
 		// update
-		time := glfw.GetTime()
-		update(time - current_time)
-		current_time = time
+		timer.Step()
+
+		update(timer.GetDelta())
 
 		// draw
 		gfx.Reset()
@@ -46,7 +45,7 @@ func Start(load LoadCb, update UpdateCb, draw DrawCb) (err error) {
 		current_window.SwapBuffers()
 
 		// get user interactions
-		glfw.PollEvents()
+		current_window.PollEvents()
 	}
 
 	return

@@ -20,7 +20,8 @@ func Origin() {
 	//reset transforms
 	gl.LoadIdentity()
 	//set our coord system to flow form top left
-	gl.Ortho(0, float64(window.GetWidth()), float64(window.GetHeight()), 0, -1, 1)
+	current_window := window.GetCurrent()
+	gl.Ortho(0, float64(current_window.GetWidth()), float64(current_window.GetHeight()), 0, -1, 1)
 }
 
 func Clear(r, g, b, a float32) {

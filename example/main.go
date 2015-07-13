@@ -5,27 +5,28 @@ import (
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/gfx"
-	"github.com/tanema/amore/keyboard"
-	"github.com/tanema/amore/mouse"
+	//"github.com/tanema/amore/keyboard"
+	//"github.com/tanema/amore/mouse"
+	"github.com/tanema/amore/timer"
 )
 
 var (
-	tree        *gfx.Image
-	ttf         *gfx.Font
-	image_font  *gfx.Font
-	fps, mx, my float64
+	tree       *gfx.Image
+	ttf        *gfx.Font
+	image_font *gfx.Font
+	mx, my     float64
 )
 
 func main() {
-	keyboard.SetKeyReleaseCB(keyUp)
+	//keyboard.SetKeyReleaseCB(keyUp)
 	amore.Start(load, update, draw)
 }
 
-func keyUp(key keyboard.Key) {
-	if key == keyboard.KeyEscape {
-		amore.Quit()
-	}
-}
+//func keyUp(key keyboard.Key) {
+//if key == keyboard.KeyEscape {
+//amore.Quit()
+//}
+//}
 
 func load() {
 	var err error
@@ -38,8 +39,7 @@ func load() {
 }
 
 func update(deltaTime float64) {
-	fps = 1 / deltaTime
-	mx, my = mouse.GetPosition()
+	//mx, my = mouse.GetPosition()
 }
 
 func draw() {
@@ -77,7 +77,7 @@ func draw() {
 
 	//FPS
 	gfx.SetColor(0.0, 170.0, 170.0, 255.0)
-	gfx.Printf(1200, 10, "fps: %v", int(fps))
+	gfx.Printf(1200, 10, "fps: %v", timer.GetFPS())
 
 	//mouse position
 	gfx.Circle("fill", float32(mx), float32(my), 20.0)

@@ -3,7 +3,6 @@ package system
 import (
 	"runtime"
 
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/skratchdot/open-golang/open"
 
 	"github.com/tanema/amore/window"
