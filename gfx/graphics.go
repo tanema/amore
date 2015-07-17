@@ -8,6 +8,12 @@ import (
 
 const defaultPointCount = 30
 
+var (
+	created = false
+	width   = 0
+	height  = 0
+)
+
 func Circle(mode string, x, y, radius float32) {
 	Circlep(mode, x, y, radius, defaultPointCount)
 }
@@ -113,4 +119,52 @@ func DrawS(drawable Drawable, x, y float32) {
 
 func Draw(drawable Drawable, x, y, angle, sx, sy, ox, oy, kx, ky float32) {
 	drawable.Draw(x, y, angle, sx, sy, ox, oy, kx, ky)
+}
+
+func SetMode(w, h int) {
+	width = w
+	height = h
+
+	// Okay, setup OpenGL.
+	gl.Init()
+
+	created = true
+
+	SetViewportSize(width, height)
+
+	// Enable blending
+	gl.Enable(gl.BLEND)
+	// Auto-generated mipmaps should be the best quality possible
+	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
+	// Make sure antialiasing works when set elsewhere
+	gl.Enable(gl.MULTISAMPLE)
+	// Enable texturing
+	gl.Enable(gl.TEXTURE_2D)
+
+	//gl.setTextureUnit(0);
+
+	// Set pixel row alignment
+	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+}
+
+func UnSetMode() {
+	if !created {
+		return
+	}
+
+	//TODO release volatile and deinit context
+
+	created = false
+}
+
+func SetViewportSize(w, h int) {
+	width = w
+	height = h
+
+	if !created {
+		return
+	}
+
+	// Set the viewport to top-left corner.
+	gl.Viewport(0, 0, int32(width), int32(height))
 }

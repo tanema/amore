@@ -1,62 +1,59 @@
 package mouse
 
-//import (
-//"image"
-//"os"
-
-//"github.com/go-gl/glfw/v3.1/glfw"
-//)
+import (
+	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/sdl_image"
+)
 
 ////Creates a new hardware Cursor object from an image.
-//func NewCursor(filename string, hx, hy int) (*glfw.Cursor, error) {
-//imgFile, err := os.Open(filename)
-//if err != nil {
-//return nil, err
-//}
-//defer imgFile.Close()
-
-//img, _, err := image.Decode(imgFile)
-//if err != nil {
-//return nil, err
-//}
-
-//return NewImageCursor(img, hx, hy), nil
-//}
-
-////Creates a new hardware Cursor object from an image.
-//func NewImageCursor(img image.Image, hx, hy int) *glfw.Cursor {
-//return glfw.CreateCursor(img, hx, hy)
-//}
+func NewCursor(filename string, hx, hy int) (*sdl.Cursor, error) {
+	surface, err := img.Load(filename)
+	if err != nil {
+		return nil, err
+	}
+	return sdl.CreateColorCursor(surface, hx, hy), nil
+}
 
 ////Sets the current mouse cursor.
-//func SetCursor(cursor *glfw.Cursor) {
-//glfw.GetCurrentContext().SetCursor(cursor)
-//}
+func SetCursor(cursor *sdl.Cursor) {
+	sdl.SetCursor(cursor)
+}
 
 ////Gets the current Cursor.
-//func GetCursor() (*glfw.Cursor, error) {
-
-//return nil, nil
-//}
+func GetCursor() *sdl.Cursor {
+	return sdl.GetCursor()
+}
 
 ////Gets a Cursor object representing a system-native hardware cursor.
-//func GetSystemCursor(name string) *glfw.Cursor {
-//var cursor_type glfw.StandardCursor
-//switch name {
-//case "hand":
-//cursor_type = glfw.HandCursor
-//case "ibeam":
-//cursor_type = glfw.IBeamCursor
-//case "crosshair":
-//cursor_type = glfw.CrosshairCursor
-//case "sizeh":
-//cursor_type = glfw.HResizeCursor
-//case "sizev":
-//cursor_type = glfw.VResizeCursor
-//case "arrow":
-//fallthrough
-//default:
-//cursor_type = glfw.ArrowCursor
-//}
-//return glfw.CreateStandardCursor(int(cursor_type))
-//}
+func GetSystemCursor(name string) *sdl.Cursor {
+	var cursor_type sdl.SystemCursor
+	switch name {
+	case "hand":
+		cursor_type = sdl.SYSTEM_CURSOR_HAND
+	case "ibeam":
+		cursor_type = sdl.SYSTEM_CURSOR_IBEAM
+	case "crosshair":
+		cursor_type = sdl.SYSTEM_CURSOR_CROSSHAIR
+	case "wait":
+		cursor_type = sdl.SYSTEM_CURSOR_WAIT
+	case "waitarrow":
+		cursor_type = sdl.SYSTEM_CURSOR_WAITARROW
+	case "sizenwse":
+		cursor_type = sdl.SYSTEM_CURSOR_SIZENWSE
+	case "sizenesw":
+		cursor_type = sdl.SYSTEM_CURSOR_SIZENESW
+	case "sizewe":
+		cursor_type = sdl.SYSTEM_CURSOR_SIZEWE
+	case "sizens":
+		cursor_type = sdl.SYSTEM_CURSOR_SIZENS
+	case "sizeall":
+		cursor_type = sdl.SYSTEM_CURSOR_SIZEALL
+	case "no":
+		cursor_type = sdl.SYSTEM_CURSOR_NO
+	case "arrow":
+		fallthrough
+	default:
+		cursor_type = sdl.SYSTEM_CURSOR_ARROW
+	}
+	return sdl.CreateSystemCursor(cursor_type)
+}

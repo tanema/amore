@@ -2,8 +2,6 @@ package gfx
 
 import (
 	"github.com/go-gl/gl/v2.1/gl"
-
-	"github.com/tanema/amore/window"
 )
 
 func Translate(x, y float32) {
@@ -20,8 +18,7 @@ func Origin() {
 	//reset transforms
 	gl.LoadIdentity()
 	//set our coord system to flow form top left
-	current_window := window.GetCurrent()
-	gl.Ortho(0, float64(current_window.GetWidth()), float64(current_window.GetHeight()), 0, -1, 1)
+	gl.Ortho(0, float64(width), float64(height), 0, -1, 1)
 }
 
 func Clear(r, g, b, a float32) {

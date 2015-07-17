@@ -3,8 +3,7 @@ package amore
 import (
 	"runtime"
 
-	"github.com/go-gl/gl/v2.1/gl"
-
+	"github.com/tanema/amore/event"
 	"github.com/tanema/amore/gfx"
 	"github.com/tanema/amore/timer"
 	"github.com/tanema/amore/window"
@@ -27,10 +26,6 @@ func Start(load LoadCb, update UpdateCb, draw DrawCb) (err error) {
 	}
 	defer current_window.Destroy()
 
-	if err = setupGL(); err != nil {
-		return err
-	}
-
 	load()
 
 	for !current_window.ShouldClose() {
@@ -45,22 +40,10 @@ func Start(load LoadCb, update UpdateCb, draw DrawCb) (err error) {
 		current_window.SwapBuffers()
 
 		// get user interactions
-		current_window.PollEvents()
+		event.Poll()
 	}
 
 	return
-}
-
-func setupGL() error {
-	if err := gl.Init(); err != nil {
-		return err
-	}
-	gl.Enable(gl.BLEND)
-	// Auto-generated mipmaps should be the best quality possible
-	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
-	// Set pixel row alignment
-	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-	return nil
 }
 
 func Quit() {

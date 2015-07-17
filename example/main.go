@@ -1,12 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/gfx"
-	//"github.com/tanema/amore/keyboard"
-	//"github.com/tanema/amore/mouse"
+	"github.com/tanema/amore/keyboard"
+	"github.com/tanema/amore/mouse"
 	"github.com/tanema/amore/timer"
 )
 
@@ -14,19 +15,21 @@ var (
 	tree       *gfx.Image
 	ttf        *gfx.Font
 	image_font *gfx.Font
-	mx, my     float64
+	mx, my     float32
 )
 
 func main() {
-	//keyboard.SetKeyReleaseCB(keyUp)
-	amore.Start(load, update, draw)
+	keyboard.SetKeyReleaseCB(keyUp)
+	if err := amore.Start(load, update, draw); err != nil {
+		fmt.Println("Error starting engine: %v", err)
+	}
 }
 
-//func keyUp(key keyboard.Key) {
-//if key == keyboard.KeyEscape {
-//amore.Quit()
-//}
-//}
+func keyUp(key keyboard.Key) {
+	if key == keyboard.KeyEscape {
+		amore.Quit()
+	}
+}
 
 func load() {
 	var err error
@@ -39,7 +42,8 @@ func load() {
 }
 
 func update(deltaTime float64) {
-	//mx, my = mouse.GetPosition()
+	mx, my = mouse.GetPosition()
+	fmt.Printf("mouse pos: [%v, %v]", mx, my)
 }
 
 func draw() {
@@ -80,5 +84,5 @@ func draw() {
 	gfx.Printf(1200, 10, "fps: %v", timer.GetFPS())
 
 	//mouse position
-	gfx.Circle("fill", float32(mx), float32(my), 20.0)
+	gfx.Circle("fill", mx, my, 20.0)
 }

@@ -1,6 +1,8 @@
 package joystick
 
-import ()
+import (
+//"github.com/veandco/go-sdl2/sdl"
+)
 
 ////Gets the number of connected joysticks.
 //func GetJoystickCount() int {
