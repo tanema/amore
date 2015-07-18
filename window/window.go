@@ -3,14 +3,12 @@ package window
 import (
 	"math"
 
-	"github.com/go-gl/gl/v2.1/gl"
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/tanema/go-sdl2/sdl"
 
 	"github.com/tanema/amore/gfx"
 )
 
 var (
-	default_title  = "Amore Engine"
 	current_window *Window
 	created        = false
 )
@@ -18,10 +16,10 @@ var (
 type Window struct {
 	sdl_window                *sdl.Window
 	context                   sdl.GLContext
-	width, height             int
 	pixel_width, pixel_height int
-	title                     string
 	should_close              bool
+	config                    *WindowConfig
+	refresh_rate              int32
 }
 
 func New() (*Window, error) {
@@ -84,21 +82,19 @@ func New() (*Window, error) {
 	//sdlflags |= sdl.WINDOW_ALLOW_HIGHDPI
 	//}
 
-	x := config.X
-	y := config.Y
 	if !config.Fullscreen {
 		// The position needs to be in the global coordinate space.
 		var displaybounds sdl.Rect
 		sdl.GetDisplayBounds(config.Display, &displaybounds)
-		x += int(displaybounds.X)
-		y += int(displaybounds.Y)
+		config.X += int(displaybounds.X)
+		config.Y += int(displaybounds.Y)
 	} else {
 		if config.Centered {
-			x = sdl.WINDOWPOS_CENTERED
-			y = sdl.WINDOWPOS_CENTERED
+			config.X = sdl.WINDOWPOS_CENTERED
+			config.Y = sdl.WINDOWPOS_CENTERED
 		} else {
-			x = sdl.WINDOWPOS_UNDEFINED
-			y = sdl.WINDOWPOS_UNDEFINED
+			config.X = sdl.WINDOWPOS_UNDEFINED
+			config.Y = sdl.WINDOWPOS_UNDEFINED
 		}
 	}
 
@@ -109,7 +105,7 @@ func New() (*Window, error) {
 	}
 
 	created = false
-	window, err := createWindowAndContext(x, y, config.Width, config.Height, sdlflags)
+	window, err := createWindowAndContext(config, sdlflags)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +117,7 @@ func New() (*Window, error) {
 	window.SetTitle(config.Title)
 
 	if config.Centered && !config.Fullscreen {
-		window.SetPosition(x, y)
+		window.SetPosition(config.X, config.Y)
 	}
 
 	window.Raise()
@@ -132,13 +128,15 @@ func New() (*Window, error) {
 		sdl.GL_SetSwapInterval(0)
 	}
 
+	window.UpdateSettings()
+
 	gfx.SetMode(config.Width, config.Height)
 
 	return window, nil
 }
 
-func createWindowAndContext(x, y, w, h int, windowflags uint32) (*Window, error) {
-	window, err := sdl.CreateWindow(default_title, x, y, w, h, windowflags)
+func createWindowAndContext(config *WindowConfig, windowflags uint32) (*Window, error) {
+	window, err := sdl.CreateWindow(config.Title, config.X, config.Y, config.Width, config.Height, windowflags)
 	if err != nil {
 		panic(err)
 	}
@@ -151,24 +149,63 @@ func createWindowAndContext(x, y, w, h int, windowflags uint32) (*Window, error)
 	current_window = &Window{
 		sdl_window:   window,
 		context:      context,
-		width:        w,
-		height:       h,
-		title:        default_title,
 		should_close: false,
+		config:       config,
 	}
 	return current_window, nil
 }
 
-func setupGL() error {
-	if err := gl.Init(); err != nil {
-		return err
+func (window *Window) UpdateSettings() {
+	wflags := window.sdl_window.GetFlags()
+
+	// Set the new display mode as the current display mode.
+	window.config.Width, window.config.Height = window.sdl_window.GetSize()
+	window.pixel_width, window.pixel_height = window.sdl_window.GetDrawableSize()
+
+	if (wflags & sdl.WINDOW_FULLSCREEN_DESKTOP) == sdl.WINDOW_FULLSCREEN_DESKTOP {
+		window.config.Fullscreen = true
+		window.config.Fstype = "desktop"
+	} else if (wflags & sdl.WINDOW_FULLSCREEN) == sdl.WINDOW_FULLSCREEN {
+		window.config.Fullscreen = true
+		window.config.Fstype = "exclusive"
+	} else {
+		window.config.Fullscreen = false
+		window.config.Fstype = "normal"
 	}
-	gl.Enable(gl.BLEND)
-	// Auto-generated mipmaps should be the best quality possible
-	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
-	// Set pixel row alignment
-	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-	return nil
+
+	// The min width/height is set to 0 internally in SDL when in fullscreen.
+	if window.config.Fullscreen {
+		window.config.Minwidth = 1
+		window.config.Minheight = 1
+	} else {
+		window.config.Minwidth, window.config.Minheight = window.sdl_window.GetMinimumSize()
+	}
+
+	window.config.Resizable = (wflags & sdl.WINDOW_RESIZABLE) != 0
+	window.config.Borderless = (wflags & sdl.WINDOW_BORDERLESS) != 0
+	window.config.Centered = true
+
+	window.config.X, window.config.Y = window.sdl_window.GetPosition()
+
+	window.config.Highdpi = (wflags & sdl.WINDOW_ALLOW_HIGHDPI) != 0
+
+	// Only minimize on focus loss if the window is in exclusive-fullscreen
+	// mode.
+	if window.config.Fullscreen && window.config.Fstype == "exclusive" {
+		sdl.SetHint(sdl.HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "1")
+	} else {
+		sdl.SetHint(sdl.HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0")
+	}
+
+	window.config.Srgb = false
+	interval, _ := sdl.GL_GetSwapInterval()
+	window.config.Vsync = (interval != 0)
+
+	var dmode sdl.DisplayMode
+	sdl.GetCurrentDisplayMode(window.config.Display, &dmode)
+
+	// May be 0 if the refresh rate can't be determined.
+	window.refresh_rate = dmode.RefreshRate
 }
 
 func GetCurrent() *Window {
@@ -180,27 +217,21 @@ func GetDisplayCount() int {
 	return num
 }
 
-//func onResize(win *glfw.Window, w, h int) {
-//Height = h
-//Width = w
-//gl.Viewport(0, 0, int32(Width), int32(Height))
-//}
-
 func (window *Window) SetTitle(title string) {
 	window.sdl_window.SetTitle(title)
-	window.title = title
+	window.config.Title = title
 }
 
 func (window *Window) GetTitle() string {
-	return window.title
+	return window.config.Title
 }
 
 func (window *Window) GetWidth() int {
-	return window.width
+	return window.config.Width
 }
 
 func (window *Window) GetHeight() int {
-	return window.height
+	return window.config.Height
 }
 
 func (window *Window) ShouldClose() bool {
@@ -216,21 +247,19 @@ func (window *Window) SwapBuffers() {
 }
 
 func (window *Window) WindowToPixelCoords(x, y float32) (float32, float32) {
-	new_x := x * (float32(window.pixel_width) / float32(window.width))
-	new_y := y * (float32(window.pixel_height) / float32(window.height))
+	new_x := x * (float32(window.pixel_width) / float32(window.config.Width))
+	new_y := y * (float32(window.pixel_height) / float32(window.config.Height))
 	return new_x, new_y
 }
 
 func (window *Window) PixelToWindowCoords(x, y float32) (float32, float32) {
-	new_x := x * (float32(window.width) / float32(window.pixel_width))
-	new_y := y * (float32(window.height) / float32(window.pixel_height))
+	new_x := x * (float32(window.config.Width) / float32(window.pixel_width))
+	new_y := y * (float32(window.config.Height) / float32(window.pixel_height))
 	return new_x, new_y
 }
 
 func (window *Window) GetMousePosition() (float32, float32) {
 	mx, my, _ := sdl.GetMouseState()
-	print(mx)
-	println(my)
 	return window.WindowToPixelCoords(float32(mx), float32(my))
 }
 

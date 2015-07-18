@@ -1,5 +1,5 @@
 github.com/go-gl/gl 7c718d1758f0e23896e295ff50bb34c2c5fe901d
 github.com/tanema/freetype-go 9fad2f9010c9f382150d31809154971789e38112
 github.com/skratchdot/open-golang c8748311a7528d0ba7330d302adbc5a677ef9c9e
-github.com/veandco/go-sdl2 72e261357afe870e18feba7075b6c0961fbd1b97
+github.com/tanema/go-sdl2 72e261357afe870e18feba7075b6c0961fbd1b97
 github.com/BurntSushi/toml 056c9bc7be7190eaa7715723883caffa5f8fa3e4

@@ -1,7 +1,7 @@
 package joystick
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/tanema/go-sdl2/sdl"
 )
 
 func Delegate(event sdl.Event) {

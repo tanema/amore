@@ -1,7 +1,7 @@
 package window
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/tanema/go-sdl2/sdl"
 )
 
 func (window *Window) Delegate(event *sdl.WindowEvent) {

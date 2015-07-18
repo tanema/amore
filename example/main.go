@@ -43,7 +43,6 @@ func load() {
 
 func update(deltaTime float64) {
 	mx, my = mouse.GetPosition()
-	fmt.Printf("mouse pos: [%v, %v]", mx, my)
 }
 
 func draw() {
