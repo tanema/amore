@@ -15,7 +15,14 @@ func Poll() {
 		case *sdl.CommonEvent:
 			println("common event")
 		case *sdl.WindowEvent:
-			window.GetCurrent().Delegate(e)
+			switch e.Type {
+			case sdl.WINDOWEVENT_NONE:
+				return
+			case sdl.WINDOWEVENT_ENTER, sdl.WINDOWEVENT_LEAVE:
+				mouse.Delegate(event)
+			default:
+				window.GetCurrent().Delegate(e)
+			}
 		case *sdl.KeyDownEvent, *sdl.KeyUpEvent, *sdl.TextEditingEvent, *sdl.TextInputEvent:
 			go keyboard.Delegate(e)
 		case *sdl.MouseMotionEvent, *sdl.MouseButtonEvent, *sdl.MouseWheelEvent:
