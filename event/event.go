@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/tanema/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/sdl"
 
 	"github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"

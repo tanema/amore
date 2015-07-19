@@ -1,7 +1,7 @@
 package joystick
 
 import (
-//"github.com/tanema/go-sdl2/sdl"
+//"github.com/veandco/go-sdl2/sdl"
 )
 
 ////Gets the number of connected joysticks.

@@ -3,7 +3,7 @@ package window
 import (
 	"math"
 
-	"github.com/tanema/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/sdl"
 
 	"github.com/tanema/amore/gfx"
 )
@@ -160,7 +160,7 @@ func (window *Window) UpdateSettings() {
 
 	// Set the new display mode as the current display mode.
 	window.config.Width, window.config.Height = window.sdl_window.GetSize()
-	window.pixel_width, window.pixel_height = window.sdl_window.GetDrawableSize()
+	window.pixel_width, window.pixel_height = sdl.GL_GetDrawableSize(window.sdl_window)
 
 	if (wflags & sdl.WINDOW_FULLSCREEN_DESKTOP) == sdl.WINDOW_FULLSCREEN_DESKTOP {
 		window.config.Fullscreen = true
