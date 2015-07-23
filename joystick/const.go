@@ -1,27 +1,39 @@
 package joystick
 
-//import (
-//"github.com/go-gl/glfw/v3.1/glfw"
-//)
+import (
+	"github.com/veandco/go-sdl2/sdl"
+)
 
-//type JoystickId int
+type GameControllerAxis sdl.GameControllerAxis
+type GameControllerButton sdl.GameControllerButton
 
-//const (
-//JoyStick1    JoystickId = JoystickId(glfw.Joystick1)
-//JoyStick2    JoystickId = JoystickId(glfw.Joystick2)
-//JoyStick3    JoystickId = JoystickId(glfw.Joystick3)
-//JoyStick4    JoystickId = JoystickId(glfw.Joystick4)
-//JoyStick5    JoystickId = JoystickId(glfw.Joystick5)
-//JoyStick6    JoystickId = JoystickId(glfw.Joystick6)
-//JoyStick7    JoystickId = JoystickId(glfw.Joystick7)
-//JoyStick8    JoystickId = JoystickId(glfw.Joystick8)
-//JoyStick9    JoystickId = JoystickId(glfw.Joystick9)
-//JoyStick10   JoystickId = JoystickId(glfw.Joystick10)
-//JoyStick11   JoystickId = JoystickId(glfw.Joystick11)
-//JoyStick12   JoystickId = JoystickId(glfw.Joystick12)
-//JoyStick13   JoystickId = JoystickId(glfw.Joystick13)
-//JoyStick14   JoystickId = JoystickId(glfw.Joystick14)
-//JoyStick15   JoystickId = JoystickId(glfw.Joystick15)
-//JoyStick16   JoystickId = JoystickId(glfw.Joystick16)
-//JoyStickLast            = JoyStick16
-//)
+const (
+	AxisInvalid      = GameControllerAxis(sdl.CONTROLLER_AXIS_INVALID)
+	AxisLeftx        = GameControllerAxis(sdl.CONTROLLER_AXIS_LEFTX)
+	AxisLefty        = GameControllerAxis(sdl.CONTROLLER_AXIS_LEFTY)
+	AxisRightx       = GameControllerAxis(sdl.CONTROLLER_AXIS_RIGHTX)
+	AxisRighty       = GameControllerAxis(sdl.CONTROLLER_AXIS_RIGHTY)
+	AxisTriggerleft  = GameControllerAxis(sdl.CONTROLLER_AXIS_TRIGGERLEFT)
+	AxisTriggerright = GameControllerAxis(sdl.CONTROLLER_AXIS_TRIGGERRIGHT)
+	AxisMax          = GameControllerAxis(sdl.CONTROLLER_AXIS_MAX)
+)
+
+const (
+	ButtonInvalid       = GameControllerButton(sdl.CONTROLLER_BUTTON_INVALID)
+	ButtonA             = GameControllerButton(sdl.CONTROLLER_BUTTON_A)
+	ButtonB             = GameControllerButton(sdl.CONTROLLER_BUTTON_B)
+	ButtonX             = GameControllerButton(sdl.CONTROLLER_BUTTON_X)
+	ButtonY             = GameControllerButton(sdl.CONTROLLER_BUTTON_Y)
+	ButtonBack          = GameControllerButton(sdl.CONTROLLER_BUTTON_BACK)
+	ButtonGuide         = GameControllerButton(sdl.CONTROLLER_BUTTON_GUIDE)
+	ButtonStart         = GameControllerButton(sdl.CONTROLLER_BUTTON_START)
+	ButtonLeftstick     = GameControllerButton(sdl.CONTROLLER_BUTTON_LEFTSTICK)
+	ButtonRightstick    = GameControllerButton(sdl.CONTROLLER_BUTTON_RIGHTSTICK)
+	ButtonLeftshoulder  = GameControllerButton(sdl.CONTROLLER_BUTTON_LEFTSHOULDER)
+	ButtonRightshoulder = GameControllerButton(sdl.CONTROLLER_BUTTON_RIGHTSHOULDER)
+	ButtonDpadUp        = GameControllerButton(sdl.CONTROLLER_BUTTON_DPAD_UP)
+	ButtonDpadDown      = GameControllerButton(sdl.CONTROLLER_BUTTON_DPAD_DOWN)
+	ButtonDpadLeft      = GameControllerButton(sdl.CONTROLLER_BUTTON_DPAD_LEFT)
+	ButtonDpadRight     = GameControllerButton(sdl.CONTROLLER_BUTTON_DPAD_RIGHT)
+	ButtonMax           = GameControllerButton(sdl.CONTROLLER_BUTTON_MAX)
+)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/gfx"
+	//"github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"
 	"github.com/tanema/amore/mouse"
 	"github.com/tanema/amore/timer"

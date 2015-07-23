@@ -6,14 +6,12 @@ Requirements
 ============
 * [OpenGL 2.1+ / OpenGL ES 2+](https://www.opengl.org/wiki/Getting_Started)
 * [SDL2](http://libsdl.org/download-2.0.php)
-* [SDL2_mixer (optional)](http://www.libsdl.org/projects/SDL_mixer/)
-* [SDL2_image (optional)](http://www.libsdl.org/projects/SDL_image/)
-* [SDL2_ttf (optional)](http://www.libsdl.org/projects/SDL_ttf/)
+* [SDL2_mixer](http://www.libsdl.org/projects/SDL_mixer/)
+* [SDL2_image](http://www.libsdl.org/projects/SDL_image/)
+* [SDL2_ttf](http://www.libsdl.org/projects/SDL_ttf/)
 
 TODO
 =====
-* keyboard
-* mouse
 * joystick
 * audio
 * Framebuffer / Canvas
