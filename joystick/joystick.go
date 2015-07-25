@@ -1,16 +1,32 @@
 package joystick
 
 import (
-	"unsafe"
-
 	"github.com/veandco/go-sdl2/sdl"
 )
+
+type Vibration struct {
+	Left, Right float32
+	Effect      sdl.HapticEffect
+	Data        [4]uint16
+	ID          int
+	Endtime     uint32
+}
+
+func defaultVibration() *Vibration {
+	return &Vibration{
+		ID:      -1,
+		Left:    0.0,
+		Right:   0.0,
+		Endtime: sdl.HAPTIC_INFINITY,
+	}
+}
 
 type Joystick struct {
 	id         int
 	stick      *sdl.Joystick
 	controller *sdl.GameController
 	haptic     *sdl.Haptic
+	vibration  *Vibration
 }
 
 func (joystick *Joystick) Open() bool {
@@ -18,11 +34,8 @@ func (joystick *Joystick) Open() bool {
 
 	joystick.stick = sdl.JoystickOpen(joystick.id)
 
-	if joystick.stick != nil {
-		if sdl.IsGameController(joystick.id) {
-			joystick.controller = sdl.GameControllerOpen(joystick.id)
-		}
-
+	if joystick.stick != nil && sdl.IsGameController(joystick.id) {
+		joystick.controller = sdl.GameControllerOpen(joystick.id)
 	}
 
 	return joystick.IsConnected()
@@ -50,12 +63,8 @@ func (joystick *Joystick) IsConnected() bool {
 	return joystick.stick != nil && joystick.stick.GetAttached()
 }
 
-//TODO I dont think guid works
 func (joystick *Joystick) GetGUID() string {
-	guid := ""
-	sdlguid := joystick.stick.GetGUID()
-	sdl.JoystickGetGUIDString(sdlguid, guid, int(unsafe.Sizeof(guid)))
-	return guid
+	return sdl.JoystickGetGUIDString(joystick.stick.GetGUID())
 }
 
 func (joystick *Joystick) GetHandle() *sdl.Joystick {
@@ -73,31 +82,29 @@ func (joystick *Joystick) Close() {
 	joystick.controller = nil
 }
 
-//TODO WTF is byte for get button
 func (joystick *Joystick) IsDown(button int) bool {
 	if joystick.IsConnected() == false {
 		return false
 	}
 
-	println(joystick.stick.GetButton(button))
-	return true
+	return joystick.stick.GetButton(button) == 1
 }
 
-func (joystick *Joystick) GetNumAxes() int {
+func (joystick *Joystick) GetAxisCount() int {
 	if joystick.IsConnected() == false {
 		return 0
 	}
 	return joystick.stick.NumAxes()
 }
 
-func (joystick *Joystick) GetNumButton() int {
+func (joystick *Joystick) GetButtonCount() int {
 	if joystick.IsConnected() == false {
 		return 0
 	}
 	return joystick.stick.NumButtons()
 }
 
-func (joystick *Joystick) GetNumHats() int {
+func (joystick *Joystick) GetHatCount() int {
 	if joystick.IsConnected() == false {
 		return 0
 	}
@@ -105,7 +112,7 @@ func (joystick *Joystick) GetNumHats() int {
 }
 
 func (joystick *Joystick) GetAxis(axisindex int) float32 {
-	if joystick.IsConnected() == false || axisindex < 0 || axisindex >= joystick.GetNumAxes() {
+	if joystick.IsConnected() == false || axisindex < 0 || axisindex >= joystick.GetAxisCount() {
 		return 0.0
 	}
 
@@ -113,7 +120,7 @@ func (joystick *Joystick) GetAxis(axisindex int) float32 {
 }
 
 func (joystick *Joystick) GetAxes() []float32 {
-	count := joystick.GetNumAxes()
+	count := joystick.GetAxisCount()
 	axes := []float32{}
 
 	if joystick.IsConnected() == false || count <= 0 {
@@ -127,11 +134,9 @@ func (joystick *Joystick) GetAxes() []float32 {
 	return axes
 }
 
-// TODO WFT byte still?
 func (joystick *Joystick) GetHat(hatindex int) byte {
-	if joystick.IsConnected() == false || hatindex < 0 || hatindex >= joystick.GetNumHats() {
-		var a byte
-		return a
+	if joystick.IsConnected() == false || hatindex < 0 || hatindex >= joystick.GetHatCount() {
+		return 0
 	}
 
 	return joystick.stick.GetHat(hatindex)
@@ -147,15 +152,12 @@ func (joystick *Joystick) GetGamepadAxis(axis GameControllerAxis) float32 {
 	return float32(clampval(float64(value) / 32768.0))
 }
 
-// TODO wtf is byte for get button?
 func (joystick *Joystick) IsGamepadDown(button GameControllerButton) bool {
 	if joystick.IsConnected() == false || joystick.IsGamepad() == false {
 		return false
 	}
 
-	joystick.controller.GetButton(sdl.GameControllerButton(button))
-
-	return false
+	return joystick.controller.GetButton(sdl.GameControllerButton(button)) == 1
 }
 
 func (joystick *Joystick) IsVibrationSupported() bool {
@@ -200,19 +202,23 @@ func (joystick *Joystick) checkCreateHaptic() bool {
 	}
 
 	joystick.haptic = sdl.HapticOpenFromJoystick(joystick.stick)
+	joystick.vibration = defaultVibration()
 
 	return joystick.haptic != nil
 }
 
-//TODO
+// TODO
 func (joystick *Joystick) SetVibration(left, right, duration float32) bool {
+	panic("set vibration not implemented yet")
 	return false
 }
 
 func (joystick *Joystick) StopVibration() bool {
+	panic("vibration not implemented yet")
 	return false
 }
 
 func (joystick *Joystick) GetVibration() (float32, float32) {
+	panic("vibration not implemented yet")
 	return 0.0, 0.0
 }

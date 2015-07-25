@@ -37,3 +37,18 @@ const (
 	ButtonDpadRight     = GameControllerButton(sdl.CONTROLLER_BUTTON_DPAD_RIGHT)
 	ButtonMax           = GameControllerButton(sdl.CONTROLLER_BUTTON_MAX)
 )
+
+type HatDirection int
+
+const (
+	HatInvalid  HatDirection = -1
+	HatCentered HatDirection = iota
+	HatUp
+	HatRight
+	HatDown
+	HatLeft
+	HatRightUp
+	HatRightDown
+	HatLeftup
+	HatLeftdown
+)

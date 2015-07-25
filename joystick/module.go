@@ -2,7 +2,6 @@ package joystick
 
 import (
 	"math"
-	"unsafe"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -31,7 +30,6 @@ func addJoystick(idx int) *Joystick {
 	}
 
 	guidstr := getDeviceGUID(idx)
-	println(guidstr)
 	var joystick *Joystick
 	reused := false
 
@@ -90,11 +88,7 @@ func getDeviceGUID(idx int) string {
 		return ""
 	}
 
-	guid := ""
-	sdlguid := sdl.JoystickGetDeviceGUID(idx)
-	sdl.JoystickGetGUIDString(sdlguid, guid, int(unsafe.Sizeof(guid)))
-
-	return guid
+	return sdl.JoystickGetGUIDString(sdl.JoystickGetDeviceGUID(idx))
 }
 
 //Gets the number of connected joysticks.
@@ -105,6 +99,15 @@ func GetJoystickCount() int {
 //Gets a list of connected Joysticks.
 func GetJoysticks() []*Joystick {
 	return activeSticks
+}
+
+func getJoystickFromID(id int) *Joystick {
+	for _, stick := range activeSticks {
+		if stick.GetID() == id {
+			return stick
+		}
+	}
+	return nil
 }
 
 func clampval(x float64) float64 {
