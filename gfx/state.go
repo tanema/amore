@@ -4,8 +4,8 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 )
 
-func Translate(x, y float32) {
-	gl.Translatef(x, y, 0)
+func Translate(x, y float64) {
+	gl.Translated(x, y, 0)
 }
 
 func Reset() {
@@ -26,20 +26,20 @@ func Clear(r, g, b, a float32) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-func Rotate(angle float32) {
-	gl.Rotatef(angle, 0, 0, 0)
+func Rotate(angle float64) {
+	gl.Rotated(angle, 0, 0, 0)
 }
 
-func RotateAround(angle, x, y float32) {
-	gl.Rotatef(angle, x, y, 0)
+func RotateAround(angle, x, y float64) {
+	gl.Rotated(angle, x, y, 0)
 }
 
-func Scale(sx float32) {
-	gl.Scalef(sx, sx, 0)
+func Scale(sx float64) {
+	gl.Scaled(sx, sx, 0)
 }
 
-func Scale2(sx, sy float32) {
-	gl.Scalef(sx, sy, 0)
+func Scale2(sx, sy float64) {
+	gl.Scaled(sx, sy, 0)
 }
 
 func Push() {
@@ -62,8 +62,8 @@ func ClearShader() {
 	gl.UseProgram(0)
 }
 
-func SetColor(r, g, b, a float32) {
-	gl.Color4f(r/255.0, g/255.0, b/255.0, a/255.0)
+func SetColor(r, g, b, a float64) {
+	gl.Color4d(r/255.0, g/255.0, b/255.0, a/255.0)
 }
 
 func SetLineWidth(width float32) {

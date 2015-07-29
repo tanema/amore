@@ -12,7 +12,6 @@ Requirements
 
 TODO
 =====
-* joystick
 * audio
 * Framebuffer / Canvas
 * Quad

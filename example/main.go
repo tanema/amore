@@ -16,7 +16,7 @@ var (
 	tree       *gfx.Image
 	ttf        *gfx.Font
 	image_font *gfx.Font
-	mx, my     float32
+	mx, my     float64
 )
 
 func main() {

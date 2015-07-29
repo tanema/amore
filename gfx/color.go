@@ -1,7 +1,7 @@
 package gfx
 
 type Color struct {
-	R, G, B, A float32
+	R, G, B, A float64
 }
 
 func (color *Color) Add(c *Color) {
@@ -11,14 +11,14 @@ func (color *Color) Add(c *Color) {
 	color.A = color.A + c.A
 }
 
-func (color *Color) Mul(s float32) {
+func (color *Color) Mul(s float64) {
 	color.R = color.R * s
 	color.G = color.G * s
 	color.B = color.B * s
 	color.A = color.A * s
 }
 
-func (color *Color) Div(s float32) {
+func (color *Color) Div(s float64) {
 	color.R = color.R / s
 	color.G = color.G / s
 	color.B = color.B / s
