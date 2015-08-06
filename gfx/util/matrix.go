@@ -8,12 +8,12 @@ type Matrix struct {
 	e [16]float64
 }
 
-func newEmptyMatrix() *Matrix {
+func NewEmptyMatrix() *Matrix {
 	return &Matrix{}
 }
 
-func newOrthoMatrix(left, right, bottom, top float64) *Matrix {
-	m := newEmptyMatrix()
+func NewOrthoMatrix(left, right, bottom, top float64) *Matrix {
+	m := NewEmptyMatrix()
 	m.e[0] = 2.0 / (right - left)
 	m.e[5] = 2.0 / (top - bottom)
 	m.e[10] = -1.0
@@ -22,7 +22,7 @@ func newOrthoMatrix(left, right, bottom, top float64) *Matrix {
 	return m
 }
 
-func newMatrix(x, y, angle, sx, sy, ox, oy, kx, ky float64) *Matrix {
+func NewMatrix(x, y, angle, sx, sy, ox, oy, kx, ky float64) *Matrix {
 	new_matrix := &Matrix{}
 	new_matrix.SetTransformation(x, y, angle, sx, sy, ox, oy, kx, ky)
 	return new_matrix
@@ -96,7 +96,7 @@ func (mat *Matrix) SetShear(kx, ky float64) {
 // | e3 e7 e11 e15 |
 
 func (mat *Matrix) Mul(m *Matrix) *Matrix {
-	t := newEmptyMatrix()
+	t := NewEmptyMatrix()
 
 	t.e[0] = (mat.e[0] * m.e[0]) + (mat.e[4] * m.e[1]) + (mat.e[8] * m.e[2]) + (mat.e[12] * m.e[3])
 	t.e[4] = (mat.e[0] * m.e[4]) + (mat.e[4] * m.e[5]) + (mat.e[8] * m.e[6]) + (mat.e[12] * m.e[7])
@@ -121,26 +121,26 @@ func (mat *Matrix) Mul(m *Matrix) *Matrix {
 	return t
 }
 
-func (mat *Matrix) Translate(x, y float64) {
-	t := newEmptyMatrix()
+func (mat *Matrix) Translate(x, y float64) *Matrix {
+	t := NewEmptyMatrix()
 	t.SetTranslation(x, y)
-	mat.e = mat.Mul(m).GetElements()
+	return mat.Mul(t)
 }
 
-func (mat *Matrix) Rotate(rad float64) {
-	t := newEmptyMatrix()
+func (mat *Matrix) Rotate(rad float64) *Matrix {
+	t := NewEmptyMatrix()
 	t.SetRotation(rad)
-	mat.e = mat.Mul(m).GetElements()
+	return mat.Mul(t)
 }
 
-func (mat *Matrix) Scale(sx, sy float64) {
-	t := newEmptyMatrix()
+func (mat *Matrix) Scale(sx, sy float64) *Matrix {
+	t := NewEmptyMatrix()
 	t.SetScale(sx, sy)
-	mat.e = mat.Mul(m).GetElements()
+	return mat.Mul(t)
 }
 
-func (mat *Matrix) Shear(kx, ky float64) {
-	t := newEmptyMatrix()
+func (mat *Matrix) Shear(kx, ky float64) *Matrix {
+	t := NewEmptyMatrix()
 	t.SetShear(kx, ky)
-	mat.e = mat.Mul(m).GetElements()
+	return mat.Mul(t)
 }

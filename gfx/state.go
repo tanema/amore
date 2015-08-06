@@ -62,8 +62,8 @@ func ClearShader() {
 	gl.UseProgram(0)
 }
 
-func SetColor(r, g, b, a float64) {
-	gl.Color4d(r/255.0, g/255.0, b/255.0, a/255.0)
+func SetColor(r, g, b, a int) {
+	gl.Color4d(float64(r)/255.0, float64(g)/255.0, float64(b)/255.0, float64(a)/255.0)
 }
 
 func SetLineWidth(width float32) {

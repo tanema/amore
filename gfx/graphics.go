@@ -126,7 +126,8 @@ func SetMode(w, h int) {
 	height = h
 
 	// Okay, setup OpenGL.
-	gl.Init()
+	InitContext()
+	opengl.SetupContext()
 
 	created = true
 
