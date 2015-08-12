@@ -127,7 +127,6 @@ func SetMode(w, h int) {
 
 	// Okay, setup OpenGL.
 	InitContext()
-	opengl.SetupContext()
 
 	created = true
 
@@ -146,6 +145,10 @@ func SetMode(w, h int) {
 
 	// Set pixel row alignment
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+
+	if !loadAllVolatile() {
+		println("Could not reload all volatile objects.")
+	}
 }
 
 func UnSetMode() {
@@ -153,8 +156,8 @@ func UnSetMode() {
 		return
 	}
 
-	//TODO release volatile and deinit context
-
+	unloadAllVolatile()
+	opengl.DeInit()
 	created = false
 }
 

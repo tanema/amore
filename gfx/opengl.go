@@ -30,8 +30,8 @@ type state struct {
 	// Currently active texture unit.
 	CurTextureUnit int
 
-	Viewport *viewport
-	Scissor  *viewport
+	Viewport viewport
+	Scissor  viewport
 
 	PointSize              float32
 	FramebufferSRGBEnabled bool
@@ -42,7 +42,7 @@ type openGL struct {
 	vendor     string
 	transform  []*util.Matrix
 	projection []*util.Matrix
-	viewport   *viewport
+	viewport   viewport
 	stats      *stats
 	state      *state
 
@@ -69,50 +69,44 @@ func InitContext() {
 		vendor:     gl.GoStr(gl.GetString(gl.VENDOR)),
 		transform:  []*util.Matrix{util.NewEmptyMatrix()},
 		projection: []*util.Matrix{util.NewEmptyMatrix()},
-		viewport:   &viewport{},
 		stats:      &stats{},
 		state: &state{
 			Color:    &Color{255, 255, 255, 255},
-			Viewport: &viewport{},
-			Scissor:  &viewport{},
+			Viewport: viewport{},
+			Scissor:  viewport{},
 		},
 	}
 
-	opengl.SetupContext()
-}
+	opengl.initMaxValues()
 
-func (g *openGL) SetupContext() {
-	g.initMaxValues()
-
-	g.state.Color = &Color{255, 255, 255, 255}
 	gl.VertexAttrib4f(ATTRIB_COLOR, 1.0, 1.0, 1.0, 1.0)
 
 	// Get the current viewport.
-	gl.GetIntegerv(gl.VIEWPORT, &g.state.Viewport[0])
+	gl.GetIntegerv(gl.VIEWPORT, &opengl.state.Viewport[0])
 
 	// And the current scissor - but we need to compensate for GL scissors
 	// starting at the bottom left instead of top left.
-	gl.GetIntegerv(gl.SCISSOR_BOX, &g.state.Scissor[0])
-	g.state.Scissor[1] = g.state.Viewport[3] - (g.state.Scissor[1] + g.state.Scissor[3])
+	gl.GetIntegerv(gl.SCISSOR_BOX, &opengl.state.Scissor[0])
+	opengl.state.Scissor[1] = opengl.state.Viewport[3] - (opengl.state.Scissor[1] + opengl.state.Scissor[3])
 
-	gl.GetFloatv(gl.POINT_SIZE, &g.state.PointSize)
-	g.state.FramebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
+	gl.GetFloatv(gl.POINT_SIZE, &opengl.state.PointSize)
+	opengl.state.FramebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
 
 	var curgltextureunit int32
 	gl.GetIntegerv(gl.ACTIVE_TEXTURE, &curgltextureunit)
-	g.state.CurTextureUnit = int(curgltextureunit - gl.TEXTURE0)
+	opengl.state.CurTextureUnit = int(curgltextureunit - gl.TEXTURE0)
 
 	// Retrieve currently bound textures for each texture unit.
 	var boundTex int32
-	for i := 0; i < int(g.maxTextureUnits); i++ {
+	for i := 0; i < int(opengl.maxTextureUnits); i++ {
 		gl.ActiveTexture(uint32(gl.TEXTURE0 + i))
 		gl.GetIntegerv(gl.TEXTURE_BINDING_2D, &boundTex)
-		g.state.BoundTextures = append(g.state.BoundTextures, uint32(boundTex))
+		opengl.state.BoundTextures = append(opengl.state.BoundTextures, uint32(boundTex))
 	}
 
 	gl.ActiveTexture(uint32(curgltextureunit))
 
-	g.createDefaultTexture()
+	opengl.createDefaultTexture()
 }
 
 func (g *openGL) initMaxValues() {
@@ -157,4 +151,22 @@ func (g *openGL) BindTexture(texture uint32) {
 		g.state.BoundTextures[g.state.CurTextureUnit] = texture
 		gl.BindTexture(gl.TEXTURE_2D, texture)
 	}
+}
+
+func (g *openGL) DeInit() {
+	gl.DeleteTextures(1, &g.state.DefaultTexture)
+	g.state.DefaultTexture = 0
+}
+
+func (g *openGL) pushTransform() {
+	new_transform := *g.GetTransform()
+	g.transform = append(g.transform, &new_transform)
+}
+
+func (g *openGL) popTransform() {
+	g.transform = g.transform[:len(g.transform)-1]
+}
+
+func (g *openGL) GetTransform() *util.Matrix {
+	return g.transform[len(g.transform)-1]
 }

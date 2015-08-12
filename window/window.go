@@ -289,6 +289,7 @@ func (window *Window) Raise() {
 }
 
 func (window *Window) Destroy() {
+	gfx.UnSetMode()
 	sdl.GL_DeleteContext(window.context)
 	window.sdl_window.Destroy()
 	// The old window may have generated pending events which are no longer
