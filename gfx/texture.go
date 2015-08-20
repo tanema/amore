@@ -5,12 +5,9 @@ import (
 	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
-	"os"
 
 	"github.com/go-gl/gl/v2.1/gl"
 )
-
-type BindCB func()
 
 var filters = map[string]int32{"linear": gl.LINEAR, "nearest": gl.NEAREST}
 var wraps = map[string]int32{"clamp": gl.CLAMP_TO_EDGE, "repeat": gl.REPEAT}
@@ -20,22 +17,7 @@ type Texture struct {
 	Width, Height float64
 }
 
-func NewTexture(file string) (*Texture, error) {
-	imgFile, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
-	defer imgFile.Close()
-
-	img, _, err := image.Decode(imgFile)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewImageTexture(img)
-}
-
-func NewImageTexture(img image.Image) (*Texture, error) {
+func LoadImageTexture(img image.Image) (*Texture, error) {
 	var texture_id uint32
 	gl.GenTextures(1, &texture_id)
 
@@ -46,12 +28,11 @@ func NewImageTexture(img image.Image) (*Texture, error) {
 		Height:    float64(bounds.Dy()),
 	}
 
-	new_texture.Bind(func() {
-		//generate a uniform image and upload to vram
-		rgba := image.NewRGBA(img.Bounds())
-		draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
-		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(bounds.Dx()), int32(bounds.Dy()), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
-	})
+	opengl.BindTexture(new_texture.GetHandle())
+	//generate a uniform image and upload to vram
+	rgba := image.NewRGBA(img.Bounds())
+	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(bounds.Dx()), int32(bounds.Dy()), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
 
 	new_texture.SetFilter("nearest", "nearest")
 	new_texture.SetWrap("clamp", "clamp")
@@ -59,11 +40,8 @@ func NewImageTexture(img image.Image) (*Texture, error) {
 	return new_texture, nil
 }
 
-func (texture *Texture) Bind(draw_cb BindCB) {
-	gl.Enable(gl.TEXTURE_2D)
-	gl.BindTexture(gl.TEXTURE_2D, texture.textureId)
-	draw_cb()
-	gl.Disable(gl.TEXTURE_2D)
+func (texture *Texture) GetHandle() uint32 {
+	return texture.textureId
 }
 
 func (texture *Texture) SetWrap(wrap_s, wrap_t string) {

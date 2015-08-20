@@ -87,15 +87,26 @@ func Ellipsep(mode string, x, y, a, b float64, points int) {
 	Polygon(mode, coords)
 }
 
+func Point(x, y float64) {
+	opengl.PrepareDraw()
+	opengl.BindTexture(opengl.GetDefaultTexture())
+	gl.EnableVertexAttribArray(ATTRIB_POS)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float64{x, y}))
+	gl.DrawArrays(gl.POINTS, 0, 1)
+	gl.DisableVertexAttribArray(ATTRIB_POS)
+}
+
 func Line(args ...float64) {
 	PolyLine(args)
 }
 
 func PolyLine(coords []float64) {
-	gl.EnableVertexAttribArray(0)
-	gl.VertexAttribPointer(0, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
+	opengl.PrepareDraw()
+	opengl.BindTexture(opengl.GetDefaultTexture())
+	gl.EnableVertexAttribArray(ATTRIB_POS)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
 	gl.DrawArrays(gl.LINE_STRIP, 0, int32(len(coords))/2)
-	gl.DisableVertexAttribArray(0)
+	gl.DisableVertexAttribArray(ATTRIB_POS)
 }
 
 func Rect(mode string, x, y, w, h float64) {
@@ -106,10 +117,12 @@ func Polygon(mode string, coords []float64) {
 	if mode == "line" {
 		PolyLine(coords)
 	} else {
-		gl.EnableVertexAttribArray(0)
-		gl.VertexAttribPointer(0, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
+		opengl.PrepareDraw()
+		opengl.BindTexture(opengl.GetDefaultTexture())
+		gl.EnableVertexAttribArray(ATTRIB_POS)
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, int32(len(coords))/2-1)
-		gl.DisableVertexAttribArray(0)
+		gl.DisableVertexAttribArray(ATTRIB_POS)
 	}
 }
 

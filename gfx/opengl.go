@@ -146,11 +146,18 @@ func (g *openGL) createDefaultTexture() {
 	g.BindTexture(curtexture)
 }
 
+func (g *openGL) PrepareDraw() {
+}
+
 func (g *openGL) BindTexture(texture uint32) {
 	if texture != g.state.BoundTextures[g.state.CurTextureUnit] {
 		g.state.BoundTextures[g.state.CurTextureUnit] = texture
 		gl.BindTexture(gl.TEXTURE_2D, texture)
 	}
+}
+
+func (g *openGL) GetDefaultTexture() uint32 {
+	return g.state.DefaultTexture
 }
 
 func (g *openGL) DeInit() {

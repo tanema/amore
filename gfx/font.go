@@ -18,6 +18,7 @@ import (
 var current_font *Font
 
 type Font struct {
+	img     image.Image
 	Texture *Texture
 	Offset  int
 	Glyphs  map[rune]Glyph
@@ -102,16 +103,16 @@ func NewFont(filename string, font_size float64) (*Font, error) {
 		}
 	}
 
-	texture, err := NewImageTexture(rgba)
-	if err != nil {
-		return nil, err
+	new_font := &Font{
+		img:    rgba,
+		Glyphs: glyph_dict,
+		Offset: offset,
 	}
 
-	return &Font{
-		Texture: texture,
-		Glyphs:  glyph_dict,
-		Offset:  offset,
-	}, nil
+	registerVolatile(new_font)
+	new_font.LoadVolatile()
+
+	return new_font, nil
 }
 
 func NewImageFont(filename, glyph_hints string) (*Font, error) {
@@ -163,22 +164,37 @@ func NewImageFont(filename, glyph_hints string) (*Font, error) {
 		}
 	}
 
-	texture, err := NewImageTexture(rgba)
-	if err != nil {
-		return nil, err
+	new_font := &Font{
+		img:    rgba,
+		Glyphs: glyph_dict,
 	}
 
-	return &Font{
-		Texture: texture,
-		Glyphs:  glyph_dict,
-	}, nil
+	registerVolatile(new_font)
+	new_font.LoadVolatile()
+
+	return new_font, nil
 }
 
 func (f *Font) Index(ch rune) {
 }
 
 func (f *Font) Release() {
+	f.UnloadVolatile()
+}
+
+func (f *Font) LoadVolatile() bool {
+	var err error
+	f.Texture, err = LoadImageTexture(f.img)
+	return err == nil
+}
+
+func (f *Font) UnloadVolatile() {
+	if f.Texture != nil {
+		return
+	}
+
 	f.Texture.Release()
+	f.Texture = nil
 }
 
 func SetFont(font *Font) {
@@ -198,24 +214,24 @@ func Printf(x, y float64, fs string, argv ...interface{}) {
 	x = x - float64(current_font.Offset)
 	y = y - (float64(current_font.Offset) / 4.0)
 
-	current_font.Texture.Bind(func() {
-		for _, ch := range formatted_string {
-			if glyph, ok := current_font.Glyphs[ch]; ok {
-				gl.Begin(gl.QUADS)
-				{
-					gl.TexCoord2d(glyph.TextureRec.X1, glyph.TextureRec.Y1) // top-left
-					gl.Vertex2d(x, y)
-					gl.TexCoord2d(glyph.TextureRec.X1, glyph.TextureRec.Y2) // bottom-left
-					gl.Vertex2d(x, y+float64(glyph.Height))
-					gl.TexCoord2d(glyph.TextureRec.X2, glyph.TextureRec.Y2) // bottom-right
-					gl.Vertex2d(x+float64(glyph.Width), y+float64(glyph.Height))
-					gl.TexCoord2d(glyph.TextureRec.X2, glyph.TextureRec.Y1) // top-right
-					gl.Vertex2d(x+float64(glyph.Width), y)
-				}
-				gl.End()
-				x = x + float64(glyph.Advance)
+	opengl.PrepareDraw()
+	opengl.BindTexture(current_font.Texture.GetHandle())
+	for _, ch := range formatted_string {
+		if glyph, ok := current_font.Glyphs[ch]; ok {
+			gl.Begin(gl.QUADS)
+			{
+				gl.TexCoord2d(glyph.TextureRec.X1, glyph.TextureRec.Y1) // top-left
+				gl.Vertex2d(x, y)
+				gl.TexCoord2d(glyph.TextureRec.X1, glyph.TextureRec.Y2) // bottom-left
+				gl.Vertex2d(x, y+float64(glyph.Height))
+				gl.TexCoord2d(glyph.TextureRec.X2, glyph.TextureRec.Y2) // bottom-right
+				gl.Vertex2d(x+float64(glyph.Width), y+float64(glyph.Height))
+				gl.TexCoord2d(glyph.TextureRec.X2, glyph.TextureRec.Y1) // top-right
+				gl.Vertex2d(x+float64(glyph.Width), y)
 			}
+			gl.End()
+			x = x + float64(glyph.Advance)
 		}
-	})
+	}
 
 }
