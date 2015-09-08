@@ -7,9 +7,31 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 )
 
+type ShaderSource struct {
+	vertex, pixel string
+}
+
+const (
+	DEFAULT_VERTEX_SHADER = `vec4 position(mat4 transform_proj, vec4 vertpos) {
+						return transform_proj * vertpos;
+					}`
+	DEFAULT_PIXEL_SHADER = `vec4 effect(lowp vec4 vcolor, Image tex, vec2 texcoord, vec2 pixcoord) {
+						return Texel(tex, texcoord) * vcolor;
+					}`
+)
+
 type Shader struct {
 	program uint32
 }
+
+var (
+	defaultShader         *Shader
+	currentShader         *Shader
+	default_shader_source = &ShaderSource{
+		vertex: DEFAULT_VERTEX_SHADER,
+		pixel:  DEFAULT_PIXEL_SHADER,
+	}
+)
 
 func NewShader(vert_string, frag_string string) (*Shader, error) {
 	vert, vert_err := generateGenericShader(vert_string, gl.VERTEX_SHADER)
