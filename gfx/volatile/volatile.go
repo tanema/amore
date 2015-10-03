@@ -1,4 +1,4 @@
-package gfx
+package volatile
 
 type Volatile interface {
 	LoadVolatile() bool
@@ -9,11 +9,12 @@ var (
 	all_volatile = []Volatile{}
 )
 
-func registerVolatile(new_volatile Volatile) {
+func Register(new_volatile Volatile) {
 	all_volatile = append(all_volatile, new_volatile)
+	new_volatile.LoadVolatile()
 }
 
-func releaseVolatile(vol Volatile) {
+func Release(vol Volatile) {
 	var pos int
 	for i, v := range all_volatile {
 		if v == vol {
@@ -25,12 +26,12 @@ func releaseVolatile(vol Volatile) {
 	all_volatile = all_volatile[:pos+copy(all_volatile[pos:], all_volatile[pos+1:])]
 }
 
-func releaseAllVolatile() {
-	unloadAllVolatile()
+func ReleaseAll() {
+	UnloadAll()
 	all_volatile = []Volatile{}
 }
 
-func loadAllVolatile() bool {
+func LoadAll() bool {
 	success := true
 
 	for _, v := range all_volatile {
@@ -40,7 +41,7 @@ func loadAllVolatile() bool {
 	return success
 }
 
-func unloadAllVolatile() {
+func UnloadAll() {
 	for _, v := range all_volatile {
 		v.UnloadVolatile()
 	}

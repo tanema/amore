@@ -12,9 +12,13 @@ const (
 )
 
 type Uniform struct {
-	Location uint32
-	Count    uint32
+	Location int32
+	Count    int32
 	Type     uint32
 	BaseType UniformType
 	Name     string
+}
+
+func getUniformBaseType(t uint32) UniformType {
+	return UNIFORM_UNKNOWN
 }

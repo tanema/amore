@@ -12,6 +12,8 @@ import (
 
 	"github.com/go-gl/gl/v2.1/gl"
 
+	"github.com/tanema/amore/gfx/opengl"
+	"github.com/tanema/amore/gfx/volatile"
 	"github.com/tanema/freetype-go/freetype"
 )
 
@@ -109,8 +111,7 @@ func NewFont(filename string, font_size float64) (*Font, error) {
 		Offset: offset,
 	}
 
-	registerVolatile(new_font)
-	new_font.LoadVolatile()
+	volatile.Register(new_font)
 
 	return new_font, nil
 }
@@ -169,8 +170,7 @@ func NewImageFont(filename, glyph_hints string) (*Font, error) {
 		Glyphs: glyph_dict,
 	}
 
-	registerVolatile(new_font)
-	new_font.LoadVolatile()
+	volatile.Register(new_font)
 
 	return new_font, nil
 }

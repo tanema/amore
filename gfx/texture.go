@@ -7,6 +7,8 @@ import (
 	_ "image/png"
 
 	"github.com/go-gl/gl/v2.1/gl"
+
+	"github.com/tanema/amore/gfx/opengl"
 )
 
 var filters = map[string]int32{"linear": gl.LINEAR, "nearest": gl.NEAREST}

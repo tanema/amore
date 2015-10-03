@@ -4,6 +4,9 @@ import (
 	"math"
 
 	"github.com/go-gl/gl/v2.1/gl"
+
+	"github.com/tanema/amore/gfx/opengl"
+	"github.com/tanema/amore/gfx/volatile"
 )
 
 const defaultPointCount = 30
@@ -90,10 +93,10 @@ func Ellipsep(mode string, x, y, a, b float64, points int) {
 func Point(x, y float64) {
 	opengl.PrepareDraw()
 	opengl.BindTexture(opengl.GetDefaultTexture())
-	gl.EnableVertexAttribArray(ATTRIB_POS)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float64{x, y}))
+	gl.EnableVertexAttribArray(opengl.ATTRIB_POS)
+	gl.VertexAttribPointer(opengl.ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float64{x, y}))
 	gl.DrawArrays(gl.POINTS, 0, 1)
-	gl.DisableVertexAttribArray(ATTRIB_POS)
+	gl.DisableVertexAttribArray(opengl.ATTRIB_POS)
 }
 
 func Line(args ...float64) {
@@ -103,10 +106,10 @@ func Line(args ...float64) {
 func PolyLine(coords []float64) {
 	opengl.PrepareDraw()
 	opengl.BindTexture(opengl.GetDefaultTexture())
-	gl.EnableVertexAttribArray(ATTRIB_POS)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
+	gl.EnableVertexAttribArray(opengl.ATTRIB_POS)
+	gl.VertexAttribPointer(opengl.ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
 	gl.DrawArrays(gl.LINE_STRIP, 0, int32(len(coords))/2)
-	gl.DisableVertexAttribArray(ATTRIB_POS)
+	gl.DisableVertexAttribArray(opengl.ATTRIB_POS)
 }
 
 func Rect(mode string, x, y, w, h float64) {
@@ -119,10 +122,10 @@ func Polygon(mode string, coords []float64) {
 	} else {
 		opengl.PrepareDraw()
 		opengl.BindTexture(opengl.GetDefaultTexture())
-		gl.EnableVertexAttribArray(ATTRIB_POS)
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
+		gl.EnableVertexAttribArray(opengl.ATTRIB_POS)
+		gl.VertexAttribPointer(opengl.ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, int32(len(coords))/2-1)
-		gl.DisableVertexAttribArray(ATTRIB_POS)
+		gl.DisableVertexAttribArray(opengl.ATTRIB_POS)
 	}
 }
 
@@ -139,7 +142,7 @@ func SetMode(w, h int) {
 	height = h
 
 	// Okay, setup OpenGL.
-	InitContext()
+	opengl.InitContext()
 
 	created = true
 
@@ -159,7 +162,7 @@ func SetMode(w, h int) {
 	// Set pixel row alignment
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
-	if !loadAllVolatile() {
+	if !volatile.LoadAll() {
 		println("Could not reload all volatile objects.")
 	}
 }
@@ -169,7 +172,7 @@ func UnSetMode() {
 		return
 	}
 
-	unloadAllVolatile()
+	volatile.UnloadAll()
 	opengl.DeInit()
 	created = false
 }

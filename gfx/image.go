@@ -7,6 +7,9 @@ import (
 	"os"
 
 	"github.com/go-gl/gl/v2.1/gl"
+
+	"github.com/tanema/amore/gfx/opengl"
+	"github.com/tanema/amore/gfx/volatile"
 )
 
 type Image struct {
@@ -30,8 +33,8 @@ func NewImage(path string) (*Image, error) {
 		img: img,
 	}
 
-	registerVolatile(new_image)
-	new_image.LoadVolatile()
+	volatile.Register(new_image)
+
 	return new_image, nil
 }
 
