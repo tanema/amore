@@ -5,9 +5,9 @@ import (
 	"math"
 
 	"github.com/tanema/amore"
-	"github.com/tanema/amore/file"
+	//"github.com/tanema/amore/file"
 	"github.com/tanema/amore/gfx"
-	"github.com/tanema/amore/gfx/shader"
+	//"github.com/tanema/amore/gfx/shader"
 	_ "github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"
 	"github.com/tanema/amore/mouse"
@@ -43,7 +43,7 @@ func load() {
 	ttf, _ = gfx.NewFont("assets/fonts/arial.ttf", 20)
 	image_font, _ = gfx.NewImageFont("assets/fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 
-	shader.New(file.Read("shaders/blackandwhite.glsl"))
+	//shader.New(file.Read("shaders/blackandwhite.glsl"))
 }
 
 func update(deltaTime float64) {

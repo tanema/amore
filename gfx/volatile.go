@@ -1,4 +1,4 @@
-package volatile
+package gfx
 
 type Volatile interface {
 	LoadVolatile() bool

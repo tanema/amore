@@ -1,4 +1,4 @@
-package shader
+package gfx
 
 import (
 	"github.com/go-gl/gl/v2.1/gl"

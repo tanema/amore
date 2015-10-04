@@ -7,9 +7,6 @@ import (
 	"os"
 
 	"github.com/go-gl/gl/v2.1/gl"
-
-	"github.com/tanema/amore/gfx/opengl"
-	"github.com/tanema/amore/gfx/volatile"
 )
 
 type Image struct {
@@ -33,7 +30,7 @@ func NewImage(path string) (*Image, error) {
 		img: img,
 	}
 
-	volatile.Register(new_image)
+	Register(new_image)
 
 	return new_image, nil
 }
@@ -54,8 +51,8 @@ func (image *Image) UnloadVolatile() {
 }
 
 func (image *Image) Draw(x, y, angle, sx, sy, ox, oy, kx, ky float64) {
-	opengl.PrepareDraw()
-	opengl.BindTexture(image.texture.GetHandle())
+	PrepareDraw()
+	BindTexture(image.texture.GetHandle())
 	gl.Begin(gl.QUADS)
 	{
 		gl.TexCoord2d(0, 0) // top-left

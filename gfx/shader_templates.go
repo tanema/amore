@@ -1,4 +1,4 @@
-package shader
+package gfx
 
 import (
 	"text/template"

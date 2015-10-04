@@ -12,8 +12,6 @@ import (
 
 	"github.com/go-gl/gl/v2.1/gl"
 
-	"github.com/tanema/amore/gfx/opengl"
-	"github.com/tanema/amore/gfx/volatile"
 	"github.com/tanema/freetype-go/freetype"
 )
 
@@ -111,7 +109,7 @@ func NewFont(filename string, font_size float64) (*Font, error) {
 		Offset: offset,
 	}
 
-	volatile.Register(new_font)
+	Register(new_font)
 
 	return new_font, nil
 }
@@ -170,7 +168,7 @@ func NewImageFont(filename, glyph_hints string) (*Font, error) {
 		Glyphs: glyph_dict,
 	}
 
-	volatile.Register(new_font)
+	Register(new_font)
 
 	return new_font, nil
 }
@@ -214,8 +212,8 @@ func Printf(x, y float64, fs string, argv ...interface{}) {
 	x = x - float64(current_font.Offset)
 	y = y - (float64(current_font.Offset) / 4.0)
 
-	opengl.PrepareDraw()
-	opengl.BindTexture(current_font.Texture.GetHandle())
+	PrepareDraw()
+	BindTexture(current_font.Texture.GetHandle())
 	for _, ch := range formatted_string {
 		if glyph, ok := current_font.Glyphs[ch]; ok {
 			gl.Begin(gl.QUADS)

@@ -1,9 +1,7 @@
-package opengl
+package gfx
 
 import (
 	"github.com/go-gl/gl/v2.1/gl"
-
-	"github.com/tanema/amore/gfx/util"
 )
 
 const (
@@ -28,12 +26,15 @@ type State struct {
 	PointSize              float32
 	FramebufferSRGBEnabled bool
 	DefaultTexture         uint32
+
+	LastProjectionMatrix *Matrix
+	LastTransformMatrix  *Matrix
 }
 
 var (
 	vendor     string
-	transform  []*util.Matrix
-	projection []*util.Matrix
+	transform  []*Matrix
+	projection []*Matrix
 	state      *State
 
 	maxAnisotropy          float32
@@ -54,8 +55,8 @@ func InitContext() {
 	gl.Init()
 
 	vendor = gl.GoStr(gl.GetString(gl.VENDOR))
-	transform = []*util.Matrix{util.NewEmptyMatrix()}
-	projection = []*util.Matrix{util.NewEmptyMatrix()}
+	transform = []*Matrix{NewEmptyMatrix()}
+	projection = []*Matrix{NewEmptyMatrix()}
 	state = &State{
 		Viewport: Viewport{},
 		Scissor:  Viewport{},
@@ -133,6 +134,31 @@ func createDefaultTexture() {
 }
 
 func PrepareDraw() {
+	shader := currentShader
+	if shader != nil {
+		// Make sure the active shader has the correct values for its
+		// love-provided uniforms.
+		shader.CheckSetScreenParams()
+	}
+
+	//curproj := projection[len(projection)-1]
+	//curxform := transform[len(transform)-1]
+
+	// We only need to re-upload the projection matrix if it's changed.
+	//if state.LastProjectionMatrix != curproj {
+	//gl.MatrixMode(gl.PROJECTION)
+	//projection_elements := curproj.GetElements()
+	//gl.LoadMatrixf(&projection_elements[0])
+	//gl.MatrixMode(gl.MODELVIEW)
+
+	//state.LastProjectionMatrix = curproj
+	//}
+
+	//if state.LastTransformMatrix != curxform {
+	//transform_elements := curxform.GetElements()
+	//gl.LoadMatrixf(&transform_elements[0])
+	//state.LastTransformMatrix = curxform
+	//}
 }
 
 func SetTextureUnit(textureunit int) {
@@ -190,7 +216,7 @@ func popTransform() {
 	transform = transform[:len(transform)-1]
 }
 
-func GetTransform() *util.Matrix {
+func GetTransform() *Matrix {
 	return transform[len(transform)-1]
 }
 

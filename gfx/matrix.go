@@ -1,18 +1,18 @@
-package util
+package gfx
 
 import (
 	"math"
 )
 
 type Matrix struct {
-	e [16]float64
+	e [16]float32
 }
 
 func NewEmptyMatrix() *Matrix {
 	return &Matrix{}
 }
 
-func NewOrthoMatrix(left, right, bottom, top float64) *Matrix {
+func NewOrthoMatrix(left, right, bottom, top float32) *Matrix {
 	m := NewEmptyMatrix()
 	m.e[0] = 2.0 / (right - left)
 	m.e[5] = 2.0 / (top - bottom)
@@ -22,15 +22,15 @@ func NewOrthoMatrix(left, right, bottom, top float64) *Matrix {
 	return m
 }
 
-func NewMatrix(x, y, angle, sx, sy, ox, oy, kx, ky float64) *Matrix {
+func NewMatrix(x, y, angle, sx, sy, ox, oy, kx, ky float32) *Matrix {
 	new_matrix := &Matrix{}
 	new_matrix.SetTransformation(x, y, angle, sx, sy, ox, oy, kx, ky)
 	return new_matrix
 }
 
-func (mat *Matrix) SetTransformation(x, y, angle, sx, sy, ox, oy, kx, ky float64) {
-	c := math.Cos(angle)
-	s := math.Sin(angle)
+func (mat *Matrix) SetTransformation(x, y, angle, sx, sy, ox, oy, kx, ky float32) {
+	c := (float32)(math.Cos((float64)(angle)))
+	s := (float32)(math.Sin((float64)(angle)))
 	// matrix multiplication carried out on paper:
 	// |1     x| |c -s    | |sx       | | 1 ky    | |1     -ox|
 	// |  1   y| |s  c    | |   sy    | |kx  1    | |  1   -oy|
@@ -54,33 +54,33 @@ func (mat *Matrix) SetIdentity() {
 	mat.e[15] = 1.0
 }
 
-func (mat *Matrix) GetElements() [16]float64 {
+func (mat *Matrix) GetElements() [16]float32 {
 	return mat.e
 }
 
-func (mat *Matrix) SetTranslation(x, y float64) {
+func (mat *Matrix) SetTranslation(x, y float32) {
 	mat.SetIdentity()
 	mat.e[12] = x
 	mat.e[13] = y
 }
 
-func (mat *Matrix) SetRotation(rad float64) {
+func (mat *Matrix) SetRotation(angle float32) {
 	mat.SetIdentity()
-	c := math.Cos(rad)
-	s := math.Sin(rad)
+	c := (float32)(math.Cos((float64)(angle)))
+	s := (float32)(math.Sin((float64)(angle)))
 	mat.e[0] = c
 	mat.e[4] = -s
 	mat.e[1] = s
 	mat.e[5] = c
 }
 
-func (mat *Matrix) SetScale(sx, sy float64) {
+func (mat *Matrix) SetScale(sx, sy float32) {
 	mat.SetIdentity()
 	mat.e[0] = sx
 	mat.e[5] = sy
 }
 
-func (mat *Matrix) SetShear(kx, ky float64) {
+func (mat *Matrix) SetShear(kx, ky float32) {
 	mat.SetIdentity()
 	mat.e[1] = ky
 	mat.e[4] = kx
@@ -121,25 +121,25 @@ func (mat *Matrix) Mul(m *Matrix) *Matrix {
 	return t
 }
 
-func (mat *Matrix) Translate(x, y float64) *Matrix {
+func (mat *Matrix) Translate(x, y float32) *Matrix {
 	t := NewEmptyMatrix()
 	t.SetTranslation(x, y)
 	return mat.Mul(t)
 }
 
-func (mat *Matrix) Rotate(rad float64) *Matrix {
+func (mat *Matrix) Rotate(rad float32) *Matrix {
 	t := NewEmptyMatrix()
 	t.SetRotation(rad)
 	return mat.Mul(t)
 }
 
-func (mat *Matrix) Scale(sx, sy float64) *Matrix {
+func (mat *Matrix) Scale(sx, sy float32) *Matrix {
 	t := NewEmptyMatrix()
 	t.SetScale(sx, sy)
 	return mat.Mul(t)
 }
 
-func (mat *Matrix) Shear(kx, ky float64) *Matrix {
+func (mat *Matrix) Shear(kx, ky float32) *Matrix {
 	t := NewEmptyMatrix()
 	t.SetShear(kx, ky)
 	return mat.Mul(t)

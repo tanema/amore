@@ -2,8 +2,6 @@ package gfx
 
 import (
 	"github.com/go-gl/gl/v2.1/gl"
-
-	"github.com/tanema/amore/gfx/shader"
 )
 
 func Translate(x, y float64) {
@@ -56,11 +54,12 @@ func SetScissor(x, y, width, height int32) {
 	gl.Scissor(x, y, width, height)
 }
 
-func SetShader(s *shader.Shader) {
-	if s == nil {
-		shader.Current.Detach()
+func SetShader(shader *Shader) {
+	if shader == nil {
+		currentShader.Detach()
 	} else {
-		s.Attach(false)
+		shader.Attach(false)
+		defaultShader.Attach(false)
 	}
 }
 

@@ -7,8 +7,6 @@ import (
 	_ "image/png"
 
 	"github.com/go-gl/gl/v2.1/gl"
-
-	"github.com/tanema/amore/gfx/opengl"
 )
 
 var filters = map[string]int32{"linear": gl.LINEAR, "nearest": gl.NEAREST}
@@ -30,7 +28,7 @@ func LoadImageTexture(img image.Image) (*Texture, error) {
 		Height:    float64(bounds.Dy()),
 	}
 
-	opengl.BindTexture(new_texture.GetHandle())
+	BindTexture(new_texture.GetHandle())
 	//generate a uniform image and upload to vram
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)

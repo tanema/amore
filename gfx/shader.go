@@ -1,14 +1,12 @@
-package shader
+package gfx
 
 import (
+	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/go-gl/gl/v2.1/gl"
-
-	"github.com/tanema/amore/gfx/canvas"
-	"github.com/tanema/amore/gfx/opengl"
-	"github.com/tanema/amore/gfx/volatile"
 )
 
 type BuiltinUniform int
@@ -24,9 +22,9 @@ const (
 
 var (
 	attribNames = map[string]int{
-		"VertexPosition": opengl.ATTRIB_POS,
-		"VertexTexCoord": opengl.ATTRIB_TEXCOORD,
-		"VertexColor":    opengl.ATTRIB_COLOR,
+		"VertexPosition": ATTRIB_POS,
+		"VertexTexCoord": ATTRIB_TEXCOORD,
+		"VertexColor":    ATTRIB_COLOR,
 	}
 	builtinNames = map[string]BuiltinUniform{
 		"TransformMatrix":           BUILTIN_TRANSFORM_MATRIX,
@@ -35,20 +33,20 @@ var (
 		"amore_PointSize":           BUILTIN_POINT_SIZE,
 		"amore_ScreenSize":          BUILTIN_SCREEN_SIZE,
 	}
-	Current       *Shader
-	DefaultShader *Shader
+	currentShader *Shader
+	defaultShader *Shader
 )
 
 type Shader struct {
 	vertext_code      string
 	pixel_code        string
 	program           uint32
-	builtinUniforms   [BUILTIN_MAX_ENUM]int32       // Location values for any built-in uniform variables.
-	builtinAttributes [opengl.ATTRIB_MAX_ENUM]int32 // Location values for any generic vertex attribute variables.
+	builtinUniforms   [BUILTIN_MAX_ENUM]int32 // Location values for any built-in uniform variables.
+	builtinAttributes [ATTRIB_MAX_ENUM]int32  // Location values for any generic vertex attribute variables.
 	attributes        map[string]uint32
 	uniforms          map[string]Uniform // Uniform location buffer map
-	lastViewport      opengl.Viewport
-	lastCanvas        *canvas.Canvas
+	lastViewport      Viewport
+	lastCanvas        *Canvas
 	lastPointSize     float32
 
 	// Texture unit pool for setting images
@@ -57,7 +55,7 @@ type Shader struct {
 	boundRetainables map[string]interface{} // Uniform name to retainable objects
 }
 
-func New(code ...string) *Shader {
+func NewShader(code ...string) *Shader {
 	new_shader := &Shader{}
 	new_shader.vertext_code, new_shader.pixel_code = shaderCodeToGLSL(code...)
 
@@ -65,7 +63,7 @@ func New(code ...string) *Shader {
 		panic("Cannot create shader: no source code!")
 	}
 
-	volatile.Register(new_shader)
+	Register(new_shader)
 
 	return new_shader
 }
@@ -110,18 +108,18 @@ func (shader *Shader) LoadVolatile() bool {
 		shader.builtinAttributes[i] = gl.GetAttribLocation(shader.program, gl.Str(name+"\x00"))
 	}
 
-	if Current == shader {
+	if currentShader == shader {
 		// make sure glUseProgram gets called.
-		Current = nil
+		currentShader = nil
 		shader.Attach(false)
-		shader.checkSetScreenParams()
+		shader.CheckSetScreenParams()
 	}
 
 	return true
 }
 
 func (shader *Shader) UnloadVolatile() {
-	if Current == shader {
+	if currentShader == shader {
 		gl.UseProgram(0)
 	}
 
@@ -169,30 +167,37 @@ func (shader *Shader) mapActiveUniforms() {
 }
 
 func (shader *Shader) Attach(temporary bool) {
-	if Current != shader {
+	if currentShader != shader {
 		gl.UseProgram(shader.program)
 	}
 
 	if !temporary {
-		Current = shader
+		currentShader = shader
 		// make sure all sent textures are properly bound to their respective texture units
 		// note: list potentially contains texture ids of deleted/invalid textures!
 		for i := 0; i < len(shader.activeTexUnits); i++ {
 			if shader.activeTexUnits[i] > 0 {
-				opengl.BindTextureToUnit(shader.activeTexUnits[i], i+1, false)
+				BindTextureToUnit(shader.activeTexUnits[i], i+1, false)
 			}
 		}
 
 		// We always want to use texture unit 0 for everyhing else.
-		opengl.SetTextureUnit(0)
+		SetTextureUnit(0)
 	}
 }
 
 func (shader *Shader) Detach() {
-	if Current != nil {
+	if defaultShader != nil {
+		if currentShader != defaultShader {
+			defaultShader.Attach(false)
+		}
+		return
+	}
+
+	if currentShader != nil {
 		gl.UseProgram(0)
 	}
-	Current = nil
+	currentShader = nil
 }
 
 func (shader *Shader) getUniform(name string) Uniform {
@@ -221,16 +226,16 @@ func (shader *Shader) checkSetUniformError(u Uniform, size, count int32, sendtyp
 	}
 }
 
-func (shader *Shader) checkSetScreenParams() {
-	view := opengl.GetViewport()
-	if view == shader.lastViewport && shader.lastCanvas == canvas.Current {
+func (shader *Shader) CheckSetScreenParams() {
+	view := GetViewport()
+	if view == shader.lastViewport && shader.lastCanvas == currentCanvas {
 		return
 	}
 
 	// In the shader, we do pixcoord.y = gl_FragCoord.y * params.z + params.w.
 	// This lets us flip pixcoord.y when needed, to be consistent (drawing with
 	// no Canvas active makes the y-values for pixel coordinates flipped.)
-	if canvas.Current != nil {
+	if currentCanvas != nil {
 		// No flipping: pixcoord.y = gl_FragCoord.y * 1.0 + 0.0.
 		shader.sendBuiltinFloat(BUILTIN_SCREEN_SIZE, 4, 1, (float32)(view[2]), (float32)(view[3]), 1.0, 0.0)
 	} else {
@@ -239,11 +244,11 @@ func (shader *Shader) checkSetScreenParams() {
 		shader.sendBuiltinFloat(BUILTIN_SCREEN_SIZE, 4, 1, (float32)(view[2]), (float32)(view[3]), -1.0, (float32)(view[3]))
 	}
 
-	shader.lastCanvas = canvas.Current
+	shader.lastCanvas = currentCanvas
 	shader.lastViewport = view
 }
 
-func (shader *Shader) checkSetPointSize(size float32) {
+func (shader *Shader) CheckSetPointSize(size float32) {
 	if size == shader.lastPointSize {
 		return
 	}
@@ -271,7 +276,7 @@ func (shader *Shader) sendInt(name string, size, count int32, vec ...int32) {
 		gl.Uniform1iv(u.Location, count, &vec[0])
 	}
 
-	Current.Attach(false)
+	currentShader.Attach(false)
 }
 
 func (shader *Shader) sendFloat(name string, size, count int32, vec ...float32) {
@@ -292,7 +297,7 @@ func (shader *Shader) sendFloat(name string, size, count int32, vec ...float32) 
 		gl.Uniform1fv(u.Location, count, &vec[0])
 	}
 
-	Current.Attach(false)
+	currentShader.Attach(false)
 }
 
 func (shader *Shader) sendMatrix(name string, size, count int32, m ...float32) {
@@ -314,7 +319,7 @@ func (shader *Shader) sendMatrix(name string, size, count int32, m ...float32) {
 	default:
 		gl.UniformMatrix2fv(u.Location, count, false, &m[0])
 	}
-	Current.Attach(false)
+	currentShader.Attach(false)
 }
 
 func (shader *Shader) sendBuiltinMatrix(builtin BuiltinUniform, size, count int32, m ...float32) bool {
@@ -334,11 +339,11 @@ func (shader *Shader) sendBuiltinMatrix(builtin BuiltinUniform, size, count int3
 	case 4:
 		gl.UniformMatrix4fv(location, count, false, &m[0])
 	default:
-		Current.Attach(false)
+		currentShader.Attach(false)
 		return false
 	}
 
-	Current.Attach(false)
+	currentShader.Attach(false)
 	return true
 }
 
@@ -361,10 +366,114 @@ func (shader *Shader) sendBuiltinFloat(builtin BuiltinUniform, size, count int32
 	case 4:
 		gl.Uniform4fv(location, count, &vec[0])
 	default:
-		Current.Attach(false)
+		currentShader.Attach(false)
 		return false
 	}
 
-	Current.Attach(false)
+	currentShader.Attach(false)
 	return true
+}
+
+func createVertexCode(code string) string {
+	codes := struct {
+		Version, Syntax, Header, Uniforms, Code, Footer string
+	}{
+		Version:  VERSION,
+		Syntax:   SYNTAX,
+		Header:   VERTEX_HEADER,
+		Uniforms: UNIFORMS,
+		Code:     code,
+		Footer:   VERTEX_FOOTER,
+	}
+
+	var template_writer bytes.Buffer
+	err := SHADER_TEMPLATE.Execute(&template_writer, codes)
+	if err != nil {
+		panic(err)
+	}
+
+	return template_writer.String()
+}
+
+func createPixelCode(code string, is_multicanvas bool) string {
+	codes := struct {
+		Version, Syntax, Header, Uniforms, Line, Footer, Code string
+	}{
+		Version:  VERSION,
+		Syntax:   SYNTAX,
+		Header:   PIXEL_HEADER,
+		Uniforms: UNIFORMS,
+		Code:     code,
+	}
+
+	if is_multicanvas {
+		codes.Footer = FOOTER_MULTI_CANVAS
+	} else {
+		codes.Footer = PIXEL_FOOTER
+	}
+
+	var template_writer bytes.Buffer
+	err := SHADER_TEMPLATE.Execute(&template_writer, codes)
+	if err != nil {
+		panic(err)
+	}
+
+	return template_writer.String()
+}
+
+func isVertexCode(code string) bool {
+	match, _ := regexp.MatchString(`vec4\s+position\s*\(`, code)
+	return match
+}
+
+func isPixelCode(code string) (bool, bool) {
+	if match, _ := regexp.MatchString(`vec4\s+effect\s*\(`, code); match {
+		return true, false
+	} else if match, _ := regexp.MatchString(`vec4\s+effects\s*\(`, code); match {
+		// function for rendering to multiple canvases simultaneously
+		return true, true
+	}
+	return false, false
+}
+
+func shaderCodeToGLSL(code ...string) (string, string) {
+	vertexcode := DEFAULT_VERTEX_SHADER_CODE
+	pixelcode := DEFAULT_PIXEL_SHADER_CODE
+	is_multicanvas := false // whether pixel code has "effects" function instead of "effect"
+
+	if code != nil {
+		for _, shader_code := range code {
+			if isVertexCode(shader_code) {
+				vertexcode = shader_code
+			}
+
+			ispixel, isMultiCanvas := isPixelCode(shader_code)
+			if ispixel {
+				pixelcode = shader_code
+				is_multicanvas = isMultiCanvas
+			}
+		}
+	}
+
+	return createVertexCode(vertexcode), createPixelCode(pixelcode, is_multicanvas)
+}
+
+func compileCode(shader_type uint32, code string) uint32 {
+	id := gl.CreateShader(shader_type)
+	csource := gl.Str(code + "\x00")
+	gl.ShaderSource(id, 1, &csource, nil)
+	gl.CompileShader(id)
+
+	var isCompiled int32
+	gl.GetShaderiv(id, gl.COMPILE_STATUS, &isCompiled)
+	if isCompiled == gl.FALSE {
+		var logLength int32
+		gl.GetShaderiv(id, gl.INFO_LOG_LENGTH, &logLength)
+
+		logBuffer := make([]uint8, logLength)
+		gl.GetShaderInfoLog(id, logLength, nil, &logBuffer[0])
+		panic(fmt.Sprintf("Cannot compile shader code: %v", gl.GoStr(&logBuffer[0])))
+	}
+
+	return id
 }
