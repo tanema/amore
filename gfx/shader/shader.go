@@ -35,7 +35,8 @@ var (
 		"amore_PointSize":           BUILTIN_POINT_SIZE,
 		"amore_ScreenSize":          BUILTIN_SCREEN_SIZE,
 	}
-	current *Shader
+	Current       *Shader
+	DefaultShader *Shader
 )
 
 type Shader struct {
@@ -48,6 +49,7 @@ type Shader struct {
 	uniforms          map[string]Uniform // Uniform location buffer map
 	lastViewport      opengl.Viewport
 	lastCanvas        *canvas.Canvas
+	lastPointSize     float32
 
 	// Texture unit pool for setting images
 	texUnitPool      map[string]uint32      // texUnitPool[name] = textureunit
@@ -69,6 +71,8 @@ func New(code ...string) *Shader {
 }
 
 func (shader *Shader) LoadVolatile() bool {
+	shader.lastPointSize = 0.0
+
 	vert := compileCode(gl.VERTEX_SHADER, shader.vertext_code)
 	frag := compileCode(gl.FRAGMENT_SHADER, shader.pixel_code)
 	shader.program = gl.CreateProgram()
@@ -106,9 +110,9 @@ func (shader *Shader) LoadVolatile() bool {
 		shader.builtinAttributes[i] = gl.GetAttribLocation(shader.program, gl.Str(name+"\x00"))
 	}
 
-	if current == shader {
+	if Current == shader {
 		// make sure glUseProgram gets called.
-		current = nil
+		Current = nil
 		shader.Attach(false)
 		shader.checkSetScreenParams()
 	}
@@ -117,7 +121,7 @@ func (shader *Shader) LoadVolatile() bool {
 }
 
 func (shader *Shader) UnloadVolatile() {
-	if current == shader {
+	if Current == shader {
 		gl.UseProgram(0)
 	}
 
@@ -142,10 +146,9 @@ func (shader *Shader) mapActiveUniforms() {
 
 		gl.GetActiveUniform(shader.program, (uint32)(i), 256, nil, &u.Count, &u.Type, &nameBuf[0])
 		u.Name = gl.GoStr(&nameBuf[0])
-		fmt.Println(u.Name)
 
 		u.Location = gl.GetUniformLocation(shader.program, gl.Str(u.Name+"\x00"))
-		u.BaseType = getUniformBaseType(u.Type)
+		u.SetBaseType()
 
 		// glGetActiveUniform appends "[0]" to the end of array uniform names...
 		if len(u.Name) > 3 {
@@ -166,13 +169,12 @@ func (shader *Shader) mapActiveUniforms() {
 }
 
 func (shader *Shader) Attach(temporary bool) {
-	if current != shader {
+	if Current != shader {
 		gl.UseProgram(shader.program)
-		current = shader
-		// retain/release happens in gfx.SetShader.
 	}
 
 	if !temporary {
+		Current = shader
 		// make sure all sent textures are properly bound to their respective texture units
 		// note: list potentially contains texture ids of deleted/invalid textures!
 		for i := 0; i < len(shader.activeTexUnits); i++ {
@@ -186,6 +188,39 @@ func (shader *Shader) Attach(temporary bool) {
 	}
 }
 
+func (shader *Shader) Detach() {
+	if Current != nil {
+		gl.UseProgram(0)
+	}
+	Current = nil
+}
+
+func (shader *Shader) getUniform(name string) Uniform {
+	return shader.uniforms[name]
+}
+
+func (shader *Shader) checkSetUniformError(u Uniform, size, count int32, sendtype UniformType) {
+	if shader.program == 0 {
+		panic("No active shader program.")
+	}
+
+	if realsize := u.GetTypeSize(); size != realsize {
+		panic(fmt.Sprintf("Value size of %v does not match variable size of %v.", size, realsize))
+	}
+
+	if (u.Count == 1 && count > 1) || count < 0 {
+		panic(fmt.Sprintf("Invalid number of values (expected %v, got %v).", u.Count, count))
+	}
+
+	if u.BaseType == UNIFORM_SAMPLER && sendtype != u.BaseType {
+		panic("Cannot send a value of this type to an Image variable.")
+	}
+
+	if (sendtype == UNIFORM_FLOAT && u.BaseType == UNIFORM_INT) || (sendtype == UNIFORM_INT && u.BaseType == UNIFORM_FLOAT) {
+		panic("Cannot convert between float and int.")
+	}
+}
+
 func (shader *Shader) checkSetScreenParams() {
 	view := opengl.GetViewport()
 	if view == shader.lastViewport && shader.lastCanvas == canvas.Current {
@@ -195,30 +230,141 @@ func (shader *Shader) checkSetScreenParams() {
 	// In the shader, we do pixcoord.y = gl_FragCoord.y * params.z + params.w.
 	// This lets us flip pixcoord.y when needed, to be consistent (drawing with
 	// no Canvas active makes the y-values for pixel coordinates flipped.)
-	params := []float32{
-		(float32)(view[2]),
-		(float32)(view[3]),
-		0.0,
-		0.0,
-	}
-
 	if canvas.Current != nil {
 		// No flipping: pixcoord.y = gl_FragCoord.y * 1.0 + 0.0.
-		params[2] = 1.0
-		params[3] = 0.0
+		shader.sendBuiltinFloat(BUILTIN_SCREEN_SIZE, 4, 1, (float32)(view[2]), (float32)(view[3]), 1.0, 0.0)
 	} else {
 		// gl_FragCoord.y is flipped when drawing to the screen, so we un-flip:
 		// pixcoord.y = gl_FragCoord.y * -1.0 + height.
-		params[2] = -1.0
-		params[3] = (float32)(view[3])
+		shader.sendBuiltinFloat(BUILTIN_SCREEN_SIZE, 4, 1, (float32)(view[2]), (float32)(view[3]), -1.0, (float32)(view[3]))
 	}
-
-	sendBuiltinFloat(BUILTIN_SCREEN_SIZE, 4, params, 1)
 
 	shader.lastCanvas = canvas.Current
 	shader.lastViewport = view
 }
 
-func sendBuiltinFloat(builtin BuiltinUniform, size int, m []float32, count int) bool {
+func (shader *Shader) checkSetPointSize(size float32) {
+	if size == shader.lastPointSize {
+		return
+	}
+
+	shader.sendBuiltinFloat(BUILTIN_POINT_SIZE, 1, 1, size)
+
+	shader.lastPointSize = size
+}
+
+func (shader *Shader) sendInt(name string, size, count int32, vec ...int32) {
+	shader.Attach(true)
+
+	u := shader.getUniform(name)
+	shader.checkSetUniformError(u, size, count, UNIFORM_INT)
+
+	switch size {
+	case 4:
+		gl.Uniform4iv(u.Location, count, &vec[0])
+	case 3:
+		gl.Uniform3iv(u.Location, count, &vec[0])
+	case 2:
+		gl.Uniform2iv(u.Location, count, &vec[0])
+	case 1:
+	default:
+		gl.Uniform1iv(u.Location, count, &vec[0])
+	}
+
+	Current.Attach(false)
+}
+
+func (shader *Shader) sendFloat(name string, size, count int32, vec ...float32) {
+	shader.Attach(true)
+
+	u := shader.getUniform(name)
+	shader.checkSetUniformError(u, size, count, UNIFORM_FLOAT)
+
+	switch size {
+	case 4:
+		gl.Uniform4fv(u.Location, count, &vec[0])
+	case 3:
+		gl.Uniform3fv(u.Location, count, &vec[0])
+	case 2:
+		gl.Uniform2fv(u.Location, count, &vec[0])
+	case 1:
+	default:
+		gl.Uniform1fv(u.Location, count, &vec[0])
+	}
+
+	Current.Attach(false)
+}
+
+func (shader *Shader) sendMatrix(name string, size, count int32, m ...float32) {
+	shader.Attach(true)
+
+	if size < 2 || size > 4 {
+		panic(fmt.Sprintf("Invalid matrix size: %dx%d (can only set 2x2, 3x3 or 4x4 matrices.)", size, size))
+	}
+
+	u := shader.getUniform(name)
+	shader.checkSetUniformError(u, size, count, UNIFORM_FLOAT)
+
+	switch size {
+	case 4:
+		gl.UniformMatrix4fv(u.Location, count, false, &m[0])
+	case 3:
+		gl.UniformMatrix3fv(u.Location, count, false, &m[0])
+	case 2:
+	default:
+		gl.UniformMatrix2fv(u.Location, count, false, &m[0])
+	}
+	Current.Attach(false)
+}
+
+func (shader *Shader) sendBuiltinMatrix(builtin BuiltinUniform, size, count int32, m ...float32) bool {
+	location := shader.builtinUniforms[builtin]
+
+	if shader.builtinUniforms[builtin] == -1 {
+		return false
+	}
+
+	shader.Attach(true)
+
+	switch size {
+	case 2:
+		gl.UniformMatrix2fv(location, count, false, &m[0])
+	case 3:
+		gl.UniformMatrix3fv(location, count, false, &m[0])
+	case 4:
+		gl.UniformMatrix4fv(location, count, false, &m[0])
+	default:
+		Current.Attach(false)
+		return false
+	}
+
+	Current.Attach(false)
+	return true
+}
+
+func (shader *Shader) sendBuiltinFloat(builtin BuiltinUniform, size, count int32, vec ...float32) bool {
+	location := shader.builtinUniforms[builtin]
+
+	if shader.builtinUniforms[builtin] == -1 {
+		return false
+	}
+
+	shader.Attach(true)
+
+	switch size {
+	case 1:
+		gl.Uniform1fv(location, count, &vec[0])
+	case 2:
+		gl.Uniform2fv(location, count, &vec[0])
+	case 3:
+		gl.Uniform3fv(location, count, &vec[0])
+	case 4:
+		gl.Uniform4fv(location, count, &vec[0])
+	default:
+		Current.Attach(false)
+		return false
+	}
+
+	Current.Attach(false)
 	return true
 }

@@ -7,6 +7,8 @@ import (
 
 	"github.com/tanema/amore/gfx/opengl"
 	"github.com/tanema/amore/gfx/volatile"
+
+	"github.com/tanema/amore/gfx/shader"
 )
 
 const defaultPointCount = 30
@@ -164,6 +166,17 @@ func SetMode(w, h int) {
 
 	if !volatile.LoadAll() {
 		println("Could not reload all volatile objects.")
+	}
+
+	// We always need a default shader.
+	if shader.DefaultShader == nil {
+		shader.DefaultShader = shader.New()
+	}
+
+	// A shader should always be active, but the default shader shouldn't be
+	// returned by getShader(), so we don't do setShader(defaultShader).
+	if shader.Current == nil {
+		shader.DefaultShader.Attach(false)
 	}
 }
 
