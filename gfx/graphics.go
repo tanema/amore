@@ -8,12 +8,6 @@ import (
 
 const defaultPointCount = 30
 
-var (
-	created = false
-	width   = 0
-	height  = 0
-)
-
 func Circle(mode string, x, y, radius float64) {
 	Circlep(mode, x, y, radius, defaultPointCount)
 }
@@ -89,7 +83,7 @@ func Ellipsep(mode string, x, y, a, b float64, points int) {
 
 func Point(x, y float64) {
 	PrepareDraw()
-	BindTexture(GetDefaultTexture())
+	BindTexture(defaultTexture)
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float64{x, y}))
 	gl.DrawArrays(gl.POINTS, 0, 1)
@@ -102,7 +96,7 @@ func Line(args ...float64) {
 
 func PolyLine(coords []float64) {
 	PrepareDraw()
-	BindTexture(GetDefaultTexture())
+	BindTexture(defaultTexture)
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
 	gl.DrawArrays(gl.LINE_STRIP, 0, int32(len(coords))/2)
@@ -118,7 +112,7 @@ func Polygon(mode string, coords []float64) {
 		PolyLine(coords)
 	} else {
 		PrepareDraw()
-		BindTexture(GetDefaultTexture())
+		BindTexture(defaultTexture)
 		gl.EnableVertexAttribArray(ATTRIB_POS)
 		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, int32(len(coords))/2-1)
@@ -132,67 +126,4 @@ func DrawS(drawable Drawable, x, y float64) {
 
 func Draw(drawable Drawable, x, y, angle, sx, sy, ox, oy, kx, ky float64) {
 	drawable.Draw(x, y, angle, sx, sy, ox, oy, kx, ky)
-}
-
-func SetMode(w, h int) {
-	width = w
-	height = h
-
-	// Okay, setup OpenGL.
-	InitContext()
-
-	created = true
-
-	SetViewportSize(width, height)
-
-	// Enable blending
-	gl.Enable(gl.BLEND)
-	// Auto-generated mipmaps should be the best quality possible
-	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
-	// Make sure antialiasing works when set elsewhere
-	gl.Enable(gl.MULTISAMPLE)
-	// Enable texturing
-	gl.Enable(gl.TEXTURE_2D)
-
-	//gl.setTextureUnit(0);
-
-	// Set pixel row alignment
-	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-
-	if !LoadAll() {
-		println("Could not reload all volatile objects.")
-	}
-
-	// We always need a default shader.
-	//if defaultShader == nil {
-	//defaultShader = NewShader()
-	//}
-
-	//// A shader should always be active, but the default shader shouldn't be
-	//// returned by getShader(), so we don't do setShader(defaultShader).
-	//if currentShader == nil {
-	//defaultShader.Attach(false)
-	//}
-}
-
-func UnSetMode() {
-	if !created {
-		return
-	}
-
-	UnloadAll()
-	DeInit()
-	created = false
-}
-
-func SetViewportSize(w, h int) {
-	width = w
-	height = h
-
-	if !created {
-		return
-	}
-
-	// Set the viewport to top-left corner.
-	gl.Viewport(0, 0, int32(width), int32(height))
 }

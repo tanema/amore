@@ -98,8 +98,6 @@ func New() (*Window, error) {
 		}
 	}
 
-	gfx.UnSetMode()
-
 	if current_window != nil {
 		current_window.Destroy()
 	}
@@ -130,7 +128,7 @@ func New() (*Window, error) {
 
 	window.UpdateSettings()
 
-	gfx.SetMode(config.Width, config.Height)
+	gfx.InitContext(config.Width, config.Height)
 
 	return window, nil
 }
@@ -289,7 +287,7 @@ func (window *Window) Raise() {
 }
 
 func (window *Window) Destroy() {
-	gfx.UnSetMode()
+	gfx.DeInit()
 	sdl.GL_DeleteContext(window.context)
 	window.sdl_window.Destroy()
 	// The old window may have generated pending events which are no longer

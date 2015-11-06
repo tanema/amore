@@ -11,64 +11,42 @@ func Translate(x, y float64) {
 func Reset() {
 	Origin()
 	SetBlendMode("alpha")
-	Clear(0.0, 0.0, 0.0, 0.0)
+	Clear()
 }
 
 func Origin() {
 	//reset transforms
 	gl.LoadIdentity()
-	//set our coord system to flow form top left
-	gl.Ortho(0, float64(width), float64(height), 0, -1, 1)
 }
 
-func Clear(r, g, b, a float32) {
+func SetBackgroundColor(r, g, b, a float32) {
 	gl.ClearColor(r/255.0, g/255.0, b/255.0, a/255.0)
+}
+
+func Clear() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-func Rotate(angle float64) {
-	gl.Rotated(angle, 0, 0, 0)
-}
-
-func RotateAround(angle, x, y float64) {
-	gl.Rotated(angle, x, y, 0)
-}
-
-func Scale(sx float64) {
-	gl.Scaled(sx, sx, 0)
-}
-
-func Scale2(sx, sy float64) {
-	gl.Scaled(sx, sy, 0)
-}
-
-func Push() {
-	gl.PushMatrix()
-}
-
-func Pop() {
-	gl.PopMatrix()
-}
-
-func SetScissor(x, y, width, height int32) {
-	gl.Scissor(x, y, width, height)
-}
+func Rotate(angle float64)                 {}
+func RotateAround(angle, x, y float64)     {}
+func Scale(sx float64)                     {}
+func Scale2(sx, sy float64)                {}
+func Push()                                {}
+func Pop()                                 {}
+func SetScissor(x, y, width, height int32) {}
 
 func SetShader(shader *Shader) {
-	if shader == nil {
-		currentShader.Detach()
-	} else {
-		shader.Attach(false)
-		defaultShader.Attach(false)
-	}
+	currentShader = shader
+	currentShader.Attach()
 }
 
 func ClearShader() {
-	gl.UseProgram(0)
+	currentShader = defaultShader
+	defaultShader.Attach()
 }
 
-func SetColor(r, g, b, a int) {
-	gl.Color4d(float64(r)/255.0, float64(g)/255.0, float64(b)/255.0, float64(a)/255.0)
+func SetColor(r, g, b, a float32) {
+	gl.VertexAttrib4f(ATTRIB_COLOR, r/255.0, g/255.0, b/255.0, a/255.0)
 }
 
 func SetLineWidth(width float32) {
