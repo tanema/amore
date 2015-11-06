@@ -212,24 +212,33 @@ func Printf(x, y float64, fs string, argv ...interface{}) {
 	x = x - float64(current_font.Offset)
 	y = y - (float64(current_font.Offset) / 4.0)
 
+	gl.EnableVertexAttribArray(ATTRIB_POS)
+	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
+
 	PrepareDraw()
 	BindTexture(current_font.Texture.GetHandle())
+
 	for _, ch := range formatted_string {
 		if glyph, ok := current_font.Glyphs[ch]; ok {
-			gl.Begin(gl.QUADS)
-			{
-				gl.TexCoord2d(glyph.TextureRec.X1, glyph.TextureRec.Y1) // top-left
-				gl.Vertex2d(x, y)
-				gl.TexCoord2d(glyph.TextureRec.X1, glyph.TextureRec.Y2) // bottom-left
-				gl.Vertex2d(x, y+float64(glyph.Height))
-				gl.TexCoord2d(glyph.TextureRec.X2, glyph.TextureRec.Y2) // bottom-right
-				gl.Vertex2d(x+float64(glyph.Width), y+float64(glyph.Height))
-				gl.TexCoord2d(glyph.TextureRec.X2, glyph.TextureRec.Y1) // top-right
-				gl.Vertex2d(x+float64(glyph.Width), y)
-			}
-			gl.End()
+			gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr([]float64{
+				x, y,
+				x, y + float64(glyph.Height),
+				x + float64(glyph.Width), y + float64(glyph.Height),
+				x + float64(glyph.Width), y,
+			}))
+			gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.DOUBLE, false, 0, gl.Ptr([]float64{
+				glyph.TextureRec.X1, glyph.TextureRec.Y1,
+				glyph.TextureRec.X1, glyph.TextureRec.Y2,
+				glyph.TextureRec.X2, glyph.TextureRec.Y2,
+				glyph.TextureRec.X2, glyph.TextureRec.Y1,
+			}))
+			gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
+
 			x = x + float64(glyph.Advance)
 		}
 	}
+
+	gl.DisableVertexAttribArray(ATTRIB_TEXCOORD)
+	gl.DisableVertexAttribArray(ATTRIB_POS)
 
 }

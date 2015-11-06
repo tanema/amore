@@ -5,12 +5,12 @@ import (
 	"math"
 
 	"github.com/tanema/amore"
-	//"github.com/tanema/amore/file"
+	"github.com/tanema/amore/file"
 	"github.com/tanema/amore/gfx"
 	_ "github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"
 	"github.com/tanema/amore/mouse"
-	//"github.com/tanema/amore/timer"
+	"github.com/tanema/amore/timer"
 )
 
 var (
@@ -18,6 +18,8 @@ var (
 	ttf        *gfx.Font
 	image_font *gfx.Font
 	mx, my     float64
+	shader     *gfx.Shader
+	use_shader = false
 )
 
 func main() {
@@ -33,15 +35,18 @@ func load() {
 	if err != nil {
 		panic(err)
 	}
-	//ttf, _ = gfx.NewFont("assets/fonts/arial.ttf", 20)
-	//image_font, _ = gfx.NewImageFont("assets/fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
+	ttf, _ = gfx.NewFont("assets/fonts/arial.ttf", 20)
+	image_font, _ = gfx.NewImageFont("assets/fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 
-	//gfx.NewShader(file.Read("shaders/blackandwhite.glsl"))
+	shader = gfx.NewShader(file.Read("shaders/blackandwhite.glsl"))
 }
 
 func keyUp(key keyboard.Key) {
 	if key == keyboard.KeyEscape {
 		amore.Quit()
+	}
+	if key == keyboard.Key1 {
+		use_shader = !use_shader
 	}
 }
 
@@ -50,6 +55,12 @@ func update(deltaTime float64) {
 }
 
 func draw() {
+	if use_shader {
+		gfx.SetShader(shader)
+	} else {
+		gfx.ClearShader()
+	}
+
 	// rectangle
 	gfx.SetColor(0, 170, 0, 155)
 	gfx.Rect("fill", 20.0, 20.0, 200.0, 200.0)
@@ -76,15 +87,15 @@ func draw() {
 	gfx.SetColor(255, 255, 255, 255)
 	gfx.DrawS(tree, 500, 100)
 
-	//// font
-	//gfx.SetFont(image_font)
-	//gfx.Printf(20, 20, "test one two")
-	//gfx.SetFont(ttf)
-	//gfx.Printf(20, 100, "test one two")
+	// font
+	gfx.SetFont(image_font)
+	gfx.Printf(20, 20, "test one two")
+	gfx.SetFont(ttf)
+	gfx.Printf(20, 100, "test one two")
 
 	////FPS
-	//gfx.SetColor(0, 170, 170, 255)
-	//gfx.Printf(1200, 10, "fps: %v", timer.GetFPS())
+	gfx.SetColor(0, 170, 170, 255)
+	gfx.Printf(1200, 10, "fps: %v", timer.GetFPS())
 
 	//mouse position
 	gfx.Circle("fill", mx, my, 20.0)
