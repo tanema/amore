@@ -28,11 +28,11 @@ func main() {
 
 func load() {
 	keyboard.SetKeyReleaseCB(keyUp)
-	//var err error
-	//tree, err = gfx.NewImage("assets/palm_tree.png")
-	//if err != nil {
-	//panic(err)
-	//}
+	var err error
+	tree, err = gfx.NewImage("assets/palm_tree.png")
+	if err != nil {
+		panic(err)
+	}
 	//ttf, _ = gfx.NewFont("assets/fonts/arial.ttf", 20)
 	//image_font, _ = gfx.NewImageFont("assets/fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 
@@ -73,8 +73,8 @@ func draw() {
 	)
 
 	//// image
-	//gfx.SetColor(255, 255, 255, 255)
-	//gfx.DrawS(tree, 500, 100)
+	gfx.SetColor(255, 255, 255, 255)
+	gfx.DrawS(tree, 500, 100)
 
 	//// font
 	//gfx.SetFont(image_font)

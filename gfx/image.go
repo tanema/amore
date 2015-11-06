@@ -51,18 +51,27 @@ func (image *Image) UnloadVolatile() {
 }
 
 func (image *Image) Draw(x, y, angle, sx, sy, ox, oy, kx, ky float64) {
-	PrepareDraw()
 	BindTexture(image.texture.GetHandle())
-	gl.Begin(gl.QUADS)
-	{
-		gl.TexCoord2d(0, 0) // top-left
-		gl.Vertex2d(x, y)
-		gl.TexCoord2d(0, 1) // bottom-left
-		gl.Vertex2d(x, y+image.texture.Height)
-		gl.TexCoord2d(1, 1) // bottom-right
-		gl.Vertex2d(x+image.texture.Width, y+image.texture.Height)
-		gl.TexCoord2d(1, 0) // top-right
-		gl.Vertex2d(x+image.texture.Width, y)
-	}
-	gl.End()
+
+	gl.EnableVertexAttribArray(ATTRIB_POS)
+	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
+
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr([]float64{
+		x, y,
+		x, y + image.texture.Height,
+		x + image.texture.Width, y + image.texture.Height,
+		x + image.texture.Width, y,
+	}))
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{
+		0, 0,
+		0, 1,
+		1, 1,
+		1, 0,
+	}))
+
+	PrepareDraw()
+	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
+
+	gl.DisableVertexAttribArray(ATTRIB_TEXCOORD)
+	gl.DisableVertexAttribArray(ATTRIB_POS)
 }
