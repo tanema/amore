@@ -85,7 +85,7 @@ func draw() {
 
 	//// image
 	gfx.SetColor(255, 255, 255, 255)
-	gfx.DrawS(tree, 500, 100)
+	gfx.Draw(tree, 500, 100)
 
 	// font
 	gfx.SetFont(image_font)

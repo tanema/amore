@@ -50,7 +50,9 @@ func (image *Image) UnloadVolatile() {
 	image.texture = nil
 }
 
-func (image *Image) Draw(x, y, angle, sx, sy, ox, oy, kx, ky float32) {
+func (image *Image) Draw(args ...float32) {
+	x, y, angle, sx, sy, ox, oy, kx, ky := normalizeDrawCallArgs(args)
+
 	BindTexture(image.texture.GetHandle())
 
 	gl.EnableVertexAttribArray(ATTRIB_POS)

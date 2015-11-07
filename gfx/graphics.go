@@ -120,10 +120,44 @@ func Polygon(mode string, coords []float32) {
 	}
 }
 
-func DrawS(drawable Drawable, x, y float32) {
-	drawable.Draw(x, y, 0, 0, 0, 0, 0, 0, 0)
+func Draw(drawable Drawable, args ...float32) {
+	drawable.Draw(args...)
 }
 
-func Draw(drawable Drawable, x, y, angle, sx, sy, ox, oy, kx, ky float32) {
-	drawable.Draw(x, y, angle, sx, sy, ox, oy, kx, ky)
+func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, float32, float32, float32, float32, float32) {
+	if args == nil || len(args) < 2 {
+		panic("not enough params passed to draw call")
+	}
+	var x, y, angle, sx, sy, ox, oy, kx, ky float32
+	sx = 1
+	sy = 1
+
+	switch len(args) {
+	case 9:
+		ky = args[8]
+		fallthrough
+	case 8:
+		kx = args[7]
+		fallthrough
+	case 7:
+		oy = args[6]
+		fallthrough
+	case 6:
+		ox = args[5]
+		fallthrough
+	case 5:
+		sy = args[4]
+		fallthrough
+	case 4:
+		sx = args[3]
+		fallthrough
+	case 3:
+		angle = args[2]
+		fallthrough
+	case 2:
+		x = args[0]
+		y = args[1]
+	}
+
+	return x, y, angle, sx, sy, ox, oy, kx, ky
 }

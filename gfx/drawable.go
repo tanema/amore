@@ -14,5 +14,5 @@ type Drawable interface {
 	 * @param kx Shear along the x-axis.
 	 * @param ky Shear along the y-axis.
 	 **/
-	Draw(x, y, angle, sx, sy, ox, oy, kx, ky float32)
+	Draw(args ...float32)
 }
