@@ -50,13 +50,13 @@ func (image *Image) UnloadVolatile() {
 	image.texture = nil
 }
 
-func (image *Image) Draw(x, y, angle, sx, sy, ox, oy, kx, ky float64) {
+func (image *Image) Draw(x, y, angle, sx, sy, ox, oy, kx, ky float32) {
 	BindTexture(image.texture.GetHandle())
 
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
 
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr([]float64{
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{
 		x, y,
 		x, y + image.texture.Height,
 		x + image.texture.Width, y + image.texture.Height,

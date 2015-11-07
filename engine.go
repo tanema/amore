@@ -10,7 +10,7 @@ import (
 )
 
 type LoadCb func()
-type UpdateCb func(float64)
+type UpdateCb func(float32)
 type DrawCb func()
 
 var (

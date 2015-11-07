@@ -17,7 +17,7 @@ var (
 	tree       *gfx.Image
 	ttf        *gfx.Font
 	image_font *gfx.Font
-	mx, my     float64
+	mx, my     float32
 	shader     *gfx.Shader
 	use_shader = false
 )
@@ -50,7 +50,7 @@ func keyUp(key keyboard.Key) {
 	}
 }
 
-func update(deltaTime float64) {
+func update(deltaTime float32) {
 	mx, my = mouse.GetPosition()
 }
 

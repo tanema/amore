@@ -110,8 +110,8 @@ func getJoystickFromID(id int) *Joystick {
 	return nil
 }
 
-func clampval(x float64) float64 {
-	if math.Abs(x) < 0.01 {
+func clampval(x float32) float32 {
+	if math.Abs(float64(x)) < 0.01 {
 		return 0.0
 	}
 

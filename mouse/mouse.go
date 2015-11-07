@@ -18,36 +18,36 @@ func IsDown(button Button) bool {
 }
 
 //Returns the current x-position of the mouse.
-func GetX() float64 {
+func GetX() float32 {
 	x, _ := GetPosition()
 	return x
 }
 
 //Returns the current y-position of the mouse.
-func GetY() float64 {
+func GetY() float32 {
 	_, y := GetPosition()
 	return y
 }
 
 //Sets the current X position of the mouse.
-func SetX(x float64) {
+func SetX(x float32) {
 	_, y := GetPosition()
 	SetPosition(x, y)
 }
 
 //Sets the current Y position of the mouse.
-func SetY(y float64) {
+func SetY(y float32) {
 	x, _ := GetPosition()
 	SetPosition(x, y)
 }
 
 //Returns the current position of the mouse.
-func GetPosition() (float64, float64) {
+func GetPosition() (float32, float32) {
 	return window.GetCurrent().GetMousePosition()
 }
 
 //Sets the current position of the mouse.
-func SetPosition(x, y float64) {
+func SetPosition(x, y float32) {
 	window.GetCurrent().SetMousePosition(x, y)
 }
 

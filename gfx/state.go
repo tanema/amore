@@ -4,9 +4,7 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 )
 
-func Translate(x, y float64) {
-	gl.Translated(x, y, 0)
-}
+func Translate(x, y float32) {}
 
 func Reset() {
 	Origin()
@@ -27,10 +25,10 @@ func Clear() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-func Rotate(angle float64)                 {}
-func RotateAround(angle, x, y float64)     {}
-func Scale(sx float64)                     {}
-func Scale2(sx, sy float64)                {}
+func Rotate(angle float32)                 {}
+func RotateAround(angle, x, y float32)     {}
+func Scale(sx float32)                     {}
+func Scale2(sx, sy float32)                {}
 func Push()                                {}
 func Pop()                                 {}
 func SetScissor(x, y, width, height int32) {}

@@ -14,7 +14,7 @@ var wraps = map[string]int32{"clamp": gl.CLAMP_TO_EDGE, "repeat": gl.REPEAT}
 
 type Texture struct {
 	textureId     uint32
-	Width, Height float64
+	Width, Height float32
 }
 
 func LoadImageTexture(img image.Image) (*Texture, error) {
@@ -24,8 +24,8 @@ func LoadImageTexture(img image.Image) (*Texture, error) {
 	bounds := img.Bounds()
 	new_texture := &Texture{
 		textureId: texture_id,
-		Width:     float64(bounds.Dx()),
-		Height:    float64(bounds.Dy()),
+		Width:     float32(bounds.Dx()),
+		Height:    float32(bounds.Dy()),
 	}
 
 	BindTexture(new_texture.GetHandle())

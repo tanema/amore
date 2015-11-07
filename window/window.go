@@ -244,24 +244,24 @@ func (window *Window) SwapBuffers() {
 	sdl.GL_SwapWindow(window.sdl_window)
 }
 
-func (window *Window) WindowToPixelCoords(x, y float64) (float64, float64) {
-	new_x := x * (float64(window.pixel_width) / float64(window.config.Width))
-	new_y := y * (float64(window.pixel_height) / float64(window.config.Height))
+func (window *Window) WindowToPixelCoords(x, y float32) (float32, float32) {
+	new_x := x * (float32(window.pixel_width) / float32(window.config.Width))
+	new_y := y * (float32(window.pixel_height) / float32(window.config.Height))
 	return new_x, new_y
 }
 
-func (window *Window) PixelToWindowCoords(x, y float64) (float64, float64) {
-	new_x := x * (float64(window.config.Width) / float64(window.pixel_width))
-	new_y := y * (float64(window.config.Height) / float64(window.pixel_height))
+func (window *Window) PixelToWindowCoords(x, y float32) (float32, float32) {
+	new_x := x * (float32(window.config.Width) / float32(window.pixel_width))
+	new_y := y * (float32(window.config.Height) / float32(window.pixel_height))
 	return new_x, new_y
 }
 
-func (window *Window) GetMousePosition() (float64, float64) {
+func (window *Window) GetMousePosition() (float32, float32) {
 	mx, my, _ := sdl.GetMouseState()
-	return window.WindowToPixelCoords(float64(mx), float64(my))
+	return window.WindowToPixelCoords(float32(mx), float32(my))
 }
 
-func (window *Window) SetMousePosition(x, y float64) {
+func (window *Window) SetMousePosition(x, y float32) {
 	wx, wy := window.PixelToWindowCoords(x, y)
 	window.sdl_window.WarpMouseInWindow(int(wx), int(wy))
 }

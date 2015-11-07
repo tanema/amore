@@ -25,7 +25,7 @@ type Font struct {
 }
 
 type textRec struct {
-	X1, Y1, X2, Y2 float64
+	X1, Y1, X2, Y2 float32
 }
 
 type Glyph struct {
@@ -44,7 +44,7 @@ func pow2(x uint32) uint32 {
 	return x + 1
 }
 
-func NewFont(filename string, font_size float64) (*Font, error) {
+func NewFont(filename string, font_size float32) (*Font, error) {
 	fontBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -81,10 +81,10 @@ func NewFont(filename string, font_size float64) (*Font, error) {
 		pt := freetype.Pt(gx+offset, gy+offset)
 		context.DrawString(string(ch), pt)
 
-		tx1 := float64(gx) / float64(image_width)
-		ty1 := float64(gy) / float64(image_height)
-		tx2 := (float64(gx) + float64(glyph_width)) / float64(image_width)
-		ty2 := (float64(gy) + float64(glyph_height)) / float64(image_height)
+		tx1 := float32(gx) / float32(image_width)
+		ty1 := float32(gy) / float32(image_height)
+		tx2 := (float32(gx) + float32(glyph_width)) / float32(image_width)
+		ty2 := (float32(gy) + float32(glyph_height)) / float32(image_height)
 
 		index := ttf.Index(ch)
 		metric := ttf.HMetric(index)
@@ -143,10 +143,10 @@ func NewImageFont(filename, glyph_hints string) (*Font, error) {
 		dst_rec := image.Rect(gx, gy, gx+glyph_width, gy+glyph_height)
 		draw.Draw(rgba, dst_rec, img, image.Pt(i*glyph_width, 0), draw.Src)
 
-		tx1 := float64(gx) / float64(image_width)
-		ty1 := float64(gy) / float64(image_height)
-		tx2 := (float64(gx) + float64(glyph_width)) / float64(image_width)
-		ty2 := (float64(gy) + float64(glyph_height)) / float64(image_height)
+		tx1 := float32(gx) / float32(image_width)
+		ty1 := float32(gy) / float32(image_height)
+		tx2 := (float32(gx) + float32(glyph_width)) / float32(image_width)
+		ty2 := (float32(gy) + float32(glyph_height)) / float32(image_height)
 
 		glyph_dict[glyph_rune_hints[i]] = Glyph{
 			TextureRec: textRec{tx1, ty1, tx2, ty2},
@@ -199,7 +199,7 @@ func SetFont(font *Font) {
 	current_font = font
 }
 
-func Printf(x, y float64, fs string, argv ...interface{}) {
+func Printf(x, y float32, fs string, argv ...interface{}) {
 	if current_font == nil {
 		return
 	}
@@ -209,8 +209,8 @@ func Printf(x, y float64, fs string, argv ...interface{}) {
 		return
 	}
 
-	x = x - float64(current_font.Offset)
-	y = y - (float64(current_font.Offset) / 4.0)
+	x = x - float32(current_font.Offset)
+	y = y - (float32(current_font.Offset) / 4.0)
 
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
@@ -220,13 +220,13 @@ func Printf(x, y float64, fs string, argv ...interface{}) {
 
 	for _, ch := range formatted_string {
 		if glyph, ok := current_font.Glyphs[ch]; ok {
-			gl.VertexAttribPointer(ATTRIB_POS, 2, gl.DOUBLE, false, 0, gl.Ptr([]float64{
+			gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{
 				x, y,
-				x, y + float64(glyph.Height),
-				x + float64(glyph.Width), y + float64(glyph.Height),
-				x + float64(glyph.Width), y,
+				x, y + float32(glyph.Height),
+				x + float32(glyph.Width), y + float32(glyph.Height),
+				x + float32(glyph.Width), y,
 			}))
-			gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.DOUBLE, false, 0, gl.Ptr([]float64{
+			gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{
 				glyph.TextureRec.X1, glyph.TextureRec.Y1,
 				glyph.TextureRec.X1, glyph.TextureRec.Y2,
 				glyph.TextureRec.X2, glyph.TextureRec.Y2,
@@ -234,7 +234,7 @@ func Printf(x, y float64, fs string, argv ...interface{}) {
 			}))
 			gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
 
-			x = x + float64(glyph.Advance)
+			x = x + float32(glyph.Advance)
 		}
 	}
 

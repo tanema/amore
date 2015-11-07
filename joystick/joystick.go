@@ -5,7 +5,7 @@ import (
 )
 
 type Vibration struct {
-	Left, Right float64
+	Left, Right float32
 	Effect      sdl.HapticEffect
 	Data        [4]uint16
 	ID          int
@@ -111,24 +111,24 @@ func (joystick *Joystick) GetHatCount() int {
 	return joystick.stick.NumHats()
 }
 
-func (joystick *Joystick) GetAxis(axisindex int) float64 {
+func (joystick *Joystick) GetAxis(axisindex int) float32 {
 	if joystick.IsConnected() == false || axisindex < 0 || axisindex >= joystick.GetAxisCount() {
 		return 0.0
 	}
 
-	return clampval(float64(joystick.stick.GetAxis(axisindex)) / 32768.0)
+	return clampval(float32(joystick.stick.GetAxis(axisindex)) / 32768.0)
 }
 
-func (joystick *Joystick) GetAxes() []float64 {
+func (joystick *Joystick) GetAxes() []float32 {
 	count := joystick.GetAxisCount()
-	axes := []float64{}
+	axes := []float32{}
 
 	if joystick.IsConnected() == false || count <= 0 {
 		return axes
 	}
 
 	for i := 0; i < count; i++ {
-		axes = append(axes, clampval(float64(joystick.stick.GetAxis(i))/32768.0))
+		axes = append(axes, clampval(float32(joystick.stick.GetAxis(i))/32768.0))
 	}
 
 	return axes
@@ -142,14 +142,14 @@ func (joystick *Joystick) GetHat(hatindex int) byte {
 	return joystick.stick.GetHat(hatindex)
 }
 
-func (joystick *Joystick) GetGamepadAxis(axis GameControllerAxis) float64 {
+func (joystick *Joystick) GetGamepadAxis(axis GameControllerAxis) float32 {
 	if joystick.IsConnected() == false || joystick.IsGamepad() == false {
 		return 0.0
 	}
 
 	value := joystick.controller.GetAxis(sdl.GameControllerAxis(axis))
 
-	return clampval(float64(value) / 32768.0)
+	return clampval(float32(value) / 32768.0)
 }
 
 func (joystick *Joystick) IsGamepadDown(button GameControllerButton) bool {
@@ -208,7 +208,7 @@ func (joystick *Joystick) checkCreateHaptic() bool {
 }
 
 // TODO
-func (joystick *Joystick) SetVibration(left, right, duration float64) bool {
+func (joystick *Joystick) SetVibration(left, right, duration float32) bool {
 	panic("set vibration not implemented yet")
 	return false
 }
@@ -218,7 +218,7 @@ func (joystick *Joystick) StopVibration() bool {
 	return false
 }
 
-func (joystick *Joystick) GetVibration() (float64, float64) {
+func (joystick *Joystick) GetVibration() (float32, float32) {
 	panic("vibration not implemented yet")
 	return 0.0, 0.0
 }
