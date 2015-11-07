@@ -51,7 +51,7 @@ func (image *Image) UnloadVolatile() {
 }
 
 func (image *Image) Draw(args ...float32) {
-	x, y, angle, sx, sy, ox, oy, kx, ky := normalizeDrawCallArgs(args)
+	x, y, _, _, _, _, _, _, _ := normalizeDrawCallArgs(args)
 
 	BindTexture(image.texture.GetHandle())
 
