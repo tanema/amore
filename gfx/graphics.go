@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/go-gl/gl/v2.1/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 const defaultPointCount = 30
@@ -82,7 +83,7 @@ func Ellipsep(mode string, x, y, a, b float32, points int) {
 }
 
 func Point(x, y float32) {
-	PrepareDraw()
+	PrepareDraw(nil)
 	BindTexture(defaultTexture)
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{x, y}))
@@ -95,7 +96,7 @@ func Line(args ...float32) {
 }
 
 func PolyLine(coords []float32) {
-	PrepareDraw()
+	PrepareDraw(nil)
 	BindTexture(defaultTexture)
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
@@ -111,7 +112,7 @@ func Polygon(mode string, coords []float32) {
 	if mode == "line" {
 		PolyLine(coords)
 	} else {
-		PrepareDraw()
+		PrepareDraw(nil)
 		BindTexture(defaultTexture)
 		gl.EnableVertexAttribArray(ATTRIB_POS)
 		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
@@ -132,24 +133,35 @@ func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, 
 	sx = 1
 	sy = 1
 
-	switch len(args) {
+	args_length := len(args)
+
+	switch args_length {
 	case 9:
 		ky = args[8]
 		fallthrough
 	case 8:
 		kx = args[7]
+		if args_length == 8 {
+			ky = kx
+		}
 		fallthrough
 	case 7:
 		oy = args[6]
 		fallthrough
 	case 6:
 		ox = args[5]
+		if args_length == 6 {
+			oy = ox
+		}
 		fallthrough
 	case 5:
 		sy = args[4]
 		fallthrough
 	case 4:
 		sx = args[3]
+		if args_length == 4 {
+			sy = sx
+		}
 		fallthrough
 	case 3:
 		angle = args[2]
@@ -160,4 +172,28 @@ func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, 
 	}
 
 	return x, y, angle, sx, sy, ox, oy, kx, ky
+}
+
+//did manually to save computation
+func generateModelMatFromArgs(args []float32) *mgl32.Mat4 {
+	x, y, angle, sx, sy, ox, oy, kx, ky := normalizeDrawCallArgs(args)
+	mat := mgl32.Ident4()
+	c := float32(math.Cos(float64(angle)))
+	s := float32(math.Sin(float64(angle)))
+	// matrix multiplication carried out on paper:
+	// |1     x| |c -s    | |sx       | | 1 ky    | |1     -ox|
+	// |  1   y| |s  c    | |   sy    | |kx  1    | |  1   -oy|
+	// |    1  | |     1  | |      1  | |      1  | |    1    |
+	// |      1| |       1| |        1| |        1| |       1 |
+	//   move      rotate      scale       skew       origin
+	mat[10] = 1
+	mat[15] = 1
+	mat[0] = c*sx - ky*s*sy // = a
+	mat[1] = s*sx + ky*c*sy // = b
+	mat[4] = kx*c*sx - s*sy // = c
+	mat[5] = kx*s*sx + c*sy // = d
+	mat[12] = x - ox*mat[0] - oy*mat[4]
+	mat[13] = y - ox*mat[1] - oy*mat[5]
+
+	return &mat
 }

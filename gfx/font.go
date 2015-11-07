@@ -215,7 +215,7 @@ func Printf(x, y float32, fs string, argv ...interface{}) {
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
 
-	PrepareDraw()
+	PrepareDraw(nil)
 	BindTexture(current_font.Texture.GetHandle())
 
 	for _, ch := range formatted_string {

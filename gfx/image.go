@@ -10,8 +10,10 @@ import (
 )
 
 type Image struct {
-	texture *Texture
-	img     image.Image
+	texture   *Texture
+	img       image.Image
+	coords    []float32
+	texcoords []float32
 }
 
 func NewImage(path string) (*Image, error) {
@@ -38,6 +40,18 @@ func NewImage(path string) (*Image, error) {
 func (img *Image) LoadVolatile() bool {
 	var err error
 	img.texture, err = LoadImageTexture(img.img)
+	img.coords = []float32{
+		0, 0,
+		0, img.texture.Height,
+		img.texture.Width, img.texture.Height,
+		img.texture.Width, 0,
+	}
+	img.texcoords = []float32{
+		0, 0,
+		0, 1,
+		1, 1,
+		1, 0,
+	}
 	return err == nil
 }
 
@@ -50,28 +64,24 @@ func (image *Image) UnloadVolatile() {
 	image.texture = nil
 }
 
-func (image *Image) Draw(args ...float32) {
-	x, y, _, _, _, _, _, _, _ := normalizeDrawCallArgs(args)
+func (img *Image) GetWidth() float32 {
+	return img.texture.Width
+}
 
+func (img *Image) GetHeight() float32 {
+	return img.texture.Height
+}
+
+func (image *Image) Draw(args ...float32) {
 	BindTexture(image.texture.GetHandle())
 
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
 
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{
-		x, y,
-		x, y + image.texture.Height,
-		x + image.texture.Width, y + image.texture.Height,
-		x + image.texture.Width, y,
-	}))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{
-		0, 0,
-		0, 1,
-		1, 1,
-		1, 0,
-	}))
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(image.coords))
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 0, gl.Ptr(image.texcoords))
 
-	PrepareDraw()
+	PrepareDraw(generateModelMatFromArgs(args))
 	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
 
 	gl.DisableVertexAttribArray(ATTRIB_TEXCOORD)

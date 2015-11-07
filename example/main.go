@@ -58,7 +58,7 @@ func draw() {
 	if use_shader {
 		gfx.SetShader(shader)
 	} else {
-		gfx.ClearShader()
+		gfx.SetShader(nil)
 	}
 
 	// rectangle
@@ -83,17 +83,21 @@ func draw() {
 		1030.0, 100.0, 950.0, 180.0,
 	)
 
-	//// image
+	// image
 	gfx.SetColor(255, 255, 255, 255)
-	gfx.Draw(tree, 500, 100)
+	//x, y, rotate radians, scale x, y, offset x, y, shear x, y
+	gfx.Draw(tree, 500, 100, 0.2, 0.5, 0.8, -100, -200, -0.2, 0.4)
 
 	// font
 	gfx.SetFont(image_font)
 	gfx.Printf(20, 20, "test one two")
 	gfx.SetFont(ttf)
-	gfx.Printf(20, 100, "test one two")
+	gfx.Rotate(0.5)
+	gfx.Scale(1.5)
+	gfx.Printf(200, 100, "test one two")
+	gfx.Origin()
 
-	////FPS
+	//FPS
 	gfx.SetColor(0, 170, 170, 255)
 	gfx.Printf(1200, 10, "fps: %v", timer.GetFPS())
 
