@@ -7,15 +7,18 @@ import (
 type KeyPressCB func(key Key, is_repeat bool)
 type KeyReleaseCB func(key Key)
 type TextInputCB func(str string)
+type TextEditCB func(str string, start, length int32)
 
 var (
 	key_press_default   KeyPressCB   = func(key Key, is_repeat bool) {}
 	key_release_default KeyReleaseCB = func(key Key) {}
 	text_input_default  TextInputCB  = func(str string) {}
+	text_edit_default   TextEditCB   = func(str string, start, length int32) {}
 
 	key_press_cb   = key_press_default
 	key_release_cb = key_release_default
 	text_input_cb  = text_input_default
+	text_edit_cb   = text_edit_default
 )
 
 func Delegate(event sdl.Event) {
@@ -33,7 +36,7 @@ func Delegate(event sdl.Event) {
 		key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))
 		key_release_cb(key)
 	case *sdl.TextEditingEvent:
-		//not done right now
+		text_edit_cb(string(e.Text[:]), e.Start, e.Length)
 	case *sdl.TextInputEvent:
 		text_input_cb(string(e.Text[:]))
 	}
@@ -60,5 +63,13 @@ func SetTextInputCB(cb TextInputCB) {
 		text_input_cb = text_input_default
 	} else {
 		text_input_cb = cb
+	}
+}
+
+func SetTextEditCB(cb TextEditCB) {
+	if cb == nil {
+		text_edit_cb = text_edit_default
+	} else {
+		text_edit_cb = cb
 	}
 }

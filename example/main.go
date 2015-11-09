@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/tanema/amore"
+	_ "github.com/tanema/amore/audio"
 	"github.com/tanema/amore/file"
 	"github.com/tanema/amore/gfx"
 	_ "github.com/tanema/amore/joystick"
@@ -86,7 +87,7 @@ func draw() {
 	// image
 	gfx.SetColor(255, 255, 255, 255)
 	//x, y, rotate radians, scale x, y, offset x, y, shear x, y
-	gfx.Draw(tree, 500, 100, 0.2, 0.5, 0.8, -100, -200, -0.2, 0.4)
+	gfx.Draw(tree, 500, 50, -0.4, 0.5, 0.8, -100, -200, -0.2, 0.4)
 
 	// font
 	gfx.SetFont(image_font)
