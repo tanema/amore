@@ -13,6 +13,18 @@ const (
 	ATTRIB_MAX_ENUM
 )
 
+type BlendMode int
+
+const (
+	ALPHA BlendMode = iota
+	MULTIPLICATIVE
+	PREMULTIPLIED
+	SUBTRACTIVE
+	ADDITIVE
+	SCREEN
+	REPLACE
+)
+
 type Viewport [4]int32 //The Viewport Values (X, Y, Width, Height)
 
 var (
@@ -140,7 +152,7 @@ func SetViewportSize(w, h int) {
 
 func Reset() {
 	Origin()
-	SetBlendMode("alpha")
+	SetBlendMode(ALPHA)
 	Clear()
 }
 
@@ -218,7 +230,7 @@ func SetColor(r, g, b, a float32) {
 	gl.VertexAttrib4f(ATTRIB_COLOR, r/255.0, g/255.0, b/255.0, a/255.0)
 }
 
-func SetBlendMode(mode string) {
+func SetBlendMode(mode BlendMode) {
 	fn := gl.FUNC_ADD
 	srcRGB := gl.ONE
 	srcA := gl.ONE
@@ -226,35 +238,35 @@ func SetBlendMode(mode string) {
 	dstA := gl.ZERO
 
 	switch mode {
-	case "alpha":
+	case ALPHA:
 		srcRGB = gl.SRC_ALPHA
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_ALPHA
 		dstA = gl.ONE_MINUS_SRC_ALPHA
-	case "multiplicative":
+	case MULTIPLICATIVE:
 		srcRGB = gl.DST_COLOR
 		srcA = gl.DST_COLOR
 		dstRGB = gl.ZERO
 		dstA = gl.ZERO
-	case "premultiplied":
+	case PREMULTIPLIED:
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_ALPHA
 		dstA = gl.ONE_MINUS_SRC_ALPHA
-	case "subtractive":
+	case SUBTRACTIVE:
 		fn = gl.FUNC_REVERSE_SUBTRACT
-	case "additive":
+	case ADDITIVE:
 		srcRGB = gl.SRC_ALPHA
 		srcA = gl.SRC_ALPHA
 		dstRGB = gl.ONE
 		dstA = gl.ONE
-	case "screen":
+	case SCREEN:
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_COLOR
 		dstA = gl.ONE_MINUS_SRC_COLOR
 		break
-	case "replace":
+	case REPLACE:
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ZERO

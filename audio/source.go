@@ -1,5 +1,9 @@
 package audio
 
+import (
+	"golang.org/x/mobile/exp/audio/al"
+)
+
 type SourceType int
 
 const (
@@ -7,23 +11,46 @@ const (
 	STREAM_SOURCE
 )
 
+type Cone struct {
+	innerAngle  int
+	outerAngle  int
+	outerVolume float32
+}
+
 type Source struct {
-	relative          bool
-	looping           bool
+	Channel           al.Source
+	valid             bool
 	pitch             float32
 	volume            float32
-	coneInnerAngle    float32
-	coneOuterAngle    float32
-	coneOuterVolume   float32
+	position          [3]float32
+	velocity          [3]float32
+	direction         [3]float32
+	relative          bool
+	looping           bool
+	paused            bool
 	minVolume         float32
 	maxVolume         float32
 	referenceDistance float32
 	rolloffFactor     float32
 	maxDistance       float32
+	cone              Cone
+	offsetSamples     float32
+	offsetSeconds     float32
+	sampleRate        int
+	channels          int
+	toLoop            uint
+}
+
+//	Creates a new Source from a file, SoundData, or Decoder
+func NewSource(filepath string) {
 }
 
 // Creates an identical copy of the Source in the stopped state.
 func (s *Source) Clone() {}
+
+func (s *Source) Update() bool {
+	return false
+}
 
 // Gets the reference and maximum attenuation distances of the Source.
 func (s *Source) GetAttenuationDistances() {}
@@ -35,13 +62,17 @@ func (s *Source) GetChannels() {}
 func (s *Source) GetCone() {}
 
 //Gets the direction of the Source.
-func (s *Source) GetDirection() {}
+func (s *Source) GetDirection() {
+}
 
 //Gets the current pitch of the Source.
 func (s *Source) GetPitch() {}
 
 // Gets the position of the Source.
-func (s *Source) GetPosition() {}
+func (s *Source) GetPosition() (float32, float32, float32) {
+	vec := s.Channel.Position()
+	return vec[0], vec[1], vec[2]
+}
 
 //Returns the rolloff factor of the source.
 func (s *Source) GetRolloff() {}
@@ -76,17 +107,34 @@ func (s *Source) IsStopped() {}
 // Pauses a source.
 func (s *Source) Pause() {}
 
+// Pauses a source.
+func (s *Source) PauseAtomic() {}
+
 //Plays a source.
 func (s *Source) Play() {}
+
+//Plays a source.
+func (s *Source) PlayAtomic() bool {
+	return true
+}
 
 //Resumes a paused source.
 func (s *Source) Resume() {}
 
+//Resumes a paused source.
+func (s *Source) ResumeAtomic() {}
+
 //Rewinds a source.
 func (s *Source) Rewind() {}
 
+//Rewinds a source.
+func (s *Source) RewindAtomic() {}
+
 //Sets the currently playing position of the Source.
 func (s *Source) Seek() {}
+
+//Sets the currently playing position of the Source.
+func (s *Source) SeekAtomic(offset float32) {}
 
 // Sets the reference and maximum attenuation distances of the Source.
 func (s *Source) SetAttenuationDistances() {}
@@ -124,5 +172,15 @@ func (s *Source) SetVolumeLimits() {}
 //Stops a source.
 func (s *Source) Stop() {}
 
+//Stops a source.
+func (s *Source) StopAtomic() {}
+
 //Gets the currently playing position of the Source.
 func (s *Source) Tell() {}
+
+//Gets the currently playing position of the Source.
+func (s *Source) TellAtomic() float32 {
+	return 0.0
+}
+
+func (s *Source) Release() {}
