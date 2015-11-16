@@ -37,17 +37,13 @@ TODO
   - Quad
   - Mesh
   - SpriteBatch
+  - Scissor
   - Shader 
     * ~~Uniforms~~
     * ~~default shaders~~
     * sendTexture / texture pool
     * temporary attach to send variables to a non attached shader
-* Events
-  - common event
-  - drop event
-  - render event
-  - clipboard event
-  - os event
+* ~~Events~~
 * Window [ref](https://love2d.org/wiki/love.window)
   - msaa
   - setIcon
@@ -62,11 +58,9 @@ TODO
 * ~~Mouse~~
 * ~~Keyboard~~
 * Joystick
-  - Vibration
-  - joystick remapped event
+  - SetVibration (sdl library problem)
 * File [ref](https://love2d.org/wiki/love.filesystem)
   - making assets come from config working dir
-  - helpers to get rid of file boilerplate
 * ~~Timer~~
 * Wiki
 * Remove sdl_image dep

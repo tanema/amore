@@ -4,9 +4,10 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
-	"os"
 
 	"github.com/go-gl/gl/v2.1/gl"
+
+	"github.com/tanema/amore/file"
 )
 
 type Image struct {
@@ -17,7 +18,7 @@ type Image struct {
 }
 
 func NewImage(path string) (*Image, error) {
-	imgFile, err := os.Open(path)
+	imgFile, err := file.NewFile(path)
 	if err != nil {
 		return nil, err
 	}

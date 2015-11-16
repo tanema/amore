@@ -7,11 +7,10 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"io/ioutil"
-	"os"
 
 	"github.com/go-gl/gl/v2.1/gl"
 
+	"github.com/tanema/amore/file"
 	"github.com/tanema/freetype-go/freetype"
 )
 
@@ -45,10 +44,7 @@ func pow2(x uint32) uint32 {
 }
 
 func NewFont(filename string, font_size float32) (*Font, error) {
-	fontBytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
+	fontBytes, err := file.Read(filename)
 	ttf, err := freetype.ParseFont(fontBytes)
 	if err != nil {
 		return nil, err
@@ -117,7 +113,7 @@ func NewFont(filename string, font_size float32) (*Font, error) {
 func NewImageFont(filename, glyph_hints string) (*Font, error) {
 	glyph_rune_hints := []rune(glyph_hints)
 
-	imgFile, err := os.Open(filename)
+	imgFile, err := file.NewFile(filename)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,8 @@
 package audio
 
 import (
+	"os"
+
 	"golang.org/x/mobile/exp/audio/al"
 )
 
@@ -19,7 +21,8 @@ type Cone struct {
 
 type Source struct {
 	Channel           al.Source
-	valid             bool
+	_type             SourceType
+	src               os.File
 	pitch             float32
 	volume            float32
 	position          [3]float32
@@ -28,6 +31,7 @@ type Source struct {
 	relative          bool
 	looping           bool
 	paused            bool
+	valid             bool
 	minVolume         float32
 	maxVolume         float32
 	referenceDistance float32
@@ -42,7 +46,13 @@ type Source struct {
 }
 
 //	Creates a new Source from a file, SoundData, or Decoder
-func NewSource(filepath string) {
+func NewSource(filepath string) (*Source, error) {
+	_, err := decode(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 // Creates an identical copy of the Source in the stopped state.

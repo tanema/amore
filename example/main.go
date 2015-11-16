@@ -5,7 +5,7 @@ import (
 	"math"
 
 	"github.com/tanema/amore"
-	_ "github.com/tanema/amore/audio"
+	"github.com/tanema/amore/audio"
 	"github.com/tanema/amore/file"
 	"github.com/tanema/amore/gfx"
 	_ "github.com/tanema/amore/joystick"
@@ -32,14 +32,19 @@ func main() {
 func load() {
 	keyboard.SetKeyReleaseCB(keyUp)
 	var err error
-	tree, err = gfx.NewImage("assets/palm_tree.png")
+	tree, err = gfx.NewImage("palm_tree.png")
 	if err != nil {
 		panic(err)
 	}
-	ttf, _ = gfx.NewFont("assets/fonts/arial.ttf", 20)
-	image_font, _ = gfx.NewImageFont("assets/fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
+	ttf, _ = gfx.NewFont("fonts/arial.ttf", 20)
+	image_font, _ = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 
-	shader = gfx.NewShader(file.Read("shaders/blackandwhite.glsl"))
+	shader = gfx.NewShader(file.ReadString("shaders/blackandwhite.glsl"))
+
+	_, err = audio.NewSource("audio/bomb.wav")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func keyUp(key keyboard.Key) {

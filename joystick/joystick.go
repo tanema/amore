@@ -1,6 +1,8 @@
 package joystick
 
 import (
+	"math"
+
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -10,15 +12,6 @@ type Vibration struct {
 	Data        [4]uint16
 	ID          int
 	Endtime     uint32
-}
-
-func defaultVibration() *Vibration {
-	return &Vibration{
-		ID:      -1,
-		Left:    0.0,
-		Right:   0.0,
-		Endtime: sdl.HAPTIC_INFINITY,
-	}
 }
 
 type Joystick struct {
@@ -202,23 +195,161 @@ func (joystick *Joystick) checkCreateHaptic() bool {
 	}
 
 	joystick.haptic = sdl.HapticOpenFromJoystick(joystick.stick)
-	joystick.vibration = defaultVibration()
+	joystick.vibration = &Vibration{
+		ID:      -1,
+		Left:    0.0,
+		Right:   0.0,
+		Endtime: sdl.HAPTIC_INFINITY,
+		Effect:  sdl.HapticEffect{},
+	}
 
 	return joystick.haptic != nil
 }
 
-// TODO
-func (joystick *Joystick) SetVibration(left, right, duration float32) bool {
-	panic("set vibration not implemented yet")
+func (joystick *Joystick) runVibrationEffect() bool {
+	if joystick.vibration.ID != -1 {
+		if joystick.haptic.UpdateEffect(joystick.vibration.ID, &joystick.vibration.Effect) == 0 {
+			if joystick.haptic.RunEffect(joystick.vibration.ID, 1) == 0 {
+				return true
+			}
+		}
+
+		// If the effect fails to update, we should destroy and re-create it.
+		joystick.haptic.DestroyEffect(joystick.vibration.ID)
+		joystick.vibration.ID = -1
+	}
+
+	joystick.vibration.ID = joystick.haptic.NewEffect(&joystick.vibration.Effect)
+
+	if joystick.vibration.ID != -1 && joystick.haptic.RunEffect(joystick.vibration.ID, 1) == 0 {
+		return true
+	}
+
 	return false
 }
 
-func (joystick *Joystick) StopVibration() bool {
-	panic("vibration not implemented yet")
-	return false
+func (joystick *Joystick) SetVibration(args ...float32) bool {
+	if !joystick.checkCreateHaptic() {
+		return false
+	}
+
+	// no arguments given means stop the vibration
+	if len(args) == 0 {
+		return joystick.stopVibration()
+	}
+
+	left := float32(math.Min(math.Max(float64(args[0]), 0.0), 1.0))
+	right := left
+	if len(args) > 1 {
+		right = float32(math.Min(math.Max(float64(right), 0.0), 1.0))
+	}
+
+	if left == 0.0 && right == 0.0 {
+		return joystick.stopVibration()
+	}
+
+	length := sdl.HAPTIC_INFINITY
+	if len(args) > 2 && args[2] >= 0.0 {
+		maxduration := math.MaxUint32 / 1000.0
+		length = int(math.Min(float64(args[2]), float64(maxduration)) * 1000)
+	}
+
+	success := false
+	features := joystick.haptic.Query()
+	axes := joystick.haptic.NumAxes()
+
+	if (features & sdl.HAPTIC_LEFTRIGHT) != 0 {
+		//joystick.vibration.Effect.Type = sdl.HAPTIC_LEFTRIGHT
+		lr := joystick.vibration.Effect.LeftRight()
+		lr.Length = uint32(length)
+		lr.LargeMagnitude = uint16(left * math.MaxUint16)
+		lr.SmallMagnitude = uint16(right * math.MaxUint16)
+		success = joystick.runVibrationEffect()
+	}
+
+	// Some gamepad drivers only give support for controlling individual motors
+	// through a custom FF effect.
+	if !success && joystick.IsGamepad() && (features&sdl.HAPTIC_CUSTOM) != 0 && axes == 2 {
+		// NOTE: this may cause issues with drivers which support custom effects
+		// but aren't similar to https://github.com/d235j/360Controller .
+
+		// Custom effect data is clamped to 0x7FFF in SDL.
+		joystick.vibration.Data[0] = uint16(left * 0x7FFF)
+		joystick.vibration.Data[2] = uint16(left * 0x7FFF)
+		joystick.vibration.Data[1] = uint16(right * 0x7FFF)
+		joystick.vibration.Data[3] = uint16(right * 0x7FFF)
+
+		//joystick.vibration.Effect.Type = sdl.HAPTIC_CUSTOM
+		custom := joystick.vibration.Effect.Custom()
+		custom.Length = uint32(length)
+		custom.Channels = 2
+		custom.Period = 10
+		custom.Samples = 2
+		custom.Data = &joystick.vibration.Data[0]
+
+		success = joystick.runVibrationEffect()
+	}
+
+	//// Fall back to a simple sine wave if all else fails. This only supports a
+	//// single strength value.
+	if !success && (features&sdl.HAPTIC_SINE) != 0 {
+		//joystick.vibration.Effect.Type = sdl.HAPTIC_SINE
+		periodic := joystick.vibration.Effect.Periodic()
+		periodic.Length = uint32(length)
+		periodic.Period = 10
+		strength := math.Max(float64(left), float64(right))
+		periodic.Magnitude = int16(strength * 0x7FFF)
+		success = joystick.runVibrationEffect()
+	}
+
+	if success {
+		joystick.vibration.Left = left
+		joystick.vibration.Right = right
+		if length == sdl.HAPTIC_INFINITY {
+			joystick.vibration.Endtime = sdl.HAPTIC_INFINITY
+		} else {
+			joystick.vibration.Endtime = sdl.GetTicks() + uint32(length)
+		}
+	} else {
+		joystick.vibration.Left = 0.0
+		joystick.vibration.Right = 0.0
+		joystick.vibration.Endtime = sdl.HAPTIC_INFINITY
+	}
+
+	return success
+}
+
+func (joystick *Joystick) stopVibration() bool {
+	success := true
+
+	if sdl.WasInit(sdl.INIT_HAPTIC) == 0 && joystick.haptic != nil && sdl.HapticIndex(joystick.haptic) != -1 {
+		success = (joystick.haptic.StopEffect(joystick.vibration.ID) == 0)
+	}
+
+	if success {
+		joystick.vibration.Left = 0.0
+		joystick.vibration.Right = 0.0
+	}
+
+	return success
 }
 
 func (joystick *Joystick) GetVibration() (float32, float32) {
-	panic("vibration not implemented yet")
-	return 0.0, 0.0
+	if joystick.vibration.Endtime != sdl.HAPTIC_INFINITY {
+		// With some drivers, the effect physically stops at the right time, but
+		// SDL_HapticGetEffectStatus still thinks it's playing. So we explicitly
+		// stop it once it's done, just to be sure.
+		if joystick.vibration.Endtime-sdl.GetTicks() <= 0 {
+			joystick.stopVibration()
+			joystick.vibration.Endtime = sdl.HAPTIC_INFINITY
+		}
+	}
+
+	// Check if the haptic effect has stopped playing.
+	if joystick.haptic == nil || joystick.vibration.ID == -1 || joystick.haptic.GetEffectStatus(joystick.vibration.ID) != 1 {
+		joystick.vibration.Left = 0.0
+		joystick.vibration.Right = 0.0
+	}
+
+	return joystick.vibration.Left, joystick.vibration.Right
 }
