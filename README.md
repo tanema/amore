@@ -36,8 +36,8 @@ TODO
   - Framebuffer / Canvas
   - Quad
   - Mesh
+  - screenshot
   - SpriteBatch
-  - Scissor
   - Shader 
     * ~~Uniforms~~
     * ~~default shaders~~
@@ -45,14 +45,9 @@ TODO
     * temporary attach to send variables to a non attached shader
 * ~~Events~~
 * Window [ref](https://love2d.org/wiki/love.window)
-  - msaa
-  - setIcon
-  - get set position
   - request attention
-  - show message box
-  - getDesktopDimensions
-  - getFullscreenSizes
-  - size changes
+  - get display name
+    - SDL_GetDisplayName not implemented in sdl 
 * System
   - Get power info
 * ~~Mouse~~

@@ -46,6 +46,7 @@ var (
 	modelIdent             = mgl32.Ident4()
 	screen_width           = 0
 	screen_height          = 0
+	wireframe              = false
 )
 
 func InitContext(w, h int) {
@@ -61,7 +62,11 @@ func InitContext(w, h int) {
 	opengl_vendor = gl.GoStr(gl.GetString(gl.VENDOR))
 	framebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
 	gl.GetIntegerv(gl.VIEWPORT, &viewport[0])
+	// And the current scissor - but we need to compensate for GL scissors
+	// starting at the bottom left instead of top left.
 	gl.GetIntegerv(gl.SCISSOR_BOX, &scissor[0])
+	scissor[1] = viewport[3] - (scissor[1] + scissor[3])
+
 	gl.GetFloatv(gl.POINT_SIZE, &pointSize)
 	gl.GetFloatv(gl.MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy)
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
@@ -83,14 +88,13 @@ func InitContext(w, h int) {
 	// Set pixel row alignment
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
+	//default matricies
+	projectionStack = matstack.NewMatStack()
+	viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
+
 	SetViewportSize(w, h)
 	SetBackgroundColor(0, 0, 0, 1)
 	createDefaultTexture()
-
-	//default matricies
-	projectionStack = matstack.NewMatStack()
-	projectionStack.Load(mgl32.Ortho(0, float32(screen_width), float32(screen_height), 0, -1, 1))
-	viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
 
 	// We always need a default shader.
 	defaultShader = NewShader()
@@ -148,6 +152,9 @@ func SetViewportSize(w, h int) {
 	screen_height = h
 	// Set the viewport to top-left corner.
 	gl.Viewport(0, 0, int32(screen_width), int32(screen_height))
+	viewport = Viewport{0, 0, int32(screen_width), int32(screen_height)}
+	projectionStack.Load(mgl32.Ortho(0, float32(screen_width), float32(screen_height), 0, -1, 1))
+	setScissor(scissor[0], scissor[1], scissor[2], scissor[3])
 }
 
 func Reset() {
@@ -210,8 +217,58 @@ func Pop() {
 	viewStack.Pop()
 }
 
-func SetScissor(x, y, width, height int32) {}
-func SetLineWidth(width float32)           {}
+func setScissor(x, y, width, height int32) {
+	if currentCanvas != nil {
+		gl.Scissor(x, y, width, height)
+	} else {
+		// With no Canvas active, we need to compensate for glScissor starting
+		// from the lower left of the viewport instead of the top left.
+		gl.Scissor(x, viewport[3]-(y+height), width, height)
+	}
+	scissor = Viewport{x, y, width, height}
+}
+
+func SetScissor(x, y, width, height int32) {
+	gl.Enable(gl.SCISSOR_TEST)
+	// OpenGL's reversed y-coordinate is compensated for in OpenGL::setScissor.
+	setScissor(x, y, width, height)
+}
+
+func ClearScissor() {
+	gl.Disable(gl.SCISSOR_TEST)
+}
+
+func GetScissor() (int32, int32, int32, int32) {
+	return scissor[0], scissor[1], scissor[2], scissor[3]
+}
+
+func SetLineWidth(width float32) {}
+func SetLineStyle(style int)     {}
+func SetLineJoin(join int)       {}
+func GetLineWidth()              {}
+func GetLineStyle()              {}
+func GetLineJoin()               {}
+
+func SetPointSize(size float32) {
+	pointSize = size
+}
+
+func GetPointSize() float32 {
+	return pointSize
+}
+
+func SetWireframe(enable bool) {
+	if enable {
+		gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+	} else {
+		gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
+	}
+	wireframe = enable
+}
+
+func IsWireframe() bool {
+	return wireframe
+}
 
 func SetShader(shader *Shader) {
 	if shader == nil {

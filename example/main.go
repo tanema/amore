@@ -12,6 +12,7 @@ import (
 	"github.com/tanema/amore/keyboard"
 	"github.com/tanema/amore/mouse"
 	"github.com/tanema/amore/timer"
+	"github.com/tanema/amore/window"
 )
 
 var (
@@ -30,6 +31,7 @@ func main() {
 }
 
 func load() {
+	window.GetCurrent().SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
 	var err error
 	tree, err = gfx.NewImage("palm_tree.png")
@@ -54,10 +56,14 @@ func keyUp(key keyboard.Key) {
 	if key == keyboard.Key1 {
 		use_shader = !use_shader
 	}
+	if key == keyboard.Key2 {
+		window.GetCurrent().ShowSimpleMessageBox("title", "this is a message", window.MESSAGEBOX_WARNING, false)
+	}
 }
 
 func update(deltaTime float32) {
 	mx, my = mouse.GetPosition()
+	mx, my = window.GetCurrent().PixelToWindowCoords(mx, my)
 }
 
 func draw() {
