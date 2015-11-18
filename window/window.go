@@ -272,6 +272,10 @@ func GetDisplayCount() int {
 	return num
 }
 
+func GetDisplayName(displayindex int) string {
+	return sdl.GetDisplayName(displayindex)
+}
+
 func (window *Window) GetFullscreenSizes(displayindex int) [][]int32 {
 	var sizes [][]int32
 	modes, _ := sdl.GetNumDisplayModes(displayindex)

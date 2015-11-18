@@ -240,6 +240,7 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 
 	left := float32(math.Min(math.Max(float64(args[0]), 0.0), 1.0))
 	right := left
+
 	if len(args) > 1 {
 		right = float32(math.Min(math.Max(float64(right), 0.0), 1.0))
 	}
@@ -259,7 +260,7 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 	axes := joystick.haptic.NumAxes()
 
 	if (features & sdl.HAPTIC_LEFTRIGHT) != 0 {
-		//joystick.vibration.Effect.Type = sdl.HAPTIC_LEFTRIGHT
+		joystick.vibration.Effect.SetType(sdl.HAPTIC_LEFTRIGHT)
 		lr := joystick.vibration.Effect.LeftRight()
 		lr.Length = uint32(length)
 		lr.LargeMagnitude = uint16(left * math.MaxUint16)
@@ -279,7 +280,7 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 		joystick.vibration.Data[1] = uint16(right * 0x7FFF)
 		joystick.vibration.Data[3] = uint16(right * 0x7FFF)
 
-		//joystick.vibration.Effect.Type = sdl.HAPTIC_CUSTOM
+		joystick.vibration.Effect.SetType(sdl.HAPTIC_CUSTOM)
 		custom := joystick.vibration.Effect.Custom()
 		custom.Length = uint32(length)
 		custom.Channels = 2
@@ -293,7 +294,7 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 	//// Fall back to a simple sine wave if all else fails. This only supports a
 	//// single strength value.
 	if !success && (features&sdl.HAPTIC_SINE) != 0 {
-		//joystick.vibration.Effect.Type = sdl.HAPTIC_SINE
+		joystick.vibration.Effect.SetType(sdl.HAPTIC_SINE)
 		periodic := joystick.vibration.Effect.Periodic()
 		periodic.Length = uint32(length)
 		periodic.Period = 10

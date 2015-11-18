@@ -11,6 +11,7 @@ import (
 	_ "github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"
 	"github.com/tanema/amore/mouse"
+	"github.com/tanema/amore/system"
 	"github.com/tanema/amore/timer"
 	"github.com/tanema/amore/window"
 )
@@ -22,6 +23,7 @@ var (
 	mx, my     float32
 	shader     *gfx.Shader
 	use_shader = false
+	vibrating  = false
 )
 
 func main() {
@@ -31,6 +33,10 @@ func main() {
 }
 
 func load() {
+	println(system.GetOS())
+	state, seconds, percent := system.GetPowerInfo()
+	fmt.Printf("state: %v, seconds:%v, percent:%v \n", state, seconds, percent)
+
 	window.GetCurrent().SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
 	var err error

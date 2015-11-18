@@ -18,7 +18,11 @@ Requirements
 TODO
 =====
 * Audio [ref](https://love2d.org/wiki/love.audio)
-  - *
+  - formats:
+    * WAV
+    * MP3
+    * Ogg Vorbis
+    * MOD
 * GFX [ref](https://love2d.org/wiki/love.graphics)
   - primitives
     * ~~polygons~~
@@ -45,20 +49,18 @@ TODO
     * temporary attach to send variables to a non attached shader
 * ~~Events~~
 * Window [ref](https://love2d.org/wiki/love.window)
+  - non simple message box
   - request attention
-  - get display name
-    - SDL_GetDisplayName not implemented in sdl 
-* System
-  - Get power info
+* ~~System~~
 * ~~Mouse~~
 * ~~Keyboard~~
-* Joystick
-  - SetVibration (sdl library problem)
+* ~~Joystick~~
 * File [ref](https://love2d.org/wiki/love.filesystem)
   - making assets come from config working dir
 * ~~Timer~~
 * Wiki
 * Remove sdl_image dep
+* Mobile Support
 * Optimize
 
 Experiments To Check out
