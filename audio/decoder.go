@@ -7,20 +7,9 @@ import (
 	"github.com/tanema/amore/file"
 )
 
-// See http://www.topherlee.com/software/pcm-tut-wavformat.html.
 const (
+	// See http://www.topherlee.com/software/pcm-tut-wavformat.html.
 	EXT_WAVE = ".wav"
-)
-
-const (
-	//Indicates how many bytes of raw data should be generated at each call to Decode.
-	DEFAULT_BUFFER_SIZE = 16384
-	// Indicates the quality of the sound.
-	DEFAULT_SAMPLE_RATE = 44100
-	//	Default is stereo.
-	DEFAULT_CHANNELS = 2
-	// 16 bit audio is the default.
-	DEFAULT_BIT_DEPTH = 16
 )
 
 type Decoder interface {
@@ -34,6 +23,8 @@ type Decoder interface {
 	GetChannels() int16
 	GetBitDepth() int16
 	GetSampleRate() int32
+	durToByteOffset(float32) int64
+	byteOffsetToDur(offset int64) float64
 }
 
 func decode(filepath string) (Decoder, error) {
@@ -48,7 +39,7 @@ func decode(filepath string) (Decoder, error) {
 	case EXT_WAVE:
 		decoder = &waveDecoder{}
 	default:
-		return nil, errors.New("unknow file extention")
+		return nil, errors.New("unsupported audio file extention")
 	}
 
 	err = decoder.Decode(src)

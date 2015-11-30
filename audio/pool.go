@@ -3,7 +3,7 @@ package audio
 import (
 	"sync"
 
-	"golang.org/x/mobile/exp/audio/al"
+	"github.com/tanema/amore/audio/al"
 )
 
 const (
@@ -63,7 +63,7 @@ func (p *audioPool) IsAvailable() bool {
 func (p *audioPool) IsPlaying(s *Source) bool {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	_, is_playing := p.playing[s.Channel]
+	_, is_playing := p.playing[s.Source]
 	return is_playing
 }
 
@@ -90,7 +90,7 @@ func (p *audioPool) Play(source *Source) bool {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if _, alreadyPlaying := p.playing[source.Channel]; !alreadyPlaying {
+	if _, alreadyPlaying := p.playing[source.Source]; !alreadyPlaying {
 		// Try to play.
 		if len(p.available) > 0 {
 			// Get the first available source and remove it
@@ -99,7 +99,7 @@ func (p *audioPool) Play(source *Source) bool {
 
 			// Insert into map of playing sources.
 			p.playing[out] = source
-			source.Channel = out
+			source.Source = out
 
 			return source.PlayAtomic()
 		} else {
@@ -108,7 +108,6 @@ func (p *audioPool) Play(source *Source) bool {
 	}
 
 	return true
-
 }
 
 func (p *audioPool) Stop(source *Source) {
@@ -178,16 +177,16 @@ func (p *audioPool) Tell(source *Source) float32 {
 }
 
 func (p *audioPool) Release(source *Source) {
-	p.available = append(p.available, source.Channel)
-	delete(p.playing, source.Channel)
-	source.Channel = 0
+	p.available = append(p.available, source.Source)
+	delete(p.playing, source.Source)
+	source.Source = 0
 }
 
 func (p *audioPool) removeSource(source *Source) {
 	source.StopAtomic()
 	source.RewindAtomic()
 	source.Release()
-	p.available = append(p.available, source.Channel)
-	delete(p.playing, source.Channel)
-	source.Channel = 0
+	p.available = append(p.available, source.Source)
+	delete(p.playing, source.Source)
+	source.Source = 0
 }

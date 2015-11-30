@@ -5,17 +5,17 @@ import (
 )
 
 type decoderBase struct {
-	fileSize         int32
-	formatDataLength int32
-	sampleRate       int32
-	byteRate         int32
-	dataChunkSize    int32
-	audioFormat      int16
-	channels         int16
-	byteSampleRate   int16
-	bitsPerSample    int16
-	data             []byte
-	duration         float32
+	fileSize    int32
+	audioFormat int16
+	format      Format
+	channels    int16
+	sampleRate  int32
+	byteRate    int32
+	blockAlign  int16
+	bitDepth    int16
+	dataSize    int32
+	data        []byte
+	duration    float32
 }
 
 func (decoder *decoderBase) Decode(src *os.File) error {
@@ -28,15 +28,15 @@ func (decoder *decoderBase) GetBuffer() *[]byte {
 }
 
 func (decoder *decoderBase) Seek(s float32) bool {
-	return false
+	return true
 }
 
 func (decoder *decoderBase) Rewind() bool {
-	return false
+	return decoder.Seek(0)
 }
 
 func (decoder *decoderBase) IsSeekable() bool {
-	return false
+	return true
 }
 
 func (decoder *decoderBase) IsFinished() bool {
@@ -48,7 +48,7 @@ func (decoder *decoderBase) GetChannels() int16 {
 }
 
 func (decoder *decoderBase) GetBitDepth() int16 {
-	return decoder.bitsPerSample
+	return decoder.bitDepth
 }
 
 func (decoder *decoderBase) GetSampleRate() int32 {
@@ -57,4 +57,12 @@ func (decoder *decoderBase) GetSampleRate() int32 {
 
 func (decoder *decoderBase) GetSize() int {
 	return len(decoder.data)
+}
+
+func (decoder *decoderBase) durToByteOffset(offset float32) int64 {
+	return 0
+}
+
+func (decoder *decoderBase) byteOffsetToDur(offset int64) float64 {
+	return 0
 }

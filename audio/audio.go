@@ -1,7 +1,7 @@
 package audio
 
 import (
-	"golang.org/x/mobile/exp/audio/al"
+	"github.com/tanema/amore/audio/al"
 )
 
 type DistanceModel int32
@@ -77,7 +77,7 @@ func Pause(source *Source) {
 //	Plays the specified Source
 func Play(source *Source) {
 	if source == nil {
-		pool.Play(nil)
+		pool.Resume(nil)
 	} else {
 		source.Play()
 	}

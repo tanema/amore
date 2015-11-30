@@ -11,7 +11,6 @@ import (
 	_ "github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"
 	"github.com/tanema/amore/mouse"
-	"github.com/tanema/amore/system"
 	"github.com/tanema/amore/timer"
 	"github.com/tanema/amore/window"
 )
@@ -33,10 +32,6 @@ func main() {
 }
 
 func load() {
-	println(system.GetOS())
-	state, seconds, percent := system.GetPowerInfo()
-	fmt.Printf("state: %v, seconds:%v, percent:%v \n", state, seconds, percent)
-
 	window.GetCurrent().SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
 	var err error
@@ -49,7 +44,7 @@ func load() {
 
 	shader = gfx.NewShader(file.ReadString("shaders/blackandwhite.glsl"))
 
-	_, err = audio.NewSource("audio/bomb.wav")
+	_, err = audio.NewStaticSource("audio/bomb.wav")
 	if err != nil {
 		panic(err)
 	}
