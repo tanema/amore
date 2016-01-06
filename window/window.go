@@ -92,7 +92,7 @@ func New() (*Window, error) {
 		sdlflags |= sdl.WINDOW_ALLOW_HIGHDPI
 	}
 
-	if !config.Fullscreen {
+	if config.Fullscreen {
 		// The position needs to be in the global coordinate space.
 		var displaybounds sdl.Rect
 		sdl.GetDisplayBounds(config.Display, &displaybounds)
