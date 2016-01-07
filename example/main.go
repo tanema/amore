@@ -35,20 +35,11 @@ func main() {
 func load() {
 	window.GetCurrent().SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
-	var err error
-	tree, err = gfx.NewImage("images/palm_tree.png")
-	if err != nil {
-		panic(err)
-	}
+	tree, _ = gfx.NewImage("images/palm_tree.png")
 	ttf, _ = gfx.NewFont("fonts/arial.ttf", 20)
 	image_font, _ = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
-
 	shader = gfx.NewShader(file.ReadString("shaders/blackandwhite.glsl"))
-
-	bomb, err = audio.NewStaticSource("audio/bomb.wav")
-	if err != nil {
-		panic(err)
-	}
+	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
 }
 
 func keyUp(key keyboard.Key) {

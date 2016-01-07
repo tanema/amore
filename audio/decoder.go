@@ -109,7 +109,7 @@ func (decoder *decoderBase) readHeaders() error {
 
 func (decoder *decoderBase) decode() int {
 	buffer := make([]byte, 128*1024)
-	n, err := decoder.src.Read(decoder.buffer)
+	n, err := decoder.src.Read(buffer)
 	decoder.eof = (err == io.EOF)
 	decoder.buffer = buffer[:n]
 	return n

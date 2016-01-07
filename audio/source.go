@@ -1,7 +1,6 @@
 package audio
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -73,10 +72,9 @@ func NewSource(filepath string, source_type SourceType) (*Source, error) {
 
 	if source_type == STATIC_SOURCE {
 		new_source.staticBuffer = al.GenBuffers(1)[0]
-		fmt.Println("")
 		new_source.staticBuffer.BufferData(decoder.getFormat(), decoder.getData(), decoder.getSampleRate())
 	} else if source_type == STREAM_SOURCE {
-		new_source.streamBuffers = al.GenBuffers(MAX_BUFFERS)
+		new_source.streamBuffers = []al.Buffer{} //al.GenBuffers(MAX_BUFFERS)
 	}
 
 	return new_source, nil
@@ -116,7 +114,7 @@ func (s *Source) update() bool {
 }
 
 func (s *Source) reset() {
-	if s.source == 0 {
+	if !s.Valid() {
 		return
 	}
 	s.source.SetGain(s.volume)
@@ -371,7 +369,7 @@ func (s *Source) Play() bool {
 	if s.src_type == STATIC_SOURCE {
 		s.source.SetBuffer(s.staticBuffer)
 	} else if s.src_type == STREAM_SOURCE {
-		for i := 0; i <= MAX_BUFFERS; i++ {
+		for i := 0; i < MAX_BUFFERS; i++ {
 			buffer := al.GenBuffers(1)[0]
 			s.stream(buffer)
 			s.streamBuffers = append(s.streamBuffers, buffer)
@@ -401,7 +399,9 @@ func (s *Source) Play() bool {
 
 func (s *Source) stream(buffer al.Buffer) int {
 	decoded := s.decoder.decode() //get more data
-	buffer.BufferData(s.decoder.getFormat(), s.decoder.getBuffer(), s.decoder.getSampleRate())
+	if decoded > 0 {
+		buffer.BufferData(s.decoder.getFormat(), s.decoder.getBuffer(), s.decoder.getSampleRate())
+	}
 	if s.decoder.isFinished() && s.IsLooping() {
 		s.decoder.rewind()
 	}
@@ -444,21 +444,19 @@ func (s *Source) Seek(offset time.Duration) {
 
 //Stops a source.
 func (s *Source) Stop() {
+	pool.mutex.Lock()
+	defer pool.mutex.Unlock()
 	if !s.IsStopped() && s.isValid() {
-		pool.mutex.Lock()
+		al.StopSources(s.source)
 		if s.src_type == STATIC_SOURCE {
-			al.StopSources(s.source)
-		} else if s.src_type == STREAM_SOURCE {
-			al.StopSources(s.source)
+			s.source.ClearBuffers()
+		} else if s.src_type == STREAM_SOURCE && len(s.streamBuffers) > 0 {
 			s.source.UnqueueBuffers(s.streamBuffers...)
+			al.DeleteBuffers(s.streamBuffers...)
+			s.streamBuffers = []al.Buffer{}
 		}
-		s.source.ClearBuffers()
-		pool.mutex.Unlock()
 	}
-	s.Rewind()
-	if s.src_type == STREAM_SOURCE {
-		al.DeleteBuffers(s.streamBuffers...)
-	}
+	s.decoder.rewind()
 	pool.release(s)
 }
 
