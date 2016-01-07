@@ -19,7 +19,7 @@ TODO
 =====
 * Audio [ref](https://love2d.org/wiki/love.audio)
   - formats:
-    * WAV
+    * ~~WAV~~
     * MP3
     * Ogg Vorbis
     * MOD

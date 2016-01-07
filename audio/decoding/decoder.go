@@ -1,4 +1,4 @@
-package audio
+package decoding
 
 import (
 	"errors"
@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	// See http://www.topherlee.com/software/pcm-tut-wavformat.html.
 	EXT_WAVE   = ".wav"
 	EXT_VORBIS = ".ogg"
+	EXT_MP3    = ".mp3"
+	EXT_MOD    = ".mod"
 )
 
 // ReadSeekCloser is an io.ReadSeeker and io.Closer.
@@ -22,40 +23,45 @@ type ReadSeekCloser interface {
 }
 
 type Decoder interface {
-	readHeaders() error
-	getBuffer() []byte
-	seek(int64) bool
-	rewind() bool
-	isFinished() bool
-	getFormat() uint32
-	getSize() int32
-	getChannels() int16
-	getBitDepth() int16
-	getSampleRate() int32
-	getData() []byte
-	decode() int
-	byteOffsetToDur(offset int32) time.Duration
-	durToByteOffset(dur time.Duration) int32
+	read() error
+	GetBuffer() []byte
+	Seek(int64) bool
+	Rewind() bool
+	IsFinished() bool
+	GetFormat() uint32
+	GetSize() int32
+	GetChannels() int16
+	GetBitDepth() int16
+	GetSampleRate() int32
+	GetData() []byte
+	Decode() int
+	ByteOffsetToDur(offset int32) time.Duration
+	DurToByteOffset(dur time.Duration) int32
 }
 
-func decode(filepath string) (Decoder, error) {
+func Decode(filepath string) (Decoder, error) {
 	src, err := file.NewFile(filepath)
 	if err != nil {
 		return nil, err
 	}
 
 	var decoder Decoder
+	base := decoderBase{src: src}
 
 	switch file.Ext(filepath) {
 	case EXT_WAVE:
-		decoder = &waveDecoder{decoderBase: decoderBase{src: src}}
+		decoder = &waveDecoder{base}
 	case EXT_VORBIS:
-		decoder = &vorbisDecoder{decoderBase: decoderBase{src: src}}
+		decoder = &vorbisDecoder{base}
+	case EXT_MP3:
+		decoder = &mp3Decoder{base}
+	case EXT_MOD:
+		decoder = &modDecoder{base}
 	default:
 		return nil, errors.New("unsupported audio file extention")
 	}
 
-	err = decoder.readHeaders()
+	err = decoder.read()
 	if err != nil {
 		return nil, err
 	}
@@ -102,12 +108,12 @@ type decoderBase struct {
 	buffer      []byte
 }
 
-func (decoder *decoderBase) readHeaders() error {
+func (decoder *decoderBase) Read() error {
 	panic("Decoder read headers method not implemented")
 	return nil
 }
 
-func (decoder *decoderBase) decode() int {
+func (decoder *decoderBase) Decode() int {
 	buffer := make([]byte, 128*1024)
 	n, err := decoder.src.Read(buffer)
 	decoder.eof = (err == io.EOF)
@@ -115,55 +121,55 @@ func (decoder *decoderBase) decode() int {
 	return n
 }
 
-func (decoder *decoderBase) getBuffer() []byte {
+func (decoder *decoderBase) GetBuffer() []byte {
 	return decoder.buffer
 }
 
-func (decoder *decoderBase) getData() []byte {
+func (decoder *decoderBase) GetData() []byte {
 	data := make([]byte, decoder.dataSize)
-	decoder.rewind()
+	decoder.Rewind()
 	decoder.src.Read(data)
 	return data
 }
 
-func (decoder *decoderBase) seek(s int64) bool {
+func (decoder *decoderBase) Seek(s int64) bool {
 	_, err := decoder.src.Seek(int64(decoder.headerSize)+s, 0)
 	decoder.eof = (err == io.EOF)
 	return err == nil || decoder.eof
 }
 
-func (decoder *decoderBase) rewind() bool {
-	return decoder.seek(0)
+func (decoder *decoderBase) Rewind() bool {
+	return decoder.Seek(0)
 }
 
-func (decoder *decoderBase) isFinished() bool {
+func (decoder *decoderBase) IsFinished() bool {
 	return decoder.eof
 }
 
-func (decoder *decoderBase) getFormat() uint32 {
+func (decoder *decoderBase) GetFormat() uint32 {
 	return decoder.format
 }
 
-func (decoder *decoderBase) getChannels() int16 {
+func (decoder *decoderBase) GetChannels() int16 {
 	return decoder.channels
 }
 
-func (decoder *decoderBase) getBitDepth() int16 {
+func (decoder *decoderBase) GetBitDepth() int16 {
 	return decoder.bitDepth
 }
 
-func (decoder *decoderBase) getSampleRate() int32 {
+func (decoder *decoderBase) GetSampleRate() int32 {
 	return decoder.sampleRate
 }
 
-func (decoder *decoderBase) getSize() int32 {
+func (decoder *decoderBase) GetSize() int32 {
 	return decoder.dataSize
 }
 
-func (decoder *decoderBase) byteOffsetToDur(offset int32) time.Duration {
+func (decoder *decoderBase) ByteOffsetToDur(offset int32) time.Duration {
 	return time.Duration(offset * formatBytes[decoder.format] * int32(time.Second) / decoder.sampleRate)
 }
 
-func (decoder *decoderBase) durToByteOffset(dur time.Duration) int32 {
+func (decoder *decoderBase) DurToByteOffset(dur time.Duration) int32 {
 	return int32(dur) * int32(decoder.sampleRate) / (formatBytes[decoder.format] * int32(time.Second))
 }

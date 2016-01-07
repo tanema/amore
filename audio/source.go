@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/tanema/amore/audio/al"
+	"github.com/tanema/amore/audio/decoding"
 )
 
 type SourceType int
@@ -21,7 +22,7 @@ const (
 )
 
 type Source struct {
-	decoder           Decoder
+	decoder           decoding.Decoder
 	source            al.Source
 	src_type          SourceType
 	pitch             float32
@@ -50,7 +51,7 @@ func NewSource(filepath string, source_type SourceType) (*Source, error) {
 		createPool()
 	}
 
-	decoder, err := decode(filepath)
+	decoder, err := decoding.Decode(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +73,7 @@ func NewSource(filepath string, source_type SourceType) (*Source, error) {
 
 	if source_type == STATIC_SOURCE {
 		new_source.staticBuffer = al.GenBuffers(1)[0]
-		new_source.staticBuffer.BufferData(decoder.getFormat(), decoder.getData(), decoder.getSampleRate())
+		new_source.staticBuffer.BufferData(decoder.GetFormat(), decoder.GetData(), decoder.GetSampleRate())
 	} else if source_type == STREAM_SOURCE {
 		new_source.streamBuffers = []al.Buffer{} //al.GenBuffers(MAX_BUFFERS)
 	}
@@ -88,7 +89,7 @@ func (s *Source) IsFinished() bool {
 	if s.src_type == STATIC_SOURCE {
 		return s.IsStopped()
 	}
-	return s.IsStopped() && !s.IsLooping() && s.decoder.isFinished()
+	return s.IsStopped() && !s.IsLooping() && s.decoder.IsFinished()
 }
 
 func (s *Source) update() bool {
@@ -114,7 +115,7 @@ func (s *Source) update() bool {
 }
 
 func (s *Source) reset() {
-	if !s.Valid() {
+	if !s.isValid() {
 		return
 	}
 	s.source.SetGain(s.volume)
@@ -144,7 +145,7 @@ func (s *Source) GetAttenuationDistances() (float32, float32) {
 
 // Gets the number of channels in the Source.
 func (s *Source) GetChannels() int16 {
-	return s.decoder.getChannels()
+	return s.decoder.GetChannels()
 }
 
 // Gets the Source's directional volume cones.
@@ -373,7 +374,7 @@ func (s *Source) Play() bool {
 			buffer := al.GenBuffers(1)[0]
 			s.stream(buffer)
 			s.streamBuffers = append(s.streamBuffers, buffer)
-			if s.decoder.isFinished() {
+			if s.decoder.IsFinished() {
 				break
 			}
 		}
@@ -398,12 +399,12 @@ func (s *Source) Play() bool {
 }
 
 func (s *Source) stream(buffer al.Buffer) int {
-	decoded := s.decoder.decode() //get more data
+	decoded := s.decoder.Decode() //get more data
 	if decoded > 0 {
-		buffer.BufferData(s.decoder.getFormat(), s.decoder.getBuffer(), s.decoder.getSampleRate())
+		buffer.BufferData(s.decoder.GetFormat(), s.decoder.GetBuffer(), s.decoder.GetSampleRate())
 	}
-	if s.decoder.isFinished() && s.IsLooping() {
-		s.decoder.rewind()
+	if s.decoder.IsFinished() && s.IsLooping() {
+		s.decoder.Rewind()
 	}
 	return decoded
 }
@@ -424,9 +425,9 @@ func (s *Source) Rewind() { s.Seek(0) }
 //Sets the currently playing position of the Source.
 func (s *Source) Seek(offset time.Duration) {
 	if s.isValid() {
-		size := s.decoder.durToByteOffset(offset)
+		size := s.decoder.DurToByteOffset(offset)
 		if s.src_type == STREAM_SOURCE {
-			s.decoder.seek(int64(size))
+			s.decoder.Seek(int64(size))
 			waspaused := s.paused
 			// Because we still have old data from before the seek in the buffers let's empty them.
 			s.Stop()
@@ -456,7 +457,7 @@ func (s *Source) Stop() {
 			s.streamBuffers = []al.Buffer{}
 		}
 	}
-	s.decoder.rewind()
+	s.decoder.Rewind()
 	pool.release(s)
 }
 
@@ -465,7 +466,7 @@ func (s *Source) Tell() time.Duration {
 	if s.isValid() {
 		pool.mutex.Lock()
 		defer pool.mutex.Unlock()
-		return s.decoder.byteOffsetToDur(s.source.OffsetByte())
+		return s.decoder.ByteOffsetToDur(s.source.OffsetByte())
 	}
 	return time.Duration(0.0)
 }

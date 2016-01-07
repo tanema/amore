@@ -1,4 +1,4 @@
-package audio
+package decoding
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ const (
 	WAV_HEADER_SIZE = 44
 )
 
-func (decoder *waveDecoder) readHeaders() error {
+func (decoder *waveDecoder) read() error {
 	var riffMarker, waveMarker, fmtMarker, dataMarker [4]byte
 	var fmtChunkSize int32
 

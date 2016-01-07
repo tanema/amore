@@ -1,4 +1,4 @@
-package audio
+package decoding
 
 import (
 	"encoding/binary"
@@ -10,7 +10,7 @@ type vorbisDecoder struct {
 	decoderBase
 }
 
-func (decoder *vorbisDecoder) readHeaders() error {
+func (decoder *vorbisDecoder) read() error {
 	decoder.bitDepth = 16
 
 	var version, header_type, page_segments int8
