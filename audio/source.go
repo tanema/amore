@@ -82,7 +82,7 @@ func NewSource(filepath string, source_type SourceType) (*Source, error) {
 	return new_source, nil
 }
 
-func (s *Source) IsValid() bool {
+func (s *Source) isValid() bool {
 	return s.source != 0
 }
 
@@ -94,7 +94,7 @@ func (s *Source) IsFinished() bool {
 }
 
 func (s *Source) update() bool {
-	if !s.IsValid() {
+	if !s.isValid() {
 		return false
 	}
 
@@ -138,7 +138,7 @@ func (s *Source) reset() {
 
 // Gets the reference and maximum attenuation distances of the Source.
 func (s *Source) GetAttenuationDistances() (float32, float32) {
-	if s.IsValid() {
+	if s.isValid() {
 		return s.source.ReferenceDistance(), s.source.MaxDistance()
 	}
 	return s.referenceDistance, s.maxDistance
@@ -151,7 +151,7 @@ func (s *Source) GetChannels() int16 {
 
 // Gets the Source's directional volume cones.
 func (s *Source) GetCone() (float32, float32, float32) {
-	if s.IsValid() {
+	if s.isValid() {
 		c := s.source.Cone()
 		return mgl32.DegToRad(float32(c.InnerAngle)), mgl32.DegToRad(float32(c.OuterAngle)), c.OuterVolume
 	}
@@ -160,7 +160,7 @@ func (s *Source) GetCone() (float32, float32, float32) {
 
 //Gets the direction of the Source.
 func (s *Source) GetDirection() (float32, float32, float32) {
-	if s.IsValid() {
+	if s.isValid() {
 		d := s.source.Direction()
 		return d[0], d[1], d[2]
 	}
@@ -169,7 +169,7 @@ func (s *Source) GetDirection() (float32, float32, float32) {
 
 //Gets the current pitch of the Source.
 func (s *Source) GetPitch() float32 {
-	if s.IsValid() {
+	if s.isValid() {
 		return s.source.Pitch()
 	}
 	return s.pitch
@@ -177,7 +177,7 @@ func (s *Source) GetPitch() float32 {
 
 // Gets the position of the Source.
 func (s *Source) GetPosition() (float32, float32, float32) {
-	if s.IsValid() {
+	if s.isValid() {
 		vec := s.source.Position()
 		return vec[0], vec[1], vec[2]
 	}
@@ -186,7 +186,7 @@ func (s *Source) GetPosition() (float32, float32, float32) {
 
 //Returns the rolloff factor of the source.
 func (s *Source) GetRolloff() float32 {
-	if s.IsValid() {
+	if s.isValid() {
 		return s.source.Rolloff()
 	}
 	return s.rolloffFactor
@@ -194,7 +194,7 @@ func (s *Source) GetRolloff() float32 {
 
 // Gets the velocity of the Source.
 func (s *Source) GetVelocity() (float32, float32, float32) {
-	if s.IsValid() {
+	if s.isValid() {
 		vec := s.source.Velocity()
 		return vec[0], vec[1], vec[2]
 	}
@@ -203,7 +203,7 @@ func (s *Source) GetVelocity() (float32, float32, float32) {
 
 // Gets the current volume of the Source.
 func (s *Source) GetVolume() float32 {
-	if s.IsValid() {
+	if s.isValid() {
 		return s.source.Gain()
 	}
 	return s.volume
@@ -211,7 +211,7 @@ func (s *Source) GetVolume() float32 {
 
 // Returns the volume limits of the source.
 func (s *Source) GetVolumeLimits() (float32, float32) {
-	if s.IsValid() {
+	if s.isValid() {
 		return s.source.MinGain(), s.source.MaxGain()
 	}
 	return s.minVolume, s.maxVolume
@@ -228,7 +228,7 @@ func (s *Source) IsLooping() bool {
 
 //Returns whether the Source is paused.
 func (s *Source) IsPaused() bool {
-	if s.IsValid() {
+	if s.isValid() {
 		return s.GetState() == Paused
 	}
 	return false
@@ -236,7 +236,7 @@ func (s *Source) IsPaused() bool {
 
 // Returns whether the Source is playing.
 func (s *Source) IsPlaying() bool {
-	if s.IsValid() {
+	if s.isValid() {
 		return s.GetState() == Playing
 	}
 	return false
@@ -244,7 +244,7 @@ func (s *Source) IsPlaying() bool {
 
 //Gets whether the Source's position and direction are relative to the listener.
 func (s *Source) IsRelative() bool {
-	if s.IsValid() {
+	if s.isValid() {
 		return s.source.Relative()
 	}
 	return s.relative
@@ -257,104 +257,10 @@ func (s *Source) IsStatic() bool {
 
 // Returns whether the Source is stopped.
 func (s *Source) IsStopped() bool {
-	if s.IsValid() {
+	if s.isValid() {
 		return s.GetState() == Stopped
 	}
 	return true
-}
-
-// Pauses a source.
-func (s *Source) Pause() {
-	if s.IsValid() {
-		pool.mutex.Lock()
-		defer pool.mutex.Unlock()
-		al.PauseSources(s.source)
-		s.paused = true
-	}
-}
-
-//Plays a source.
-func (s *Source) Play() bool {
-	if s.IsPlaying() {
-		return true
-	}
-
-	if s.IsPaused() {
-		pool.Resume(s)
-		return true
-	}
-
-	//claim a source for ourselves and make sure it worked
-	if !pool.claim(s) || !s.IsValid() {
-		return false
-	}
-
-	pool.mutex.Lock()
-	defer pool.mutex.Unlock()
-
-	if s.src_type == STATIC_SOURCE {
-		s.source.SetBuffer(s.staticBuffer)
-	} else if s.src_type == STREAM_SOURCE {
-		for i := 0; i <= MAX_BUFFERS; i++ {
-			buffer := al.GenBuffers(1)[0]
-			s.stream(buffer)
-			s.streamBuffers = append(s.streamBuffers, buffer)
-			if s.decoder.isFinished() {
-				break
-			}
-		}
-		if len(s.streamBuffers) > 0 {
-			s.source.QueueBuffers(s.streamBuffers...)
-		}
-	}
-
-	// This Source may now be associated with an OpenAL source that still has
-	// the properties of another Source. Let's reset it to the settings
-	// of the new one.
-	s.reset()
-
-	// Clear errors.
-	al.Error()
-
-	al.PlaySources(s.source)
-
-	// alSourcePlay may fail if the system has reached its limit of simultaneous
-	// playing sources.
-	return al.Error() == al.NoError
-}
-
-//Resumes a paused source.
-func (s *Source) Resume() {
-	if s.IsValid() && s.paused {
-		pool.mutex.Lock()
-		defer pool.mutex.Unlock()
-		al.PlaySources(s.source)
-		s.paused = false
-	}
-}
-
-//Rewinds a source.
-func (s *Source) Rewind() { s.Seek(0) }
-
-//Sets the currently playing position of the Source.
-func (s *Source) Seek(offset time.Duration) {
-	if s.IsValid() {
-		size := s.decoder.durToByteOffset(offset)
-		if s.src_type == STREAM_SOURCE {
-			s.decoder.seek(int64(size))
-			waspaused := s.paused
-			// Because we still have old data from before the seek in the buffers let's empty them.
-			s.Stop()
-			s.Play()
-			if waspaused {
-				s.Pause()
-			}
-		} else {
-			pool.mutex.Lock()
-			defer pool.mutex.Unlock()
-			s.source.SetOffsetBytes(size)
-		}
-	}
 }
 
 // Sets the reference and maximum attenuation distances of the Source.
@@ -433,9 +339,112 @@ func (s *Source) SetVolumeLimits(min, max float32) {
 	s.reset()
 }
 
+// Pauses a source.
+func (s *Source) Pause() {
+	if s.isValid() {
+		pool.mutex.Lock()
+		defer pool.mutex.Unlock()
+		al.PauseSources(s.source)
+		s.paused = true
+	}
+}
+
+//Plays a source.
+func (s *Source) Play() bool {
+	if s.IsPlaying() {
+		return true
+	}
+
+	if s.IsPaused() {
+		pool.Resume(s)
+		return true
+	}
+
+	//claim a source for ourselves and make sure it worked
+	if !pool.claim(s) || !s.isValid() {
+		return false
+	}
+
+	pool.mutex.Lock()
+	defer pool.mutex.Unlock()
+
+	if s.src_type == STATIC_SOURCE {
+		s.source.SetBuffer(s.staticBuffer)
+	} else if s.src_type == STREAM_SOURCE {
+		for i := 0; i <= MAX_BUFFERS; i++ {
+			buffer := al.GenBuffers(1)[0]
+			s.stream(buffer)
+			s.streamBuffers = append(s.streamBuffers, buffer)
+			if s.decoder.isFinished() {
+				break
+			}
+		}
+		if len(s.streamBuffers) > 0 {
+			s.source.QueueBuffers(s.streamBuffers...)
+		}
+	}
+
+	// This Source may now be associated with an OpenAL source that still has
+	// the properties of another Source. Let's reset it to the settings
+	// of the new one.
+	s.reset()
+
+	// Clear errors.
+	al.Error()
+
+	al.PlaySources(s.source)
+
+	// alSourcePlay may fail if the system has reached its limit of simultaneous
+	// playing sources.
+	return al.Error() == al.NoError
+}
+
+func (s *Source) stream(buffer al.Buffer) int {
+	decoded := s.decoder.decode() //get more data
+	buffer.BufferData(s.decoder.getFormat(), s.decoder.getBuffer(), s.decoder.getSampleRate())
+	if s.decoder.isFinished() && s.IsLooping() {
+		s.decoder.rewind()
+	}
+	return decoded
+}
+
+//Resumes a paused source.
+func (s *Source) Resume() {
+	if s.isValid() && s.paused {
+		pool.mutex.Lock()
+		defer pool.mutex.Unlock()
+		al.PlaySources(s.source)
+		s.paused = false
+	}
+}
+
+//Rewinds a source.
+func (s *Source) Rewind() { s.Seek(0) }
+
+//Sets the currently playing position of the Source.
+func (s *Source) Seek(offset time.Duration) {
+	if s.isValid() {
+		size := s.decoder.durToByteOffset(offset)
+		if s.src_type == STREAM_SOURCE {
+			s.decoder.seek(int64(size))
+			waspaused := s.paused
+			// Because we still have old data from before the seek in the buffers let's empty them.
+			s.Stop()
+			s.Play()
+			if waspaused {
+				s.Pause()
+			}
+		} else {
+			pool.mutex.Lock()
+			defer pool.mutex.Unlock()
+			s.source.SetOffsetBytes(size)
+		}
+	}
+}
+
 //Stops a source.
 func (s *Source) Stop() {
-	if !s.IsStopped() && s.IsValid() {
+	if !s.IsStopped() && s.isValid() {
 		pool.mutex.Lock()
 		if s.src_type == STATIC_SOURCE {
 			al.StopSources(s.source)
@@ -455,19 +464,10 @@ func (s *Source) Stop() {
 
 //Gets the currently playing position of the Source.
 func (s *Source) Tell() time.Duration {
-	if s.IsValid() {
+	if s.isValid() {
 		pool.mutex.Lock()
 		defer pool.mutex.Unlock()
 		return s.decoder.byteOffsetToDur(s.source.OffsetByte())
 	}
 	return time.Duration(0.0)
-}
-
-func (s *Source) stream(buffer al.Buffer) int32 {
-	decoded := s.decoder.decode() //get more data
-	buffer.BufferData(uint32(s.decoder.getFormat()), s.decoder.getBuffer(), s.decoder.getSampleRate())
-	if s.decoder.isFinished() && s.IsLooping() {
-		s.decoder.rewind()
-	}
-	return decoded
 }

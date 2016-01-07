@@ -64,7 +64,3 @@ func (decoder *waveDecoder) readHeaders() error {
 
 	return nil
 }
-
-func (decoder *waveDecoder) decode() int32 {
-	return 0
-}

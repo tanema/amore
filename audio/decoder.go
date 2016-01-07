@@ -11,7 +11,8 @@ import (
 
 const (
 	// See http://www.topherlee.com/software/pcm-tut-wavformat.html.
-	EXT_WAVE = ".wav"
+	EXT_WAVE   = ".wav"
+	EXT_VORBIS = ".ogg"
 )
 
 // ReadSeekCloser is an io.ReadSeeker and io.Closer.
@@ -32,7 +33,7 @@ type Decoder interface {
 	getBitDepth() int16
 	getSampleRate() int32
 	getData() []byte
-	decode() int32
+	decode() int
 	byteOffsetToDur(offset int32) time.Duration
 	durToByteOffset(dur time.Duration) int32
 }
@@ -48,6 +49,8 @@ func decode(filepath string) (Decoder, error) {
 	switch file.Ext(filepath) {
 	case EXT_WAVE:
 		decoder = &waveDecoder{decoderBase: decoderBase{src: src}}
+	case EXT_VORBIS:
+		decoder = &vorbisDecoder{decoderBase: decoderBase{src: src}}
 	default:
 		return nil, errors.New("unsupported audio file extention")
 	}
@@ -80,4 +83,87 @@ func getFormat(channels, depth int16) uint32 {
 	default:
 		return 0
 	}
+}
+
+type decoderBase struct {
+	src         ReadSeekCloser
+	fileSize    int32
+	audioFormat int16
+	format      uint32
+	channels    int16
+	sampleRate  int32
+	byteRate    int32
+	blockAlign  int16
+	bitDepth    int16
+	dataSize    int32
+	duration    float32
+	headerSize  int32
+	eof         bool
+	buffer      []byte
+}
+
+func (decoder *decoderBase) readHeaders() error {
+	panic("Decoder read headers method not implemented")
+	return nil
+}
+
+func (decoder *decoderBase) decode() int {
+	buffer := make([]byte, 128*1024)
+	n, err := decoder.src.Read(decoder.buffer)
+	decoder.eof = (err == io.EOF)
+	decoder.buffer = buffer[:n]
+	return n
+}
+
+func (decoder *decoderBase) getBuffer() []byte {
+	return decoder.buffer
+}
+
+func (decoder *decoderBase) getData() []byte {
+	data := make([]byte, decoder.dataSize)
+	decoder.rewind()
+	decoder.src.Read(data)
+	return data
+}
+
+func (decoder *decoderBase) seek(s int64) bool {
+	_, err := decoder.src.Seek(int64(decoder.headerSize)+s, 0)
+	decoder.eof = (err == io.EOF)
+	return err == nil || decoder.eof
+}
+
+func (decoder *decoderBase) rewind() bool {
+	return decoder.seek(0)
+}
+
+func (decoder *decoderBase) isFinished() bool {
+	return decoder.eof
+}
+
+func (decoder *decoderBase) getFormat() uint32 {
+	return decoder.format
+}
+
+func (decoder *decoderBase) getChannels() int16 {
+	return decoder.channels
+}
+
+func (decoder *decoderBase) getBitDepth() int16 {
+	return decoder.bitDepth
+}
+
+func (decoder *decoderBase) getSampleRate() int32 {
+	return decoder.sampleRate
+}
+
+func (decoder *decoderBase) getSize() int32 {
+	return decoder.dataSize
+}
+
+func (decoder *decoderBase) byteOffsetToDur(offset int32) time.Duration {
+	return time.Duration(offset * formatBytes[decoder.format] * int32(time.Second) / decoder.sampleRate)
+}
+
+func (decoder *decoderBase) durToByteOffset(dur time.Duration) int32 {
+	return int32(dur) * int32(decoder.sampleRate) / (formatBytes[decoder.format] * int32(time.Second))
 }
