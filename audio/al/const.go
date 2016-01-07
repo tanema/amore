@@ -8,6 +8,7 @@ package al
 
 // Error returns one of these error codes.
 const (
+	NoError          = 0x0000
 	InvalidName      = 0xA001
 	InvalidEnum      = 0xA002
 	InvalidValue     = 0xA003

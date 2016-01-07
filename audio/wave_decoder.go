@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"os"
 )
 
 type waveDecoder struct {
@@ -13,27 +12,31 @@ type waveDecoder struct {
 }
 
 // See http://www.topherlee.com/software/pcm-tut-wavformat.html.
-func (decoder *waveDecoder) Decode(src *os.File) error {
+const (
+	WAV_HEADER_SIZE = 44
+)
+
+func (decoder *waveDecoder) readHeaders() error {
 	var riffMarker, waveMarker, fmtMarker, dataMarker [4]byte
 	var fmtChunkSize int32
 
 	//descriptor
-	binary.Read(src, binary.BigEndian, &riffMarker)
-	binary.Read(src, binary.LittleEndian, &decoder.fileSize)
-	binary.Read(src, binary.BigEndian, &waveMarker)
+	binary.Read(decoder.src, binary.BigEndian, &riffMarker)
+	binary.Read(decoder.src, binary.LittleEndian, &decoder.fileSize)
+	binary.Read(decoder.src, binary.BigEndian, &waveMarker)
 
 	//fmt chunk
-	binary.Read(src, binary.BigEndian, &fmtMarker)
-	binary.Read(src, binary.LittleEndian, &fmtChunkSize)
-	binary.Read(src, binary.LittleEndian, &decoder.audioFormat)
-	binary.Read(src, binary.LittleEndian, &decoder.channels)
-	binary.Read(src, binary.LittleEndian, &decoder.sampleRate)
-	binary.Read(src, binary.LittleEndian, &decoder.byteRate)
-	binary.Read(src, binary.LittleEndian, &decoder.blockAlign)
-	binary.Read(src, binary.LittleEndian, &decoder.bitDepth)
+	binary.Read(decoder.src, binary.BigEndian, &fmtMarker)
+	binary.Read(decoder.src, binary.LittleEndian, &fmtChunkSize)
+	binary.Read(decoder.src, binary.LittleEndian, &decoder.audioFormat)
+	binary.Read(decoder.src, binary.LittleEndian, &decoder.channels)
+	binary.Read(decoder.src, binary.LittleEndian, &decoder.sampleRate)
+	binary.Read(decoder.src, binary.LittleEndian, &decoder.byteRate)
+	binary.Read(decoder.src, binary.LittleEndian, &decoder.blockAlign)
+	binary.Read(decoder.src, binary.LittleEndian, &decoder.bitDepth)
 
 	//data chunk
-	binary.Read(src, binary.BigEndian, &dataMarker)
+	binary.Read(decoder.src, binary.BigEndian, &dataMarker)
 	//verify we have correct header data if we have the data marker we
 	//definitely made it through, which is nice
 	if !bytes.Equal(riffMarker[:], []byte("RIFF")) || //RIFF marker
@@ -43,27 +46,25 @@ func (decoder *waveDecoder) Decode(src *os.File) error {
 		!bytes.Equal(dataMarker[:], []byte("data")) { //didnt find the data marker
 		return errors.New("Not a wave file.")
 	}
-	binary.Read(src, binary.LittleEndian, &decoder.dataSize)
-	//read data into fixed length array
-	decoder.data = make([]byte, decoder.dataSize, decoder.dataSize)
-	binary.Read(src, binary.LittleEndian, &decoder.data)
+	decoder.headerSize = WAV_HEADER_SIZE
+	decoder.dataSize = decoder.fileSize - decoder.headerSize
+	//we could read file the file like this
+	//binary.Read(decoder.src, binary.LittleEndian, &decoder.dataSize)
+	//and subtract 8 for the data marker and the data size but why read and calculate
+	//when we can just calculate
 
 	//extra
 	//calculate the duration form the data size and byterate
-	decoder.duration = float32(decoder.dataSize) / float32(decoder.byteRate)
+	decoder.duration = float32(decoder.dataSize) / float32(decoder.sampleRate)
 
-	switch channels, depth := decoder.channels, decoder.bitDepth; {
-	case channels == 1 && depth == 8:
-		decoder.format = Mono8
-	case channels == 1 && depth == 16:
-		decoder.format = Mono16
-	case channels == 2 && depth == 8:
-		decoder.format = Stereo8
-	case channels == 2 && depth == 16:
-		decoder.format = Stereo16
-	default:
-		return fmt.Errorf("unsupported format; num of channels=%d, bit rate=%d", channels, depth)
+	decoder.format = getFormat(decoder.channels, decoder.bitDepth)
+	if decoder.format == 0 {
+		return fmt.Errorf("unsupported format; num of channels=%d, bit rate=%d", decoder.channels, decoder.bitDepth)
 	}
 
 	return nil
+}
+
+func (decoder *waveDecoder) decode() int32 {
+	return 0
 }

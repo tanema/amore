@@ -58,16 +58,31 @@ TODO
 * File [ref](https://love2d.org/wiki/love.filesystem)
   - making assets come from config working dir
 * ~~Timer~~
+* Cmd
+  - amore new [name]
+    - create 
+      - main.go //with imports
+      - conf.toml //with all default settings
+      - assets/
+        - audio/
+        - fonts/
+        - shaders/
+        - images/
+  - amore run 
+    - bundle assets
+    - go run
+  - amore build [OS]
+    - bundle assets
+    - go build every OS
+  - amore version
 * Wiki
-* Remove sdl_image dep
 * Mobile Support
+* Simplify Cross-Compilation possibly with [shared libraries already linked to c libs](http://blog.ralch.com/tutorial/golang-sharing-libraries/)
 * Optimize
 
-Experiments To Check out
-========================
+CMD notes
+=========
 
-* [Asset Bundling](https://github.com/jteeuwen/go-bindata)
-* amore as a lib so dependancies are easier
-
-
+* [Way of setting cmd version](http://technosophos.com/2014/06/11/compile-time-string-in-go.html)
+* [Asset Bundling](https://github.com/jteeuwen/go-bindata) to make deployment easier
 

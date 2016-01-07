@@ -21,6 +21,7 @@ var (
 	image_font *gfx.Font
 	mx, my     float32
 	shader     *gfx.Shader
+	bomb       *audio.Source
 	use_shader = false
 	vibrating  = false
 )
@@ -35,7 +36,7 @@ func load() {
 	window.GetCurrent().SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
 	var err error
-	tree, err = gfx.NewImage("palm_tree.png")
+	tree, err = gfx.NewImage("images/palm_tree.png")
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +45,7 @@ func load() {
 
 	shader = gfx.NewShader(file.ReadString("shaders/blackandwhite.glsl"))
 
-	_, err = audio.NewStaticSource("audio/bomb.wav")
+	bomb, err = audio.NewStaticSource("audio/bomb.wav")
 	if err != nil {
 		panic(err)
 	}
@@ -59,6 +60,9 @@ func keyUp(key keyboard.Key) {
 	}
 	if key == keyboard.Key2 {
 		window.GetCurrent().ShowSimpleMessageBox("title", "this is a message", window.MESSAGEBOX_WARNING, false)
+	}
+	if key == keyboard.Key3 {
+		bomb.Play()
 	}
 }
 

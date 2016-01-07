@@ -342,6 +342,21 @@ func (s Source) State() int32 {
 }
 
 // BuffersQueued returns the number of the queued buffers.
+func (s Source) SetBuffer(b Buffer) {
+	setSourcei(s, paramBuffer, int32(b))
+}
+
+// BuffersQueued returns the number of the queued buffers.
+func (s Source) Buffer() Buffer {
+	return Buffer(getSourcei(s, paramBuffer))
+}
+
+// BuffersQueued returns the number of the queued buffers.
+func (s Source) ClearBuffers() {
+	setSourcei(s, paramBuffer, 0)
+}
+
+// BuffersQueued returns the number of the queued buffers.
 func (s Source) BuffersQueued() int32 {
 	return getSourcei(s, paramBuffersQueued)
 }
@@ -352,18 +367,33 @@ func (s Source) BuffersProcessed() int32 {
 }
 
 // OffsetSeconds returns the current playback position of the source in seconds.
-func (s Source) OffsetSeconds() int32 {
-	return getSourcei(s, paramSecOffset)
+func (s Source) OffsetSeconds() float32 {
+	return getSourcef(s, paramSecOffset)
+}
+
+// OffsetSeconds returns the current playback position of the source in seconds.
+func (s Source) SetOffsetSeconds(seconds float32) {
+	setSourcef(s, paramSecOffset, seconds)
 }
 
 // OffsetSample returns the sample offset of the current playback position.
-func (s Source) OffsetSample() int32 {
-	return getSourcei(s, paramSampleOffset)
+func (s Source) OffsetSample() float32 {
+	return getSourcef(s, paramSampleOffset)
+}
+
+// OffsetSample returns the sample offset of the current playback position.
+func (s Source) SetOffsetSample(samples float32) {
+	setSourcef(s, paramSampleOffset, samples)
 }
 
 // OffsetByte returns the byte offset of the current playback position.
 func (s Source) OffsetByte() int32 {
 	return getSourcei(s, paramByteOffset)
+}
+
+// OffsetSample returns the sample offset of the current playback position.
+func (s Source) SetOffsetBytes(bytes int32) {
+	setSourcei(s, paramByteOffset, bytes)
 }
 
 func getSourcei(s Source, param int) int32 {

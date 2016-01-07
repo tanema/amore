@@ -1,6 +1,7 @@
 package audio
 
 import (
+	"fmt"
 	"github.com/tanema/amore/audio/al"
 )
 
@@ -20,7 +21,6 @@ func init() {
 	if err := al.OpenDevice(); err != nil {
 		panic(err)
 	}
-	createPool()
 }
 
 //	Returns the distance attenuation model
@@ -61,45 +61,12 @@ func GetVelocity() (float32, float32, float32) {
 }
 
 //	Returns the master volume
-func GetVolume() float32 {
-	return al.ListenerGain()
-}
-
-//	Pauses all audio
-func Pause(source *Source) {
-	if source == nil {
-		pool.Pause(nil)
-	} else {
-		source.Pause()
-	}
-}
-
-//	Plays the specified Source
-func Play(source *Source) {
-	if source == nil {
-		pool.Resume(nil)
-	} else {
-		source.Play()
-	}
-}
-
-//	Resumes all audio
-func Resume(source *Source) {
-	if source == nil {
-		pool.Resume(nil)
-	} else {
-		source.Resume()
-	}
-}
-
-//	Rewinds all playing audio
-func Rewind(source *Source) {
-	if source == nil {
-		pool.Rewind(nil)
-	} else {
-		source.Rewind()
-	}
-}
+func GetVolume() float32    { return al.ListenerGain() }
+func Pause(source *Source)  { pool.Pause(source) }
+func Play(source *Source)   { pool.Play(source) }
+func Resume(source *Source) { pool.Resume(source) }
+func Rewind(source *Source) { pool.Rewind(source) }
+func Stop(source *Source)   { pool.Stop(source) }
 
 //	Sets the distance attenuation model
 func SetDistanceModel(model DistanceModel) {
@@ -136,11 +103,28 @@ func SetVolume(gain float32) {
 	al.SetListenerGain(gain)
 }
 
-//	Stops currently played sources.
-func Stop(source *Source) {
-	if source == nil {
-		pool.Stop(nil)
-	} else {
-		source.Stop()
+func checkError(addon string) {
+	printError(al.Error(), "[ERROR] "+addon)
+	printError(al.DeviceError(), "[DEVICE] "+addon)
+}
+
+func printError(e int32, addon string) {
+	err := ""
+	switch e {
+	case al.NoError:
+		err = ""
+	case al.InvalidName:
+		err = "invalid name"
+	case al.InvalidEnum:
+		err = "invalid enum"
+	case al.InvalidValue:
+		err = "invalid value"
+	case al.InvalidOperation:
+		err = "invalid operation"
+	case al.OutOfMemory:
+		err = "out of memory"
+	}
+	if err != "" {
+		fmt.Println(addon + ": " + err)
 	}
 }

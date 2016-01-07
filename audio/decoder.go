@@ -2,8 +2,10 @@ package audio
 
 import (
 	"errors"
-	"os"
+	"io"
+	"time"
 
+	"github.com/tanema/amore/audio/al"
 	"github.com/tanema/amore/file"
 )
 
@@ -12,19 +14,27 @@ const (
 	EXT_WAVE = ".wav"
 )
 
+// ReadSeekCloser is an io.ReadSeeker and io.Closer.
+type ReadSeekCloser interface {
+	io.ReadSeeker
+	io.Closer
+}
+
 type Decoder interface {
-	Decode(*os.File) error
-	GetBuffer() *[]byte
-	Seek(float32) bool
-	Rewind() bool
-	IsSeekable() bool
-	IsFinished() bool
-	GetSize() int
-	GetChannels() int16
-	GetBitDepth() int16
-	GetSampleRate() int32
-	durToByteOffset(float32) int64
-	byteOffsetToDur(offset int64) float64
+	readHeaders() error
+	getBuffer() []byte
+	seek(int64) bool
+	rewind() bool
+	isFinished() bool
+	getFormat() uint32
+	getSize() int32
+	getChannels() int16
+	getBitDepth() int16
+	getSampleRate() int32
+	getData() []byte
+	decode() int32
+	byteOffsetToDur(offset int32) time.Duration
+	durToByteOffset(dur time.Duration) int32
 }
 
 func decode(filepath string) (Decoder, error) {
@@ -37,14 +47,37 @@ func decode(filepath string) (Decoder, error) {
 
 	switch file.Ext(filepath) {
 	case EXT_WAVE:
-		decoder = &waveDecoder{}
+		decoder = &waveDecoder{decoderBase: decoderBase{src: src}}
 	default:
 		return nil, errors.New("unsupported audio file extention")
 	}
 
-	err = decoder.Decode(src)
+	err = decoder.readHeaders()
 	if err != nil {
 		return nil, err
 	}
+
 	return decoder, nil
+}
+
+var formatBytes = map[uint32]int32{
+	al.FormatMono8:    1,
+	al.FormatMono16:   2,
+	al.FormatStereo8:  2,
+	al.FormatStereo16: 4,
+}
+
+func getFormat(channels, depth int16) uint32 {
+	switch channels, depth := channels, depth; {
+	case channels == 1 && depth == 8:
+		return al.FormatMono8
+	case channels == 1 && depth == 16:
+		return al.FormatMono16
+	case channels == 2 && depth == 8:
+		return al.FormatStereo8
+	case channels == 2 && depth == 16:
+		return al.FormatStereo16
+	default:
+		return 0
+	}
 }
