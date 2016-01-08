@@ -25,6 +25,21 @@ const (
 	REPLACE
 )
 
+type LineStyle int
+
+const (
+	ROUGH LineStyle = iota
+	SMOOTH
+)
+
+type LineJoin int
+
+const (
+	NONE LineJoin = iota
+	MITER
+	BEVEL
+)
+
 type Viewport [4]int32 //The Viewport Values (X, Y, Width, Height)
 
 var (

@@ -56,7 +56,7 @@ TODO
 * ~~Keyboard~~
 * ~~Joystick~~
 * File [ref](https://love2d.org/wiki/love.filesystem)
-  - making assets come from config working dir
+  - make it work with go-bindata
 * ~~Timer~~
 * Cmd
   - amore new [name]
