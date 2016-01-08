@@ -2,13 +2,10 @@ package decoding
 
 import (
 	"errors"
-
-	"github.com/mccoyst/vorbis"
 )
 
 type vorbisDecoder struct {
 	decoderBase
-	handle *vorbis.Vorbis
 }
 
 func (decoder *vorbisDecoder) read() error {
