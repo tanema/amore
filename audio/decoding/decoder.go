@@ -1,3 +1,10 @@
+/*
+ * flac: 	 github.com/eaburns/flac
+ * vorbis: github.com/runningwild/gorbis || github.com/mccoyst/vorbis
+ * wav: 	 github.com/youpy/go-wav
+ * mp3: 	 github.com/tcolgate/mp3
+ */
+
 package decoding
 
 import (
@@ -7,13 +14,6 @@ import (
 
 	"github.com/tanema/amore/audio/al"
 	"github.com/tanema/amore/file"
-)
-
-const (
-	EXT_WAVE   = ".wav"
-	EXT_VORBIS = ".ogg"
-	EXT_MP3    = ".mp3"
-	EXT_MOD    = ".mod"
 )
 
 // ReadSeekCloser is an io.ReadSeeker and io.Closer.
@@ -29,12 +29,12 @@ type Decoder interface {
 	Rewind() bool
 	IsFinished() bool
 	GetFormat() uint32
-	GetSize() int32
 	GetChannels() int16
 	GetBitDepth() int16
 	GetSampleRate() int32
 	GetData() []byte
 	Decode() int
+	GetDuration() time.Duration
 	ByteOffsetToDur(offset int32) time.Duration
 	DurToByteOffset(dur time.Duration) int32
 }
@@ -49,14 +49,14 @@ func Decode(filepath string) (Decoder, error) {
 	base := decoderBase{src: src}
 
 	switch file.Ext(filepath) {
-	case EXT_WAVE:
-		decoder = &waveDecoder{base}
-	case EXT_VORBIS:
-		decoder = &vorbisDecoder{base}
-	case EXT_MP3:
-		decoder = &mp3Decoder{base}
-	case EXT_MOD:
-		decoder = &modDecoder{base}
+	case ".wav":
+		decoder = &waveDecoder{decoderBase: base}
+	case ".ogg", ".oga":
+		decoder = &vorbisDecoder{decoderBase: base}
+	case ".mp3":
+		decoder = &mp3Decoder{decoderBase: base}
+	case ".flac":
+		decoder = &flacDecoder{decoderBase: base}
 	default:
 		return nil, errors.New("unsupported audio file extention")
 	}
@@ -92,52 +92,21 @@ func getFormat(channels, depth int16) uint32 {
 }
 
 type decoderBase struct {
-	src         ReadSeekCloser
-	fileSize    int32
-	audioFormat int16
-	format      uint32
-	channels    int16
-	sampleRate  int32
-	byteRate    int32
-	blockAlign  int16
-	bitDepth    int16
-	dataSize    int32
-	duration    float32
-	headerSize  int32
-	eof         bool
-	buffer      []byte
-}
-
-func (decoder *decoderBase) Read() error {
-	panic("Decoder read headers method not implemented")
-	return nil
-}
-
-func (decoder *decoderBase) Decode() int {
-	buffer := make([]byte, 128*1024)
-	n, err := decoder.src.Read(buffer)
-	decoder.eof = (err == io.EOF)
-	decoder.buffer = buffer[:n]
-	return n
+	src        ReadSeekCloser
+	channels   int16
+	sampleRate int32
+	bitDepth   int16
+	duration   time.Duration
+	eof        bool
+	buffer     []byte
 }
 
 func (decoder *decoderBase) GetBuffer() []byte {
 	return decoder.buffer
 }
 
-func (decoder *decoderBase) GetData() []byte {
-	data := make([]byte, decoder.dataSize)
-	decoder.Rewind()
-	decoder.src.Read(data)
-	return data
-}
-
-func (decoder *decoderBase) Seek(s int64) bool {
-	_, err := decoder.src.Seek(int64(decoder.headerSize)+s, 0)
-	decoder.eof = (err == io.EOF)
-	return err == nil || decoder.eof
-}
-
+//Stubs for methods so functionality can be DRY
+func (decoder *decoderBase) Seek(s int64) bool { return false }
 func (decoder *decoderBase) Rewind() bool {
 	return decoder.Seek(0)
 }
@@ -147,29 +116,18 @@ func (decoder *decoderBase) IsFinished() bool {
 }
 
 func (decoder *decoderBase) GetFormat() uint32 {
-	return decoder.format
+	return getFormat(decoder.GetChannels(), decoder.GetBitDepth())
 }
 
-func (decoder *decoderBase) GetChannels() int16 {
-	return decoder.channels
-}
-
-func (decoder *decoderBase) GetBitDepth() int16 {
-	return decoder.bitDepth
-}
-
-func (decoder *decoderBase) GetSampleRate() int32 {
-	return decoder.sampleRate
-}
-
-func (decoder *decoderBase) GetSize() int32 {
-	return decoder.dataSize
-}
+func (decoder *decoderBase) GetSampleRate() int32       { return decoder.sampleRate }
+func (decoder *decoderBase) GetChannels() int16         { return decoder.channels }
+func (decoder *decoderBase) GetBitDepth() int16         { return decoder.bitDepth }
+func (decoder *decoderBase) GetDuration() time.Duration { return decoder.duration }
 
 func (decoder *decoderBase) ByteOffsetToDur(offset int32) time.Duration {
-	return time.Duration(offset * formatBytes[decoder.format] * int32(time.Second) / decoder.sampleRate)
+	return time.Duration(offset * formatBytes[decoder.GetFormat()] * int32(time.Second) / decoder.GetSampleRate())
 }
 
 func (decoder *decoderBase) DurToByteOffset(dur time.Duration) int32 {
-	return int32(dur) * int32(decoder.sampleRate) / (formatBytes[decoder.format] * int32(time.Second))
+	return int32(dur) * int32(decoder.GetSampleRate()) / (formatBytes[decoder.GetFormat()] * int32(time.Second))
 }

@@ -148,6 +148,10 @@ func (s *Source) GetChannels() int16 {
 	return s.decoder.GetChannels()
 }
 
+func (s *Source) GetDuration() time.Duration {
+	return s.decoder.GetDuration()
+}
+
 // Gets the Source's directional volume cones.
 func (s *Source) GetCone() (float32, float32, float32) {
 	if s.isValid() {
@@ -338,16 +342,6 @@ func (s *Source) SetVolumeLimits(min, max float32) {
 	s.reset()
 }
 
-// Pauses a source.
-func (s *Source) Pause() {
-	if s.isValid() {
-		pool.mutex.Lock()
-		defer pool.mutex.Unlock()
-		al.PauseSources(s.source)
-		s.paused = true
-	}
-}
-
 //Plays a source.
 func (s *Source) Play() bool {
 	if s.IsPlaying() {
@@ -407,6 +401,16 @@ func (s *Source) stream(buffer al.Buffer) int {
 		s.decoder.Rewind()
 	}
 	return decoded
+}
+
+// Pauses a source.
+func (s *Source) Pause() {
+	if s.isValid() {
+		pool.mutex.Lock()
+		defer pool.mutex.Unlock()
+		al.PauseSources(s.source)
+		s.paused = true
+	}
 }
 
 //Resumes a paused source.
