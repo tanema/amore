@@ -25,21 +25,6 @@ const (
 	REPLACE
 )
 
-type LineStyle int
-
-const (
-	ROUGH LineStyle = iota
-	SMOOTH
-)
-
-type LineJoin int
-
-const (
-	NONE LineJoin = iota
-	MITER
-	BEVEL
-)
-
 type Viewport [4]int32 //The Viewport Values (X, Y, Width, Height)
 
 var (
@@ -56,12 +41,17 @@ var (
 	pointSize              float32
 	framebufferSRGBEnabled bool
 	defaultTexture         uint32
+	pixelSizeStack         []float32
 	projectionStack        *matstack.MatStack
 	viewStack              *matstack.MatStack
-	modelIdent             = mgl32.Ident4()
-	screen_width           = 0
-	screen_height          = 0
-	wireframe              = false
+	modelIdent                     = mgl32.Ident4()
+	screen_width                   = 0
+	screen_height                  = 0
+	wireframe                      = false
+	line_join                      = LINE_JOIN_MITER
+	line_style                     = LINE_SMOOTH
+	line_width             float32 = 1.0
+	current_color          Color
 )
 
 func InitContext(w, h int) {
@@ -103,6 +93,7 @@ func InitContext(w, h int) {
 	// Set pixel row alignment
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
+	pixelSizeStack = []float32{1.0}
 	//default matricies
 	projectionStack = matstack.NewMatStack()
 	viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
@@ -184,6 +175,7 @@ func Clear() {
 
 func Origin() {
 	viewStack.LoadIdent()
+	pixelSizeStack[len(pixelSizeStack)-1] = 1.0
 }
 
 func Translate(x, y float32) {
@@ -207,6 +199,8 @@ func Scale(args ...float32) {
 	}
 
 	viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
+
+	pixelSizeStack[len(pixelSizeStack)-1] = pixelSizeStack[len(pixelSizeStack)-1] * (2.0 / (mgl32.Abs(sx) + mgl32.Abs(sy)))
 }
 
 func Shear(args ...float32) {
@@ -226,10 +220,12 @@ func Shear(args ...float32) {
 
 func Push() {
 	viewStack.Push()
+	pixelSizeStack = append(pixelSizeStack, pixelSizeStack[len(pixelSizeStack)-1]) //push
 }
 
 func Pop() {
 	viewStack.Pop()
+	pixelSizeStack = pixelSizeStack[:len(pixelSizeStack)-1] //pop
 }
 
 func setScissor(x, y, width, height int32) {
@@ -257,12 +253,29 @@ func GetScissor() (int32, int32, int32, int32) {
 	return scissor[0], scissor[1], scissor[2], scissor[3]
 }
 
-func SetLineWidth(width float32) {}
-func SetLineStyle(style int)     {}
-func SetLineJoin(join int)       {}
-func GetLineWidth()              {}
-func GetLineStyle()              {}
-func GetLineJoin()               {}
+func SetLineWidth(width float32) {
+	line_width = width
+}
+
+func SetLineStyle(style LineStyle) {
+	line_style = style
+}
+
+func SetLineJoin(join LineJoin) {
+	line_join = join
+}
+
+func GetLineWidth() float32 {
+	return line_width
+}
+
+func GetLineStyle() LineStyle {
+	return line_style
+}
+
+func GetLineJoin() LineJoin {
+	return line_join
+}
 
 func SetPointSize(size float32) {
 	pointSize = size
@@ -299,7 +312,17 @@ func SetBackgroundColor(r, g, b, a float32) {
 }
 
 func SetColor(r, g, b, a float32) {
+	current_color = Color{r / 255.0, g / 255.0, b / 255.0, a / 255.0}
 	gl.VertexAttrib4f(ATTRIB_COLOR, r/255.0, g/255.0, b/255.0, a/255.0)
+}
+
+func SetColorC(c Color) {
+	current_color = c
+	gl.VertexAttrib4f(ATTRIB_COLOR, c[0], c[1], c[2], c[3])
+}
+
+func GetColor() Color {
+	return current_color
 }
 
 func SetBlendMode(mode BlendMode) {

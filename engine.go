@@ -9,15 +9,11 @@ import (
 	"github.com/tanema/amore/window"
 )
 
-type LoadCb func()
-type UpdateCb func(float32)
-type DrawCb func()
-
 var (
 	current_window *window.Window
 )
 
-func Start(load LoadCb, update UpdateCb, draw DrawCb) (err error) {
+func Start(load func(), update func(float32), draw func()) (err error) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	runtime.LockOSThread()
 

@@ -96,12 +96,8 @@ func Line(args ...float32) {
 }
 
 func PolyLine(coords []float32) {
-	PrepareDraw(nil)
-	BindTexture(defaultTexture)
-	gl.EnableVertexAttribArray(ATTRIB_POS)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
-	gl.DrawArrays(gl.LINE_STRIP, 0, int32(len(coords))/2)
-	gl.DisableVertexAttribArray(ATTRIB_POS)
+	polyline := newPolyLine(line_join, line_style, line_width, pixelSizeStack[len(pixelSizeStack)-1])
+	polyline.render(coords)
 }
 
 func Rect(mode string, x, y, w, h float32) {
