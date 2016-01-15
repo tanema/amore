@@ -24,10 +24,10 @@ TODO
     * Ogg Vorbis
     * MOD
 * GFX [ref](https://love2d.org/wiki/love.graphics)
-  - primitives
+  - ~~primitives~~
     * ~~polygons~~
     * ~~polyline~~
-    * line styles
+    * ~~line styles~~
     * ~~color~~
   - ~~Transforms~~
     * ~~rotate~~

@@ -37,21 +37,27 @@ var (
 	maxRenderbufferSamples int32
 	maxTextureUnits        int32
 	viewport               Viewport
-	scissor                Viewport
 	pointSize              float32
 	framebufferSRGBEnabled bool
 	defaultTexture         uint32
-	pixelSizeStack         []float32
 	projectionStack        *matstack.MatStack
 	viewStack              *matstack.MatStack
-	modelIdent                     = mgl32.Ident4()
-	screen_width                   = 0
-	screen_height                  = 0
-	wireframe                      = false
-	line_join                      = LINE_JOIN_MITER
-	line_style                     = LINE_SMOOTH
-	line_width             float32 = 1.0
-	current_color          Color
+	modelIdent             = mgl32.Ident4()
+	screen_width           = 0
+	screen_height          = 0
+	defaultShader          *Shader
+	//display state
+	wireframe        = false
+	currentShader    *Shader
+	scissor          Viewport
+	blend_mode       BlendMode
+	pixelSizeStack   []float32
+	line_join        LineJoin  = LINE_JOIN_MITER
+	line_style       LineStyle = LINE_SMOOTH
+	line_width       float32   = 1.0
+	current_font     *Font
+	current_color    Color
+	background_color Color
 )
 
 func InitContext(w, h int) {
@@ -308,6 +314,7 @@ func SetShader(shader *Shader) {
 }
 
 func SetBackgroundColor(r, g, b, a float32) {
+	background_color = Color{r / 255.0, g / 255.0, b / 255.0, a / 255.0}
 	gl.ClearColor(r/255.0, g/255.0, b/255.0, a/255.0)
 }
 
@@ -370,4 +377,5 @@ func SetBlendMode(mode BlendMode) {
 
 	gl.BlendEquation(uint32(fn))
 	gl.BlendFuncSeparate(uint32(srcRGB), uint32(dstRGB), uint32(srcA), uint32(dstA))
+	blend_mode = mode
 }

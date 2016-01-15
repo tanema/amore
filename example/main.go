@@ -63,6 +63,7 @@ func update(deltaTime float32) {
 }
 
 func draw() {
+	gfx.SetLineWidth(10)
 	if use_shader {
 		gfx.SetShader(shader)
 	} else {

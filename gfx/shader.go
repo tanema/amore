@@ -13,11 +13,6 @@ import (
 
 type BuiltinUniform int
 
-var (
-	currentShader *Shader
-	defaultShader *Shader
-)
-
 type Shader struct {
 	vertex_code string
 	pixel_code  string

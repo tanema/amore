@@ -3,6 +3,7 @@ package gfx
 import (
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"math"
 )
 
 type (
@@ -71,7 +72,6 @@ func (polyline *polyLine) render(coords []float32) {
 
 	coords_count := len(coords)
 	is_looping := (coords[0] == coords[coords_count-2]) && (coords[1] == coords[coords_count-1])
-	// compute sleeve
 	if !is_looping { // virtual starting point at second point mirrored on first point
 		sleeve = mgl32.Vec2{coords[2] - coords[0], coords[3] - coords[1]}
 	} else { // virtual starting point at last vertex
@@ -91,25 +91,11 @@ func (polyline *polyLine) render(coords []float32) {
 		polyline.renderEdge(sleeve, next, next.Add(sleeve))
 	}
 
-	//fmt.Println(polyline.vertices)
-
-	PrepareDraw(nil)
-	BindTexture(defaultTexture)
-	gl.EnableVertexAttribArray(ATTRIB_POS)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
-	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(polyline.vertices)))
-	if polyline.overdraw { // prepare colors:
-		c := GetColor()
-		overdraw := polyline.renderOverdraw(is_looping)
-		colors := polyline.generateColorArray(len(overdraw), c)
-		gl.EnableVertexAttribArray(ATTRIB_COLOR)
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
-		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(overdraw)))
-		gl.DisableVertexAttribArray(ATTRIB_COLOR)
-		SetColorC(c)
+	if polyline.join == LINE_JOIN_NONE {
+		polyline.vertices = polyline.vertices[2 : len(polyline.vertices)-2]
 	}
-	gl.DisableVertexAttribArray(ATTRIB_POS)
+
+	polyline.draw(is_looping)
 }
 
 func (polyline *polyLine) renderEdge(sleeve, current, next mgl32.Vec2) {
@@ -135,14 +121,14 @@ func (polyline *polyLine) generateEdges(current mgl32.Vec2, count int) {
 func (polyline *polyLine) renderNoEdge(sleeve, current, next mgl32.Vec2) {
 	sleeve_normal := getNormal(sleeve, polyline.halfwidth/sleeve.Len())
 
-	polyline.normals = append(polyline.normals, mgl32.Vec2{-sleeve_normal[0], -sleeve_normal[1]})
 	polyline.normals = append(polyline.normals, sleeve_normal)
+	polyline.normals = append(polyline.normals, sleeve_normal.Mul(-1))
 
 	sleeve = next.Sub(current)
 	sleeve_normal = getNormal(sleeve, polyline.halfwidth/sleeve.Len())
 
+	polyline.normals = append(polyline.normals, sleeve_normal.Mul(-1))
 	polyline.normals = append(polyline.normals, sleeve_normal)
-	polyline.normals = append(polyline.normals, mgl32.Vec2{-sleeve_normal[0], -sleeve_normal[1]})
 
 	polyline.generateEdges(current, 4)
 }
@@ -188,7 +174,6 @@ func (polyline *polyLine) renderMiterEdge(sleeve, current, next mgl32.Vec2) {
 	sleeve_normal := getNormal(sleeve, polyline.halfwidth/sleeve.Len())
 	t := next.Sub(current)
 	len_t := t.Len()
-	nt := getNormal(t, polyline.halfwidth/len_t)
 
 	det := determinant(sleeve, t)
 	// lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
@@ -197,6 +182,7 @@ func (polyline *polyLine) renderMiterEdge(sleeve, current, next mgl32.Vec2) {
 		polyline.normals = append(polyline.normals, sleeve_normal.Mul(-1))
 	} else {
 		// cramers rule
+		nt := getNormal(t, polyline.halfwidth/len_t)
 		lambda := determinant(nt.Sub(sleeve_normal), t) / det
 		d := sleeve_normal.Add(sleeve.Mul(lambda))
 
@@ -232,9 +218,8 @@ func (polyline *polyLine) renderBevelEdge(sleeve, current, next mgl32.Vec2) {
 		// lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
 		n := getNormal(t, polyline.halfwidth/len_t)
 		polyline.normals = append(polyline.normals, n)
-		polyline.vertices = append(polyline.vertices, current.Add(polyline.normals[len(polyline.normals)-1]))
 		polyline.normals = append(polyline.normals, n.Mul(-1))
-		polyline.vertices = append(polyline.vertices, current.Add(polyline.normals[len(polyline.normals)-1]))
+		polyline.generateEdges(current, 2)
 		return // early out
 	}
 
@@ -261,17 +246,17 @@ func (polyline *polyLine) renderBevelEdge(sleeve, current, next mgl32.Vec2) {
 func (polyline *polyLine) renderOverdraw(is_looping bool) []mgl32.Vec2 {
 	switch polyline.join {
 	case LINE_JOIN_NONE:
-		return polyline.renderNoneOverdraw()
+		return polyline.renderTrianglesOverdraw()
 	case LINE_JOIN_MITER:
 		fallthrough
 	case LINE_JOIN_BEVEL:
 		fallthrough
 	default:
-		return polyline.renderMainOverdraw(is_looping)
+		return polyline.renderTriangleStripOverdraw(is_looping)
 	}
 }
 
-func (polyline *polyLine) renderMainOverdraw(is_looping bool) []mgl32.Vec2 {
+func (polyline *polyLine) renderTriangleStripOverdraw(is_looping bool) []mgl32.Vec2 {
 	overdraw_vertex_count := 2 * len(polyline.vertices)
 	if !is_looping {
 		overdraw_vertex_count += 2
@@ -315,7 +300,7 @@ func (polyline *polyLine) renderMainOverdraw(is_looping bool) []mgl32.Vec2 {
 	return overdraw
 }
 
-func (polyline *polyLine) renderNoneOverdraw() []mgl32.Vec2 {
+func (polyline *polyLine) renderTrianglesOverdraw() []mgl32.Vec2 {
 	overdraw_vertex_count := 4 * (len(polyline.vertices) - 2) // less than ideal
 	overdraw := make([]mgl32.Vec2, overdraw_vertex_count)
 	for i := 2; i+3 < len(polyline.vertices); i += 4 {
@@ -355,4 +340,81 @@ func (polyline *polyLine) generateColorArray(count int, c Color) []Color {
 		}
 	}
 	return colors
+}
+
+func (polyline *polyLine) draw(is_looping bool) {
+	switch polyline.join {
+	case LINE_JOIN_NONE:
+		polyline.drawTriangles(is_looping)
+	case LINE_JOIN_MITER:
+		fallthrough
+	case LINE_JOIN_BEVEL:
+		fallthrough
+	default:
+		polyline.drawTriangleStrip(is_looping)
+	}
+}
+
+func (polyline *polyLine) drawTriangles(is_looping bool) {
+	numindices := (len(polyline.vertices) / 4) * 6
+
+	var overdraw_verts []mgl32.Vec2
+	if polyline.overdraw {
+		overdraw_verts = polyline.renderOverdraw(is_looping)
+		numindices = int(math.Max(float64(numindices), float64((len(overdraw_verts)/4)*6)))
+	}
+
+	indices := make([]uint16, numindices)
+
+	// Fill the index array to make 2 triangles from each quad.
+	// NOTE: The triangle vertex ordering here is important!
+	for i := 0; i < numindices/6; i++ {
+		// First triangle.
+		indices[i*6+0] = uint16(i*4 + 0)
+		indices[i*6+1] = uint16(i*4 + 1)
+		indices[i*6+2] = uint16(i*4 + 2)
+
+		// Second triangle.
+		indices[i*6+3] = uint16(i*4 + 0)
+		indices[i*6+4] = uint16(i*4 + 2)
+		indices[i*6+5] = uint16(i*4 + 3)
+	}
+
+	PrepareDraw(nil)
+	BindTexture(defaultTexture)
+	gl.EnableVertexAttribArray(ATTRIB_POS)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
+	gl.DrawElements(gl.TRIANGLES, int32((len(polyline.vertices)/4)*6), gl.UNSIGNED_SHORT, gl.Ptr(indices))
+	if polyline.overdraw {
+		c := GetColor()
+		colors := polyline.generateColorArray(len(overdraw_verts), c)
+		gl.EnableVertexAttribArray(ATTRIB_COLOR)
+		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw_verts))
+		gl.DrawElements(gl.TRIANGLES, int32((len(overdraw_verts)/4)*6), gl.UNSIGNED_SHORT, gl.Ptr(indices))
+		gl.DisableVertexAttribArray(ATTRIB_COLOR)
+		SetColorC(c)
+	}
+
+	gl.DisableVertexAttribArray(ATTRIB_POS)
+}
+
+func (polyline *polyLine) drawTriangleStrip(is_looping bool) {
+	PrepareDraw(nil)
+	BindTexture(defaultTexture)
+	gl.EnableVertexAttribArray(ATTRIB_POS)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
+	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(polyline.vertices)))
+	if polyline.overdraw { // prepare colors:
+		c := GetColor()
+		overdraw := polyline.renderOverdraw(is_looping)
+		colors := polyline.generateColorArray(len(overdraw), c)
+		gl.EnableVertexAttribArray(ATTRIB_COLOR)
+		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
+		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(overdraw)))
+		gl.DisableVertexAttribArray(ATTRIB_COLOR)
+		SetColorC(c)
+	}
+	gl.DisableVertexAttribArray(ATTRIB_POS)
 }

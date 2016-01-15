@@ -14,8 +14,6 @@ import (
 	"github.com/tanema/freetype-go/freetype"
 )
 
-var current_font *Font
-
 type Font struct {
 	img     image.Image
 	Texture *Texture
