@@ -55,6 +55,9 @@ func keyUp(key keyboard.Key) {
 	if key == keyboard.Key3 {
 		bomb.Play()
 	}
+	if key == keyboard.Key4 {
+		window.GetCurrent().ShowMessageBox("title", "this is a message", []string{"cancel all", "no", "yes"}, window.MESSAGEBOX_WARNING, false)
+	}
 }
 
 func update(deltaTime float32) {

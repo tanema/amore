@@ -441,6 +441,41 @@ func (window *Window) ShowSimpleMessageBox(title, message string, box_type Messa
 	return sdl.ShowSimpleMessageBox(uint32(box_type), title, message, sdlwindow)
 }
 
+func (window *Window) ShowMessageBox(title, message string, buttons []string, box_type MessageBoxType, attachtowindow bool) string {
+	var sdlwindow *sdl.Window
+	if attachtowindow {
+		sdlwindow = window.sdl_window
+	}
+
+	sdl_buttons := []sdl.MessageBoxButtonData{}
+	for i, button_text := range buttons {
+		new_button := sdl.MessageBoxButtonData{
+			ButtonId: int32(i),
+			Text:     button_text,
+		}
+		if i == len(buttons)-1 {
+			new_button.Flags |= sdl.MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT
+		}
+		if i == 0 {
+			new_button.Flags |= sdl.MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT
+		}
+		sdl_buttons = append(sdl_buttons, new_button)
+	}
+
+	messageboxdata := sdl.MessageBoxData{
+		Flags:      uint32(box_type),
+		Window:     sdlwindow,
+		Title:      title,
+		Message:    message,
+		NumButtons: int32(len(sdl_buttons)),
+		Buttons:    sdl_buttons,
+	}
+
+	var buttonid int32
+	sdl.ShowMessageBox(&messageboxdata, &buttonid)
+	return buttons[buttonid]
+}
+
 func (window *Window) HasFocus() bool {
 	return sdl.GetKeyboardFocus() == window.sdl_window
 }
