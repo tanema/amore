@@ -445,6 +445,13 @@ func (window *Window) HasFocus() bool {
 	return sdl.GetKeyboardFocus() == window.sdl_window
 }
 
+func (window *Window) RequestAttention(continuous bool) {
+	if window.HasFocus() {
+		return
+	}
+	requestAttention(continuous)
+}
+
 func (window *Window) HasMouseFocus() bool {
 	return sdl.GetMouseFocus() == window.sdl_window
 }

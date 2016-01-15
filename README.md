@@ -48,9 +48,8 @@ TODO
     * sendTexture / texture pool
     * temporary attach to send variables to a non attached shader
 * ~~Events~~
-* Window [ref](https://love2d.org/wiki/love.window)
+* Window [ref](https://love2d.org/wiki/love.window) (Need support from SDL library)
   - non simple message box
-  - request attention
 * ~~System~~
 * ~~Mouse~~
 * ~~Keyboard~~
@@ -75,6 +74,7 @@ TODO
     - bundle assets
     - go build every OS
   - amore version
+* windows support
 * Wiki
 * Mobile Support
 * Simplify Cross-Compilation possibly with [shared libraries already linked to c libs](http://blog.ralch.com/tutorial/golang-sharing-libraries/)

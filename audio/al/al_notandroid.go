@@ -21,6 +21,11 @@ package al
 #include <stdlib.h>
 #include <AL/al.h>
 #endif
+
+#ifdef GOOS_windows
+#include <stdlib.h>
+#include <AL/al.h>
+#endif
 */
 import "C"
 import "unsafe"
