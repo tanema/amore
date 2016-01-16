@@ -84,7 +84,7 @@ func Ellipsep(mode string, x, y, a, b float32, points int) {
 
 func Point(x, y float32) {
 	PrepareDraw(nil)
-	BindTexture(defaultTexture)
+	BindTexture(gl_state.defaultTexture)
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{x, y}))
 	gl.DrawArrays(gl.POINTS, 0, 1)
@@ -96,7 +96,7 @@ func Line(args ...float32) {
 }
 
 func PolyLine(coords []float32) {
-	polyline := newPolyLine(line_join, line_style, line_width, pixelSizeStack[len(pixelSizeStack)-1])
+	polyline := newPolyLine(states.back().line_join, states.back().line_style, states.back().line_width, states.back().pixelSize)
 	polyline.render(coords)
 }
 
@@ -109,7 +109,7 @@ func Polygon(mode string, coords []float32) {
 		PolyLine(coords)
 	} else {
 		PrepareDraw(nil)
-		BindTexture(defaultTexture)
+		BindTexture(gl_state.defaultTexture)
 		gl.EnableVertexAttribArray(ATTRIB_POS)
 		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, int32(len(coords))/2-1)

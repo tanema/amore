@@ -36,28 +36,13 @@ var (
 	maxRenderTargets       int32
 	maxRenderbufferSamples int32
 	maxTextureUnits        int32
-	viewport               Viewport
-	pointSize              float32
-	framebufferSRGBEnabled bool
-	defaultTexture         uint32
-	projectionStack        *matstack.MatStack
-	viewStack              *matstack.MatStack
-	modelIdent             = mgl32.Ident4()
 	screen_width           = 0
 	screen_height          = 0
+	modelIdent             = mgl32.Ident4()
 	defaultShader          *Shader
-	//display state
-	wireframe        = false
-	currentShader    *Shader
-	scissor          Viewport
-	blend_mode       BlendMode
-	pixelSizeStack   []float32
-	line_join        LineJoin  = LINE_JOIN_MITER
-	line_style       LineStyle = LINE_SMOOTH
-	line_width       float32   = 1.0
-	current_font     *Font
-	current_color    Color
-	background_color Color
+
+	gl_state = glState{}
+	states   = displayStateStack{newDisplayState()}
 )
 
 func InitContext(w, h int) {
@@ -71,14 +56,14 @@ func InitContext(w, h int) {
 	//Get system info
 	opengl_version = gl.GoStr(gl.GetString(gl.VERSION))
 	opengl_vendor = gl.GoStr(gl.GetString(gl.VENDOR))
-	framebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
-	gl.GetIntegerv(gl.VIEWPORT, &viewport[0])
+	gl_state.framebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
+	gl.GetIntegerv(gl.VIEWPORT, &gl_state.viewport[0])
 	// And the current scissor - but we need to compensate for GL scissors
 	// starting at the bottom left instead of top left.
-	gl.GetIntegerv(gl.SCISSOR_BOX, &scissor[0])
-	scissor[1] = viewport[3] - (scissor[1] + scissor[3])
+	gl.GetIntegerv(gl.SCISSOR_BOX, &states.back().scissorBox[0])
+	states.back().scissorBox[1] = gl_state.viewport[3] - (states.back().scissorBox[1] + states.back().scissorBox[3])
 
-	gl.GetFloatv(gl.POINT_SIZE, &pointSize)
+	gl.GetFloatv(gl.POINT_SIZE, &states.back().pointSize)
 	gl.GetFloatv(gl.MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy)
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
 	gl.GetIntegerv(gl.MAX_SAMPLES, &maxRenderbufferSamples)
@@ -99,10 +84,9 @@ func InitContext(w, h int) {
 	// Set pixel row alignment
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
-	pixelSizeStack = []float32{1.0}
 	//default matricies
-	projectionStack = matstack.NewMatStack()
-	viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
+	gl_state.projectionStack = matstack.NewMatStack()
+	gl_state.viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
 
 	SetViewportSize(w, h)
 	SetBackgroundColor(0, 0, 0, 1)
@@ -120,8 +104,8 @@ func InitContext(w, h int) {
 // primitives, which would create the need to use different "passthrough"
 // shaders for untextured primitives vs images.
 func createDefaultTexture() {
-	gl.GenTextures(1, &defaultTexture)
-	BindTexture(defaultTexture)
+	gl.GenTextures(1, &gl_state.defaultTexture)
+	BindTexture(gl_state.defaultTexture)
 
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
@@ -137,11 +121,11 @@ func PrepareDraw(model *mgl32.Mat4) {
 		model = &modelIdent
 	}
 
-	currentShader.SendMat4("ProjectionMat", projectionStack.Peek())
-	currentShader.SendMat4("ViewMat", viewStack.Peek())
-	currentShader.SendMat4("ModelMat", *model)
-	currentShader.SendFloat("ScreenSize", float32(screen_width), float32(screen_height), 0, 0)
-	currentShader.SendFloat("PointSize", pointSize)
+	states.back().shader.SendMat4("ProjectionMat", gl_state.projectionStack.Peek())
+	states.back().shader.SendMat4("ViewMat", gl_state.viewStack.Peek())
+	states.back().shader.SendMat4("ModelMat", *model)
+	states.back().shader.SendFloat("ScreenSize", float32(screen_width), float32(screen_height), 0, 0)
+	states.back().shader.SendFloat("PointSize", states.back().pointSize)
 }
 
 func BindTexture(texture uint32) {
@@ -151,12 +135,12 @@ func BindTexture(texture uint32) {
 
 func DeInit() {
 	UnloadAll()
-	gl.DeleteTextures(1, &defaultTexture)
-	defaultTexture = 0
+	gl.DeleteTextures(1, &gl_state.defaultTexture)
+	gl_state.defaultTexture = 0
 }
 
 func GetViewport() Viewport {
-	return viewport
+	return gl_state.viewport
 }
 
 func SetViewportSize(w, h int) {
@@ -164,9 +148,9 @@ func SetViewportSize(w, h int) {
 	screen_height = h
 	// Set the viewport to top-left corner.
 	gl.Viewport(0, 0, int32(screen_width), int32(screen_height))
-	viewport = Viewport{0, 0, int32(screen_width), int32(screen_height)}
-	projectionStack.Load(mgl32.Ortho(0, float32(screen_width), float32(screen_height), 0, -1, 1))
-	setScissor(scissor[0], scissor[1], scissor[2], scissor[3])
+	gl_state.viewport = Viewport{0, 0, int32(screen_width), int32(screen_height)}
+	gl_state.projectionStack.Load(mgl32.Ortho(0, float32(screen_width), float32(screen_height), 0, -1, 1))
+	setScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
 }
 
 func Reset() {
@@ -180,16 +164,16 @@ func Clear() {
 }
 
 func Origin() {
-	viewStack.LoadIdent()
-	pixelSizeStack[len(pixelSizeStack)-1] = 1.0
+	gl_state.viewStack.LoadIdent()
+	states.back().pixelSize = 1.0
 }
 
 func Translate(x, y float32) {
-	viewStack.LeftMul(mgl32.Translate3D(x, y, 0))
+	gl_state.viewStack.LeftMul(mgl32.Translate3D(x, y, 0))
 }
 
 func Rotate(angle float32) {
-	viewStack.LeftMul(mgl32.HomogRotate3D(angle, mgl32.Vec3{0, 0, 1}))
+	gl_state.viewStack.LeftMul(mgl32.HomogRotate3D(angle, mgl32.Vec3{0, 0, 1}))
 }
 
 func Scale(args ...float32) {
@@ -204,9 +188,9 @@ func Scale(args ...float32) {
 		sy = sx
 	}
 
-	viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
+	gl_state.viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
 
-	pixelSizeStack[len(pixelSizeStack)-1] = pixelSizeStack[len(pixelSizeStack)-1] * (2.0 / (mgl32.Abs(sx) + mgl32.Abs(sy)))
+	states.back().pixelSize *= (2.0 / (mgl32.Abs(sx) + mgl32.Abs(sy)))
 }
 
 func Shear(args ...float32) {
@@ -221,17 +205,17 @@ func Shear(args ...float32) {
 		ky = kx
 	}
 
-	viewStack.LeftMul(mgl32.ShearX3D(kx, ky))
+	gl_state.viewStack.LeftMul(mgl32.ShearX3D(kx, ky))
 }
 
 func Push() {
-	viewStack.Push()
-	pixelSizeStack = append(pixelSizeStack, pixelSizeStack[len(pixelSizeStack)-1]) //push
+	gl_state.viewStack.Push()
+	states.push(*states.back())
 }
 
 func Pop() {
-	viewStack.Pop()
-	pixelSizeStack = pixelSizeStack[:len(pixelSizeStack)-1] //pop
+	gl_state.viewStack.Pop()
+	states.pop()
 }
 
 func setScissor(x, y, width, height int32) {
@@ -240,9 +224,10 @@ func setScissor(x, y, width, height int32) {
 	} else {
 		// With no Canvas active, we need to compensate for glScissor starting
 		// from the lower left of the viewport instead of the top left.
-		gl.Scissor(x, viewport[3]-(y+height), width, height)
+		gl.Scissor(x, gl_state.viewport[3]-(y+height), width, height)
 	}
-	scissor = Viewport{x, y, width, height}
+	states.back().scissorBox = Viewport{x, y, width, height}
+	states.back().scissor = true
 }
 
 func SetScissor(x, y, width, height int32) {
@@ -253,42 +238,52 @@ func SetScissor(x, y, width, height int32) {
 
 func ClearScissor() {
 	gl.Disable(gl.SCISSOR_TEST)
+	states.back().scissor = false
 }
 
 func GetScissor() (int32, int32, int32, int32) {
-	return scissor[0], scissor[1], scissor[2], scissor[3]
+	return states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3]
+}
+
+func SetColorMask(mask ColorMask) {
+	gl.ColorMask(mask.r, mask.g, mask.b, mask.a)
+	states.back().colorMask = mask
+}
+
+func GetColorMask() ColorMask {
+	return states.back().colorMask
 }
 
 func SetLineWidth(width float32) {
-	line_width = width
+	states.back().line_width = width
 }
 
 func SetLineStyle(style LineStyle) {
-	line_style = style
+	states.back().line_style = style
 }
 
 func SetLineJoin(join LineJoin) {
-	line_join = join
+	states.back().line_join = join
 }
 
 func GetLineWidth() float32 {
-	return line_width
+	return states.back().line_width
 }
 
 func GetLineStyle() LineStyle {
-	return line_style
+	return states.back().line_style
 }
 
 func GetLineJoin() LineJoin {
-	return line_join
+	return states.back().line_join
 }
 
 func SetPointSize(size float32) {
-	pointSize = size
+	states.back().pointSize = size
 }
 
 func GetPointSize() float32 {
-	return pointSize
+	return states.back().pointSize
 }
 
 func SetWireframe(enable bool) {
@@ -297,39 +292,47 @@ func SetWireframe(enable bool) {
 	} else {
 		gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
 	}
-	wireframe = enable
+	states.back().wireframe = enable
 }
 
 func IsWireframe() bool {
-	return wireframe
+	return states.back().wireframe
 }
 
 func SetShader(shader *Shader) {
 	if shader == nil {
-		currentShader = defaultShader
+		states.back().shader = defaultShader
 	} else {
-		currentShader = shader
+		states.back().shader = shader
 	}
-	currentShader.Attach()
+	states.back().shader.Attach()
 }
 
 func SetBackgroundColor(r, g, b, a float32) {
-	background_color = Color{r / 255.0, g / 255.0, b / 255.0, a / 255.0}
+	states.back().background_color = Color{r / 255.0, g / 255.0, b / 255.0, a / 255.0}
 	gl.ClearColor(r/255.0, g/255.0, b/255.0, a/255.0)
 }
 
 func SetColor(r, g, b, a float32) {
-	current_color = Color{r / 255.0, g / 255.0, b / 255.0, a / 255.0}
+	states.back().color = Color{r / 255.0, g / 255.0, b / 255.0, a / 255.0}
 	gl.VertexAttrib4f(ATTRIB_COLOR, r/255.0, g/255.0, b/255.0, a/255.0)
 }
 
 func SetColorC(c Color) {
-	current_color = c
+	states.back().color = c
 	gl.VertexAttrib4f(ATTRIB_COLOR, c[0], c[1], c[2], c[3])
 }
 
 func GetColor() Color {
-	return current_color
+	return states.back().color
+}
+
+func SetFont(font *Font) {
+	states.back().font = font
+}
+
+func GetFont() *Font {
+	return states.back().font
 }
 
 func SetBlendMode(mode BlendMode) {
@@ -377,5 +380,5 @@ func SetBlendMode(mode BlendMode) {
 
 	gl.BlendEquation(uint32(fn))
 	gl.BlendFuncSeparate(uint32(srcRGB), uint32(dstRGB), uint32(srcA), uint32(dstA))
-	blend_mode = mode
+	states.back().blend_mode = mode
 }

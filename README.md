@@ -37,19 +37,18 @@ TODO
   - ~~Textures~~
   - ~~Images~~
   - ~~Font~~
-  - Framebuffer / Canvas
-  - Quad
-  - Mesh
+  - Canvas
   - screenshot
+  - Quad
   - SpriteBatch
+  - Mesh
   - Shader 
     * ~~Uniforms~~
     * ~~default shaders~~
     * sendTexture / texture pool
     * temporary attach to send variables to a non attached shader
 * ~~Events~~
-* Window [ref](https://love2d.org/wiki/love.window) (Need support from SDL library)
-  - non simple message box
+* ~~Window~~ [ref](https://love2d.org/wiki/love.window) (Need support from SDL library)
 * ~~System~~
 * ~~Mouse~~
 * ~~Keyboard~~

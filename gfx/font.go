@@ -184,16 +184,12 @@ func (f *Font) UnloadVolatile() {
 	if f.Texture != nil {
 		return
 	}
-
 	f.Texture.Release()
 	f.Texture = nil
 }
 
-func SetFont(font *Font) {
-	current_font = font
-}
-
 func Printf(x, y float32, fs string, argv ...interface{}) {
+	current_font := states.back().font
 	if current_font == nil {
 		return
 	}

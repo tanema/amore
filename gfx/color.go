@@ -2,6 +2,10 @@ package gfx
 
 type Color [4]float32
 
+type ColorMask struct {
+	r, g, b, a bool
+}
+
 func (color *Color) RGB() (r, g, b float32) {
 	return color[0], color[1], color[2]
 }
