@@ -56,7 +56,7 @@ func keyUp(key keyboard.Key) {
 		bomb.Play()
 	}
 	if key == keyboard.Key4 {
-		window.GetCurrent().ShowMessageBox("title", "this is a message", []string{"cancel all", "no", "yes"}, window.MESSAGEBOX_WARNING, false)
+		println(window.GetCurrent().ShowMessageBox("title", "this is a message", []string{"yes", "no", "cancel all"}, window.MESSAGEBOX_WARNING, false))
 	}
 }
 

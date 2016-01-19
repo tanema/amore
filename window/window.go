@@ -453,10 +453,10 @@ func (window *Window) ShowMessageBox(title, message string, buttons []string, bo
 			ButtonId: int32(i),
 			Text:     button_text,
 		}
-		if i == len(buttons)-1 {
+		if i == 0 {
 			new_button.Flags |= sdl.MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT
 		}
-		if i == 0 {
+		if i == len(buttons)-1 {
 			new_button.Flags |= sdl.MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT
 		}
 		sdl_buttons = append(sdl_buttons, new_button)
