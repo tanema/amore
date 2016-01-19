@@ -12,6 +12,46 @@ import (
 var filters = map[string]int32{"linear": gl.LINEAR, "nearest": gl.NEAREST}
 var wraps = map[string]int32{"clamp": gl.CLAMP_TO_EDGE, "repeat": gl.REPEAT}
 
+type (
+	WrapMode   int
+	FilterMode int
+	Filter     struct {
+		min        FilterMode
+		mag        FilterMode
+		mipmap     FilterMode
+		anisotropy float32
+	}
+	Wrap struct {
+		s WrapMode
+		t WrapMode
+	}
+)
+
+func newFilter() Filter {
+	return Filter{
+		min:        FILTER_LINEAR,
+		mag:        FILTER_LINEAR,
+		mipmap:     FILTER_NONE,
+		anisotropy: 1.0,
+	}
+}
+
+func newWrap() Wrap {
+	return Wrap{
+		s: WRAP_CLAMP,
+		t: WRAP_CLAMP,
+	}
+}
+
+const (
+	WRAP_CLAMP WrapMode = iota
+	WRAP_REPEAT
+	WRAP_MIRRORED_REPEAT
+	FILTER_NONE FilterMode = iota
+	FILTER_LINEAR
+	FILTER_NEAREST
+)
+
 type Texture struct {
 	textureId     uint32
 	Width, Height float32

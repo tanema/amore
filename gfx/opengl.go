@@ -16,13 +16,13 @@ const (
 type BlendMode int
 
 const (
-	ALPHA BlendMode = iota
-	MULTIPLICATIVE
-	PREMULTIPLIED
-	SUBTRACTIVE
-	ADDITIVE
-	SCREEN
-	REPLACE
+	BLENDMODE_ALPHA BlendMode = iota
+	BLENDMODE_MULTIPLICATIVE
+	BLENDMODE_PREMULTIPLIED
+	BLENDMODE_SUBTRACTIVE
+	BLENDMODE_ADDITIVE
+	BLENDMODE_SCREEN
+	BLENDMODE_REPLACE
 )
 
 type Viewport [4]int32 //The Viewport Values (X, Y, Width, Height)
@@ -155,7 +155,7 @@ func SetViewportSize(w, h int) {
 
 func Reset() {
 	Origin()
-	SetBlendMode(ALPHA)
+	SetBlendMode(BLENDMODE_ALPHA)
 	Clear()
 }
 
@@ -343,35 +343,35 @@ func SetBlendMode(mode BlendMode) {
 	dstA := gl.ZERO
 
 	switch mode {
-	case ALPHA:
+	case BLENDMODE_ALPHA:
 		srcRGB = gl.SRC_ALPHA
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_ALPHA
 		dstA = gl.ONE_MINUS_SRC_ALPHA
-	case MULTIPLICATIVE:
+	case BLENDMODE_MULTIPLICATIVE:
 		srcRGB = gl.DST_COLOR
 		srcA = gl.DST_COLOR
 		dstRGB = gl.ZERO
 		dstA = gl.ZERO
-	case PREMULTIPLIED:
+	case BLENDMODE_PREMULTIPLIED:
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_ALPHA
 		dstA = gl.ONE_MINUS_SRC_ALPHA
-	case SUBTRACTIVE:
+	case BLENDMODE_SUBTRACTIVE:
 		fn = gl.FUNC_REVERSE_SUBTRACT
-	case ADDITIVE:
+	case BLENDMODE_ADDITIVE:
 		srcRGB = gl.SRC_ALPHA
 		srcA = gl.SRC_ALPHA
 		dstRGB = gl.ONE
 		dstA = gl.ONE
-	case SCREEN:
+	case BLENDMODE_SCREEN:
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_COLOR
 		dstA = gl.ONE_MINUS_SRC_COLOR
 		break
-	case REPLACE:
+	case BLENDMODE_REPLACE:
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ZERO
