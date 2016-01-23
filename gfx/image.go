@@ -65,16 +65,9 @@ func (image *Image) UnloadVolatile() {
 	image.texture = nil
 }
 
-func (img *Image) GetWidth() float32 {
-	return img.texture.Width
-}
-
-func (img *Image) GetHeight() float32 {
-	return img.texture.Height
-}
-
 func (image *Image) Draw(args ...float32) {
-	BindTexture(image.texture.GetHandle())
+	prepareDraw(generateModelMatFromArgs(args))
+	bindTexture(image.texture.GetHandle())
 
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
@@ -82,7 +75,6 @@ func (image *Image) Draw(args ...float32) {
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(image.coords))
 	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 0, gl.Ptr(image.texcoords))
 
-	PrepareDraw(generateModelMatFromArgs(args))
 	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
 
 	gl.DisableVertexAttribArray(ATTRIB_TEXCOORD)

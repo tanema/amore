@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"image/png"
 	"math"
+	"os"
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/audio"
@@ -27,36 +29,32 @@ var (
 )
 
 func main() {
-	if err := amore.Start(load, update, draw); err != nil {
-		fmt.Println("Error starting engine: %v", err)
-	}
-}
-
-func load() {
 	window.GetCurrent().SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
+
 	tree, _ = gfx.NewImage("images/palm_tree.png")
 	ttf, _ = gfx.NewFont("fonts/arial.ttf", 20)
 	image_font, _ = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 	shader = gfx.NewShader(file.ReadString("shaders/blackandwhite.glsl"))
 	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
+
+	if err := amore.Start(update, draw); err != nil {
+		fmt.Println("Error starting engine: %v", err)
+	}
 }
 
 func keyUp(key keyboard.Key) {
-	if key == keyboard.KeyEscape {
+	switch key {
+	case keyboard.KeyEscape:
 		amore.Quit()
-	}
-	if key == keyboard.Key1 {
+	case keyboard.Key1:
 		use_shader = !use_shader
-	}
-	if key == keyboard.Key2 {
-		window.GetCurrent().ShowSimpleMessageBox("title", "this is a message", window.MESSAGEBOX_WARNING, false)
-	}
-	if key == keyboard.Key3 {
+	case keyboard.Key2:
 		bomb.Play()
-	}
-	if key == keyboard.Key4 {
-		println(window.GetCurrent().ShowMessageBox("title", "this is a message", []string{"yes", "no", "cancel all"}, window.MESSAGEBOX_WARNING, false))
+	case keyboard.Key3:
+		img := gfx.NewScreenshot(true)
+		out, _ := os.Create("./output.png")
+		png.Encode(out, img)
 	}
 }
 

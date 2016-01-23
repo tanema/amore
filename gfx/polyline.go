@@ -380,8 +380,8 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 		indices[i*6+5] = uint16(i*4 + 3)
 	}
 
-	PrepareDraw(nil)
-	BindTexture(gl_state.defaultTexture)
+	prepareDraw(nil)
+	bindTexture(gl_state.defaultTexture)
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
 	gl.DrawElements(gl.TRIANGLES, int32((len(polyline.vertices)/4)*6), gl.UNSIGNED_SHORT, gl.Ptr(indices))
@@ -400,8 +400,8 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 }
 
 func (polyline *polyLine) drawTriangleStrip(is_looping bool) {
-	PrepareDraw(nil)
-	BindTexture(gl_state.defaultTexture)
+	prepareDraw(nil)
+	bindTexture(gl_state.defaultTexture)
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(polyline.vertices)))

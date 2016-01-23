@@ -28,7 +28,6 @@ const (
 type Viewport [4]int32 //The Viewport Values (X, Y, Width, Height)
 
 var (
-	is_initialized         = false
 	opengl_version         string
 	opengl_vendor          string
 	maxAnisotropy          float32
@@ -46,7 +45,7 @@ var (
 )
 
 func InitContext(w, h int) {
-	if is_initialized {
+	if gl_state.initialized {
 		return
 	}
 
@@ -96,7 +95,9 @@ func InitContext(w, h int) {
 	defaultShader = NewShader()
 	SetShader(defaultShader)
 
-	is_initialized = true
+	gl_state.initialized = true
+
+	LoadAllVolatile()
 }
 
 // Set the 'default' texture (id 0) as a repeating white pixel. Otherwise,
@@ -105,7 +106,7 @@ func InitContext(w, h int) {
 // shaders for untextured primitives vs images.
 func createDefaultTexture() {
 	gl.GenTextures(1, &gl_state.defaultTexture)
-	BindTexture(gl_state.defaultTexture)
+	bindTexture(gl_state.defaultTexture)
 
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
@@ -116,7 +117,7 @@ func createDefaultTexture() {
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pix))
 }
 
-func PrepareDraw(model *mgl32.Mat4) {
+func prepareDraw(model *mgl32.Mat4) {
 	if model == nil {
 		model = &modelIdent
 	}
@@ -128,13 +129,13 @@ func PrepareDraw(model *mgl32.Mat4) {
 	states.back().shader.SendFloat("PointSize", states.back().pointSize)
 }
 
-func BindTexture(texture uint32) {
+func bindTexture(texture uint32) {
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 }
 
 func DeInit() {
-	UnloadAll()
+	UnloadAllVolatile()
 	gl.DeleteTextures(1, &gl_state.defaultTexture)
 	gl_state.defaultTexture = 0
 }
@@ -219,7 +220,7 @@ func Pop() {
 }
 
 func setScissor(x, y, width, height int32) {
-	if currentCanvas != nil {
+	if gl_state.currentCanvas != nil {
 		gl.Scissor(x, y, width, height)
 	} else {
 		// With no Canvas active, we need to compensate for glScissor starting
@@ -333,6 +334,22 @@ func SetFont(font *Font) {
 
 func GetFont() *Font {
 	return states.back().font
+}
+
+func SetCanvas(canvases ...Canvas) {
+	if canvases == nil || len(canvases) < 0 {
+		states.back().canvases = nil
+		if gl_state.currentCanvas != nil {
+			gl_state.currentCanvas.stopGrab()
+		}
+	} else {
+		states.back().canvases = canvases
+		states.back().canvases[0].startGrab(canvases[1:]...)
+	}
+}
+
+func GetCanvas() []Canvas {
+	return states.back().canvases
 }
 
 func SetBlendMode(mode BlendMode) {

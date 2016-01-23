@@ -68,7 +68,7 @@ func LoadImageTexture(img image.Image) (*Texture, error) {
 		Height:    float32(bounds.Dy()),
 	}
 
-	BindTexture(new_texture.GetHandle())
+	bindTexture(new_texture.GetHandle())
 	//generate a uniform image and upload to vram
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
@@ -92,6 +92,14 @@ func (texture *Texture) SetWrap(wrap_s, wrap_t string) {
 func (texture *Texture) SetFilter(min, mag string) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filters[min])
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filters[mag])
+}
+
+func (texture *Texture) GetWidth() float32 {
+	return texture.Width
+}
+
+func (texture *Texture) GetHeight() float32 {
+	return texture.Height
 }
 
 func (texture *Texture) Release() {

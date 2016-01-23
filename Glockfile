@@ -4,3 +4,4 @@ github.com/skratchdot/open-golang c8748311a7528d0ba7330d302adbc5a677ef9c9e
 github.com/veandco/go-sdl2 b642688f5453492e7ad27f48dd19559aeaac4655
 github.com/BurntSushi/toml 056c9bc7be7190eaa7715723883caffa5f8fa3e4
 github.com/go-gl/mathgl 667e7964455c5d0db23927d59cfd72852686e419
+github.com/jteeuwen/go-bindata a0ff2567cfb70903282db057e799fd826784d41d

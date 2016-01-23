@@ -11,7 +11,9 @@ var (
 
 func Register(new_volatile Volatile) {
 	all_volatile = append(all_volatile, new_volatile)
-	new_volatile.LoadVolatile()
+	if gl_state.initialized {
+		new_volatile.LoadVolatile()
+	}
 }
 
 func Release(vol Volatile) {
@@ -26,12 +28,12 @@ func Release(vol Volatile) {
 	all_volatile = all_volatile[:pos+copy(all_volatile[pos:], all_volatile[pos+1:])]
 }
 
-func ReleaseAll() {
-	UnloadAll()
+func ReleaseAllVolatile() {
+	UnloadAllVolatile()
 	all_volatile = []Volatile{}
 }
 
-func LoadAll() bool {
+func LoadAllVolatile() bool {
 	success := true
 
 	for _, v := range all_volatile {
@@ -41,7 +43,7 @@ func LoadAll() bool {
 	return success
 }
 
-func UnloadAll() {
+func UnloadAllVolatile() {
 	for _, v := range all_volatile {
 		v.UnloadVolatile()
 	}

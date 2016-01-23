@@ -38,7 +38,6 @@ TODO
   - ~~Images~~
   - ~~Font~~
   - Canvas
-  - screenshot
   - Quad
   - SpriteBatch
   - Mesh
@@ -53,35 +52,19 @@ TODO
 * ~~Mouse~~
 * ~~Keyboard~~
 * ~~Joystick~~
-* File [ref](https://love2d.org/wiki/love.filesystem)
-  - make it work with go-bindata
+* ~~File~~ [ref](https://love2d.org/wiki/love.filesystem)
 * ~~Timer~~
-* Cmd
-  - amore new [name]
-    - create 
-      - main.go //with imports
-      - conf.toml //with all default settings
-      - assets/
-        - audio/
-        - fonts/
-        - shaders/
-        - images/
-  - amore run 
-    - bundle assets
-    - go run
-  - amore build [OS]
-    - bundle assets
-    - go build every OS
-  - amore version
-* windows support
 * Wiki
-* Mobile Support
-* Simplify Cross-Compilation possibly with [shared libraries already linked to c libs](http://blog.ralch.com/tutorial/golang-sharing-libraries/)
+* Full Platform Support
 * Optimize
 
-CMD notes
-=========
+Notes and ideas
+====
 
-* [Way of setting cmd version](http://technosophos.com/2014/06/11/compile-time-string-in-go.html)
+* Simplify Cross-Compilation possibly with [shared libraries already linked to c libs](http://blog.ralch.com/tutorial/golang-sharing-libraries/)
+  - it would be nice to be able to provide amore as a library for each platform and not have the user install libs
 * [Asset Bundling](https://github.com/jteeuwen/go-bindata) to make deployment easier
+  - it would be nice to embed the assets and config into the binary so it is just single file deploy
+  - I want to make it work with the file package though so that there is a single entry point to all assets
+  - hard to do since the assets would be bundled into the final game and not amore espectially if amore is precompiled
 

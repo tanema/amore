@@ -1,6 +1,7 @@
 package gfx
 
 import (
+	"image"
 	"math"
 
 	"github.com/go-gl/gl/v2.1/gl"
@@ -83,8 +84,8 @@ func Ellipsep(mode string, x, y, a, b float32, points int) {
 }
 
 func Point(x, y float32) {
-	PrepareDraw(nil)
-	BindTexture(gl_state.defaultTexture)
+	prepareDraw(nil)
+	bindTexture(gl_state.defaultTexture)
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{x, y}))
 	gl.DrawArrays(gl.POINTS, 0, 1)
@@ -108,13 +109,43 @@ func Polygon(mode string, coords []float32) {
 	if mode == "line" {
 		PolyLine(coords)
 	} else {
-		PrepareDraw(nil)
-		BindTexture(gl_state.defaultTexture)
+		prepareDraw(nil)
+		bindTexture(gl_state.defaultTexture)
 		gl.EnableVertexAttribArray(ATTRIB_POS)
 		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, int32(len(coords))/2-1)
 		gl.DisableVertexAttribArray(ATTRIB_POS)
 	}
+}
+
+func NewScreenshot(copyAlpha bool) image.Image {
+	// Temporarily unbind the currently active canvas (glReadPixels reads the active framebuffer, not the main one.)
+	canvases := GetCanvas()
+	SetCanvas()
+
+	w, h := int32(1), int32(1)
+	screenshot := image.NewRGBA(image.Rect(0, 0, int(w), int(h)))
+	stride := int32(screenshot.Stride)
+	pixels := make([]byte, len(screenshot.Pix))
+	gl.ReadPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+
+	if !copyAlpha {
+		// Replace alpha values with full opacity.
+		for i := 3; i < len(screenshot.Pix); i += 4 {
+			pixels[i] = 255
+		}
+	}
+
+	// OpenGL sucks and reads pixels from the lower-left. Let's fix that.
+	for y := int32(0); y < h; y++ {
+		i := (h - 1 - y) * stride
+		copy(screenshot.Pix[y*stride:], pixels[i:i+w*4])
+	}
+
+	// Re-bind the active canvas, if necessary.
+	SetCanvas(canvases...)
+
+	return screenshot
 }
 
 func Draw(drawable Drawable, args ...float32) {

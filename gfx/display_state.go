@@ -21,13 +21,14 @@ type displayState struct {
 	colorMask              ColorMask
 	wireframe              bool
 	pixelSize              float32
-	canvases               []*Canvas
+	canvases               []Canvas
 	defaultFilter          Filter
 	defaultMipmapFilter    FilterMode
 	defaultMipmapSharpness float32
 }
 
 type glState struct {
+	initialized            bool
 	boundTextures          []uint32
 	curTextureUnit         int
 	viewport               Viewport
@@ -35,6 +36,7 @@ type glState struct {
 	defaultTexture         uint32
 	projectionStack        *matstack.MatStack
 	viewStack              *matstack.MatStack
+	currentCanvas          *Canvas
 }
 
 func newDisplayState() displayState {

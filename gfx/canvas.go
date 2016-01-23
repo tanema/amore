@@ -3,4 +3,8 @@ package gfx
 type Canvas struct {
 }
 
-var currentCanvas *Canvas
+func (canvas *Canvas) startGrab(attachments ...Canvas) {
+}
+
+func (canvas *Canvas) stopGrab() {
+}

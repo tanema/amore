@@ -17,7 +17,7 @@ package window
 	#include <SDL.h>
 #endif
 
-void requestAttention(window hwnd, bool continuous) {
+void requestAttention(bool continuous) {
 	SDL_SysWMinfo wminfo = {};
 	SDL_VERSION(&wminfo.version);
 	if (SDL_GetWindowWMInfo(window, &wminfo)) {
