@@ -3,6 +3,7 @@ package window
 import (
 	"math"
 	"os"
+	"runtime"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/sdl_image"
@@ -32,7 +33,9 @@ type Window struct {
 	refresh_rate              int32
 }
 
-func New() (*Window, error) {
+func newWindow() (*Window, error) {
+	runtime.LockOSThread() //important SDL and OpenGl Demand it and stamp thier feet if you dont
+
 	var config *WindowConfig
 	var err error
 
@@ -264,7 +267,12 @@ func (window *Window) UpdateSettings() {
 }
 
 func GetCurrent() *Window {
-	return current_window
+	if current_window == nil {
+		new_window, _ := newWindow()
+		return new_window
+	} else {
+		return current_window
+	}
 }
 
 func GetDisplayCount() int {

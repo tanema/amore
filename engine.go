@@ -1,6 +1,7 @@
 package amore
 
 import (
+	"errors"
 	"runtime"
 
 	"github.com/tanema/amore/event"
@@ -15,14 +16,11 @@ var (
 
 func Start(update func(float32), draw func()) (err error) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	runtime.LockOSThread()
 
-	if current_window, err = window.New(); err != nil {
-		return err
+	if current_window = window.GetCurrent(); current_window == nil {
+		return errors.New("Cound not get a window")
 	}
 	defer current_window.Destroy()
-
-	gfx.LoadAllVolatile()
 
 	for !current_window.ShouldClose() {
 		// update
