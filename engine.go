@@ -13,7 +13,7 @@ var (
 	current_window *window.Window
 )
 
-func Start(load func(), update func(float32), draw func()) (err error) {
+func Start(update func(float32), draw func()) (err error) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	runtime.LockOSThread()
 
@@ -22,7 +22,7 @@ func Start(load func(), update func(float32), draw func()) (err error) {
 	}
 	defer current_window.Destroy()
 
-	load()
+	gfx.LoadAllVolatile()
 
 	for !current_window.ShouldClose() {
 		// update

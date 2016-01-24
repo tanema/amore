@@ -14,22 +14,34 @@ import (
 	"github.com/tanema/freetype-go/freetype"
 )
 
-type Font struct {
-	img     image.Image
-	Texture *Texture
-	Offset  int
-	Glyphs  map[rune]Glyph
-}
+type (
+	Font interface {
+		Printf(x, y float32, fs string, argv ...interface{})
+	}
+	FontBase struct {
+		*Texture
+		filepath string
+		Offset   int
+		Glyphs   map[rune]Glyph
+	}
+	ImageFont struct {
+		FontBase
+		glyph_hints string
+	}
+	TTFont struct {
+		FontBase
+		font_size float32
+	}
 
-type textRec struct {
-	X1, Y1, X2, Y2 float32
-}
-
-type Glyph struct {
-	TextureRec    textRec
-	Width, Height int
-	Advance       int
-}
+	textRec struct {
+		X1, Y1, X2, Y2 float32
+	}
+	Glyph struct {
+		TextureRec    textRec
+		Width, Height int
+		Advance       int
+	}
+)
 
 func pow2(x uint32) uint32 {
 	x--
@@ -41,22 +53,34 @@ func pow2(x uint32) uint32 {
 	return x + 1
 }
 
-func NewFont(filename string, font_size float32) (*Font, error) {
-	fontBytes, err := file.Read(filename)
+func NewFont(filename string, font_size float32) *TTFont {
+	new_font := &TTFont{FontBase: FontBase{filepath: filename}, font_size: font_size}
+	Register(new_font)
+	return new_font
+}
+
+func NewImageFont(filename, glyph_hints string) *ImageFont {
+	new_font := &ImageFont{FontBase: FontBase{filepath: filename}, glyph_hints: glyph_hints}
+	Register(new_font)
+	return new_font
+}
+
+func (font *TTFont) LoadVolatile() bool {
+	fontBytes, err := file.Read(font.filepath)
 	ttf, err := freetype.ParseFont(fontBytes)
 	if err != nil {
-		return nil, err
+		return false
 	}
 
 	glyphs := ttf.ListRunes()
-	glyph_dict := make(map[rune]Glyph)
+	font.Glyphs = make(map[rune]Glyph)
 	glyphsPerRow := int32(16)
 	glyphsPerCol := (int32(len(glyphs)) / glyphsPerRow) + 1
 
 	context := freetype.NewContext()
 	context.SetDPI(72)
 	context.SetFont(ttf)
-	context.SetFontSize(float64(font_size))
+	context.SetFontSize(float64(font.font_size))
 
 	font_bounds := ttf.Bounds()
 	glyph_width := context.FUnitToPixelRU(int(font_bounds.XMax - font_bounds.XMin))
@@ -70,9 +94,9 @@ func NewFont(filename string, font_size float32) (*Font, error) {
 	context.SetSrc(image.White)
 
 	var gx, gy int
-	offset := context.FUnitToPixelRU(ttf.UnitsPerEm())
+	font.Offset = context.FUnitToPixelRU(ttf.UnitsPerEm())
 	for i, ch := range glyphs {
-		pt := freetype.Pt(gx+offset, gy+offset)
+		pt := freetype.Pt(gx+font.Offset, gy+font.Offset)
 		context.DrawString(string(ch), pt)
 
 		tx1 := float32(gx) / float32(image_width)
@@ -82,7 +106,7 @@ func NewFont(filename string, font_size float32) (*Font, error) {
 
 		index := ttf.Index(ch)
 		metric := ttf.HMetric(index)
-		glyph_dict[ch] = Glyph{
+		font.Glyphs[ch] = Glyph{
 			TextureRec: textRec{tx1, ty1, tx2, ty2},
 			Width:      glyph_width,
 			Height:     glyph_height,
@@ -97,32 +121,25 @@ func NewFont(filename string, font_size float32) (*Font, error) {
 		}
 	}
 
-	new_font := &Font{
-		img:    rgba,
-		Glyphs: glyph_dict,
-		Offset: offset,
-	}
-
-	Register(new_font)
-
-	return new_font, nil
+	font.Texture, err = LoadImageTexture(rgba)
+	return err == nil
 }
 
-func NewImageFont(filename, glyph_hints string) (*Font, error) {
-	glyph_rune_hints := []rune(glyph_hints)
+func (font *ImageFont) LoadVolatile() bool {
+	glyph_rune_hints := []rune(font.glyph_hints)
 
-	imgFile, err := file.NewFile(filename)
+	imgFile, err := file.NewFile(font.filepath)
 	if err != nil {
-		return nil, err
+		return false
 	}
 	defer imgFile.Close()
 
 	img, _, err := image.Decode(imgFile)
 	if err != nil {
-		return nil, err
+		return false
 	}
 
-	glyph_dict := make(map[rune]Glyph)
+	font.Glyphs = make(map[rune]Glyph)
 	glyphsPerRow := int32(16)
 	glyphsPerCol := (int32(len(glyph_rune_hints)) / glyphsPerRow) + 1
 	glyph_width := img.Bounds().Dx() / len(glyph_rune_hints)
@@ -142,7 +159,7 @@ func NewImageFont(filename, glyph_hints string) (*Font, error) {
 		tx2 := (float32(gx) + float32(glyph_width)) / float32(image_width)
 		ty2 := (float32(gy) + float32(glyph_height)) / float32(image_height)
 
-		glyph_dict[glyph_rune_hints[i]] = Glyph{
+		font.Glyphs[glyph_rune_hints[i]] = Glyph{
 			TextureRec: textRec{tx1, ty1, tx2, ty2},
 			Width:      glyph_width,
 			Height:     glyph_height,
@@ -157,35 +174,15 @@ func NewImageFont(filename, glyph_hints string) (*Font, error) {
 		}
 	}
 
-	new_font := &Font{
-		img:    rgba,
-		Glyphs: glyph_dict,
-	}
-
-	Register(new_font)
-
-	return new_font, nil
-}
-
-func (f *Font) Index(ch rune) {
-}
-
-func (f *Font) Release() {
-	f.UnloadVolatile()
-}
-
-func (f *Font) LoadVolatile() bool {
-	var err error
-	f.Texture, err = LoadImageTexture(f.img)
+	font.Texture, err = LoadImageTexture(rgba)
 	return err == nil
 }
 
-func (f *Font) UnloadVolatile() {
-	if f.Texture != nil {
-		return
-	}
-	f.Texture.Release()
-	f.Texture = nil
+func (f *FontBase) Index(ch rune) {
+}
+
+func (f *FontBase) Release() {
+	f.UnloadVolatile()
 }
 
 func Printf(x, y float32, fs string, argv ...interface{}) {
@@ -193,23 +190,26 @@ func Printf(x, y float32, fs string, argv ...interface{}) {
 	if current_font == nil {
 		return
 	}
+	current_font.Printf(x, y, fs, argv...)
+}
 
+func (font *FontBase) Printf(x, y float32, fs string, argv ...interface{}) {
 	formatted_string := fmt.Sprintf(fs, argv...)
 	if len(formatted_string) == 0 {
 		return
 	}
 
-	x = x - float32(current_font.Offset)
-	y = y - (float32(current_font.Offset) / 4.0)
+	x = x - float32(font.Offset)
+	y = y - (float32(font.Offset) / 4.0)
 
 	gl.EnableVertexAttribArray(ATTRIB_POS)
 	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
 
 	prepareDraw(nil)
-	bindTexture(current_font.Texture.GetHandle())
+	bindTexture(font.GetHandle())
 
 	for _, ch := range formatted_string {
-		if glyph, ok := current_font.Glyphs[ch]; ok {
+		if glyph, ok := font.Glyphs[ch]; ok {
 			gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{
 				x, y,
 				x, y + float32(glyph.Height),

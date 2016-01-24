@@ -16,7 +16,7 @@ type displayState struct {
 	scissorBox             Viewport
 	stencilTest            bool
 	stencilInvert          bool
-	font                   *Font
+	font                   Font
 	shader                 *Shader
 	colorMask              ColorMask
 	wireframe              bool

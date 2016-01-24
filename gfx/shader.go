@@ -9,6 +9,8 @@ import (
 
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
+
+	"github.com/tanema/amore/file"
 )
 
 type BuiltinUniform int
@@ -20,10 +22,10 @@ type Shader struct {
 	uniforms    map[string]Uniform // Uniform location buffer map
 }
 
-func NewShader(code ...string) *Shader {
+func NewShader(paths ...string) *Shader {
 	new_shader := &Shader{}
+	code := pathsToCode(paths...)
 	new_shader.vertex_code, new_shader.pixel_code = shaderCodeToGLSL(code...)
-
 	Register(new_shader)
 	return new_shader
 }
@@ -258,22 +260,38 @@ func isPixelCode(code string) (bool, bool) {
 	return false, false
 }
 
+//convert paths to strings of code
+//if string is already code just pass it along
+func pathsToCode(paths ...string) []string {
+	code := []string{}
+	if paths != nil {
+		for _, path := range paths {
+			//if this is not code it must be a path
+			is_pixel, _ := isPixelCode(path)
+			if !isVertexCode(path) && !is_pixel {
+				code = append(code, file.ReadString(path))
+			} else { //it is code!
+				code = append(code, path)
+			}
+		}
+	}
+	return code
+}
+
 func shaderCodeToGLSL(code ...string) (string, string) {
 	vertexcode := DEFAULT_VERTEX_SHADER_CODE
 	pixelcode := DEFAULT_PIXEL_SHADER_CODE
 	is_multicanvas := false // whether pixel code has "effects" function instead of "effect"
 
-	if code != nil {
-		for _, shader_code := range code {
-			if isVertexCode(shader_code) {
-				vertexcode = shader_code
-			}
+	for _, shader_code := range code {
+		if isVertexCode(shader_code) {
+			vertexcode = shader_code
+		}
 
-			ispixel, isMultiCanvas := isPixelCode(shader_code)
-			if ispixel {
-				pixelcode = shader_code
-				is_multicanvas = isMultiCanvas
-			}
+		ispixel, isMultiCanvas := isPixelCode(shader_code)
+		if ispixel {
+			pixelcode = shader_code
+			is_multicanvas = isMultiCanvas
 		}
 	}
 

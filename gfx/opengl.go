@@ -387,11 +387,11 @@ func GetColor() Color {
 	return states.back().color
 }
 
-func SetFont(font *Font) {
+func SetFont(font Font) {
 	states.back().font = font
 }
 
-func GetFont() *Font {
+func GetFont() Font {
 	return states.back().font
 }
 

@@ -8,7 +8,6 @@ import (
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/audio"
-	"github.com/tanema/amore/file"
 	"github.com/tanema/amore/gfx"
 	_ "github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"
@@ -19,8 +18,8 @@ import (
 
 var (
 	tree       *gfx.Image
-	ttf        *gfx.Font
-	image_font *gfx.Font
+	ttf        gfx.Font
+	image_font gfx.Font
 	mx, my     float32
 	shader     *gfx.Shader
 	bomb       *audio.Source
@@ -29,7 +28,16 @@ var (
 )
 
 func main() {
-	if err := amore.Start(load, update, draw); err != nil {
+	window.GetCurrent().SetMouseVisible(false)
+	keyboard.SetKeyReleaseCB(keyUp)
+
+	tree, _ = gfx.NewImage("images/palm_tree.png")
+	ttf = gfx.NewFont("fonts/arial.ttf", 20)
+	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
+	shader = gfx.NewShader("shaders/blackandwhite.glsl")
+	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
+
+	if err := amore.Start(update, draw); err != nil {
 		fmt.Println("Error starting engine: %v", err)
 	}
 }
@@ -47,17 +55,6 @@ func keyUp(key keyboard.Key) {
 		out, _ := os.Create("./output.png")
 		png.Encode(out, img)
 	}
-}
-
-func load() {
-	window.GetCurrent().SetMouseVisible(false)
-	keyboard.SetKeyReleaseCB(keyUp)
-
-	tree, _ = gfx.NewImage("images/palm_tree.png")
-	ttf, _ = gfx.NewFont("fonts/arial.ttf", 20)
-	image_font, _ = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
-	shader = gfx.NewShader(file.ReadString("shaders/blackandwhite.glsl"))
-	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
 }
 
 func update(deltaTime float32) {
@@ -100,9 +97,10 @@ func draw() {
 	//x, y, rotate radians, scale x, y, offset x, y, shear x, y
 	gfx.Draw(tree, 500, 50, -0.4, 0.5, 0.8, -100, -200, -0.2, 0.4)
 
-	// font
+	// image font
 	gfx.SetFont(image_font)
 	gfx.Printf(20, 20, "test one two")
+	// ttf font
 	gfx.SetFont(ttf)
 	gfx.Rotate(0.5)
 	gfx.Scale(1.5)
