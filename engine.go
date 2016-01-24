@@ -13,7 +13,7 @@ var (
 	current_window *window.Window
 )
 
-func Start(update func(float32), draw func()) (err error) {
+func Start(load func(), update func(float32), draw func()) (err error) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	runtime.LockOSThread()
 
@@ -21,6 +21,8 @@ func Start(update func(float32), draw func()) (err error) {
 		return err
 	}
 	defer current_window.Destroy()
+
+	load()
 
 	for !current_window.ShouldClose() {
 		// update

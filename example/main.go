@@ -29,16 +29,7 @@ var (
 )
 
 func main() {
-	window.GetCurrent().SetMouseVisible(false)
-	keyboard.SetKeyReleaseCB(keyUp)
-
-	tree, _ = gfx.NewImage("images/palm_tree.png")
-	ttf, _ = gfx.NewFont("fonts/arial.ttf", 20)
-	image_font, _ = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
-	shader = gfx.NewShader(file.ReadString("shaders/blackandwhite.glsl"))
-	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
-
-	if err := amore.Start(update, draw); err != nil {
+	if err := amore.Start(load, update, draw); err != nil {
 		fmt.Println("Error starting engine: %v", err)
 	}
 }
@@ -56,6 +47,17 @@ func keyUp(key keyboard.Key) {
 		out, _ := os.Create("./output.png")
 		png.Encode(out, img)
 	}
+}
+
+func load() {
+	window.GetCurrent().SetMouseVisible(false)
+	keyboard.SetKeyReleaseCB(keyUp)
+
+	tree, _ = gfx.NewImage("images/palm_tree.png")
+	ttf, _ = gfx.NewFont("fonts/arial.ttf", 20)
+	image_font, _ = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
+	shader = gfx.NewShader(file.ReadString("shaders/blackandwhite.glsl"))
+	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
 }
 
 func update(deltaTime float32) {

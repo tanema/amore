@@ -30,7 +30,7 @@ type displayState struct {
 type glState struct {
 	initialized            bool
 	boundTextures          []uint32
-	curTextureUnit         int
+	curTextureUnit         uint32
 	viewport               Viewport
 	framebufferSRGBEnabled bool
 	defaultTexture         uint32

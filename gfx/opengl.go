@@ -1,6 +1,9 @@
 package gfx
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
@@ -89,7 +92,21 @@ func InitContext(w, h int) {
 
 	SetViewportSize(w, h)
 	SetBackgroundColor(0, 0, 0, 1)
+
+	gl_state.boundTextures = make([]uint32, maxTextureUnits)
+	var curgltextureunit int32
+	gl.GetIntegerv(gl.ACTIVE_TEXTURE, &curgltextureunit)
+	gl_state.curTextureUnit = uint32(curgltextureunit) - gl.TEXTURE0
+	// Retrieve currently bound textures for each texture unit.
+	for i := 0; i < len(gl_state.boundTextures); i++ {
+		gl.ActiveTexture(gl.TEXTURE0 + uint32(i))
+		var boundTex int32
+		gl.GetIntegerv(gl.TEXTURE_BINDING_2D, &boundTex)
+		gl_state.boundTextures[i] = uint32(boundTex)
+	}
+	gl.ActiveTexture(uint32(curgltextureunit))
 	createDefaultTexture()
+	setTextureUnit(0)
 
 	// We always need a default shader.
 	defaultShader = NewShader()
@@ -129,9 +146,51 @@ func prepareDraw(model *mgl32.Mat4) {
 	states.back().shader.SendFloat("PointSize", states.back().pointSize)
 }
 
+func setTextureUnit(textureunit uint32) error {
+	if textureunit < 0 || int(textureunit) >= len(gl_state.boundTextures) {
+		return fmt.Errorf("Invalid texture unit index (%v).", textureunit)
+	}
+
+	if textureunit != gl_state.curTextureUnit {
+		gl.ActiveTexture(gl.TEXTURE0 + textureunit)
+	}
+
+	gl_state.curTextureUnit = textureunit
+	return nil
+}
+
 func bindTexture(texture uint32) {
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
+	if texture != gl_state.boundTextures[gl_state.curTextureUnit] {
+		gl_state.boundTextures[gl_state.curTextureUnit] = texture
+		gl.BindTexture(gl.TEXTURE_2D, texture)
+	}
+}
+
+func bindTextureToUnit(texture, textureunit uint32, restoreprev bool) error {
+	if texture != gl_state.boundTextures[textureunit] {
+		oldtextureunit := gl_state.curTextureUnit
+		if err := setTextureUnit(textureunit); err != nil {
+			return err
+		}
+		gl_state.boundTextures[textureunit] = texture
+		gl.BindTexture(gl.TEXTURE_2D, texture)
+		if restoreprev {
+			return setTextureUnit(oldtextureunit)
+		}
+	}
+	return nil
+}
+
+func deleteTexture(texture uint32) {
+	// glDeleteTextures binds texture 0 to all texture units the deleted texture
+	// was bound to before deletion.
+	for i, texid := range gl_state.boundTextures {
+		if texid == texture {
+			gl_state.boundTextures[i] = 0
+		}
+	}
+
+	gl.DeleteTextures(1, &texture)
 }
 
 func DeInit() {
@@ -398,4 +457,16 @@ func SetBlendMode(mode BlendMode) {
 	gl.BlendEquation(uint32(fn))
 	gl.BlendFuncSeparate(uint32(srcRGB), uint32(dstRGB), uint32(srcA), uint32(dstA))
 	states.back().blend_mode = mode
+}
+
+func SetDefaultFilter(min, mag FilterMode, anisotropy float32) {
+	states.back().defaultFilter = Filter{
+		min:        min,
+		mag:        mag,
+		anisotropy: float32(math.Min(math.Max(float64(anisotropy), 1.0), float64(maxAnisotropy))),
+	}
+}
+
+func GetDefaultFilter() Filter {
+	return states.back().defaultFilter
 }

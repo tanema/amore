@@ -16,14 +16,17 @@ type (
 	WrapMode   int
 	FilterMode int
 	Filter     struct {
-		min        FilterMode
-		mag        FilterMode
-		mipmap     FilterMode
-		anisotropy float32
+		min, mag, mipmap FilterMode
+		anisotropy       float32
 	}
 	Wrap struct {
-		s WrapMode
-		t WrapMode
+		s, t WrapMode
+	}
+	Texture struct {
+		textureId     uint32
+		Width, Height float32
+		filter        Filter
+		wrap          Wrap
 	}
 )
 
@@ -37,25 +40,17 @@ func newFilter() Filter {
 }
 
 func newWrap() Wrap {
-	return Wrap{
-		s: WRAP_CLAMP,
-		t: WRAP_CLAMP,
-	}
+	return Wrap{s: WRAP_CLAMP, t: WRAP_CLAMP}
 }
 
 const (
-	WRAP_CLAMP WrapMode = iota
-	WRAP_REPEAT
-	WRAP_MIRRORED_REPEAT
-	FILTER_NONE FilterMode = iota
-	FILTER_LINEAR
-	FILTER_NEAREST
+	WRAP_CLAMP           WrapMode   = WrapMode(gl.CLAMP)
+	WRAP_REPEAT          WrapMode   = WrapMode(gl.REPEAT)
+	WRAP_MIRRORED_REPEAT WrapMode   = WrapMode(gl.MIRRORED_REPEAT)
+	FILTER_NONE          FilterMode = FilterMode(gl.NONE)
+	FILTER_LINEAR        FilterMode = FilterMode(gl.LINEAR)
+	FILTER_NEAREST       FilterMode = FilterMode(gl.NEAREST)
 )
-
-type Texture struct {
-	textureId     uint32
-	Width, Height float32
-}
 
 func LoadImageTexture(img image.Image) (*Texture, error) {
 	var texture_id uint32
@@ -66,16 +61,19 @@ func LoadImageTexture(img image.Image) (*Texture, error) {
 		textureId: texture_id,
 		Width:     float32(bounds.Dx()),
 		Height:    float32(bounds.Dy()),
+		wrap:      newWrap(),
+		filter:    newFilter(),
 	}
 
-	bindTexture(new_texture.GetHandle())
 	//generate a uniform image and upload to vram
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
+
+	bindTexture(new_texture.GetHandle())
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(bounds.Dx()), int32(bounds.Dy()), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
 
-	new_texture.SetFilter("nearest", "nearest")
-	new_texture.SetWrap("clamp", "clamp")
+	new_texture.SetFilter(FILTER_NEAREST, FILTER_NEAREST)
+	new_texture.SetWrap(WRAP_CLAMP, WRAP_CLAMP)
 
 	return new_texture, nil
 }
@@ -84,14 +82,21 @@ func (texture *Texture) GetHandle() uint32 {
 	return texture.textureId
 }
 
-func (texture *Texture) SetWrap(wrap_s, wrap_t string) {
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wraps[wrap_s])
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wraps[wrap_t])
+func (texture *Texture) SetWrap(wrap_s, wrap_t WrapMode) {
+	texture.wrap.s = wrap_s
+	texture.wrap.t = wrap_t
+	bindTexture(texture.GetHandle())
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, int32(wrap_s))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int32(wrap_t))
 }
 
-func (texture *Texture) SetFilter(min, mag string) {
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filters[min])
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filters[mag])
+func (texture *Texture) SetFilter(min, mag FilterMode) {
+	texture.filter.mag = mag
+	texture.filter.min = min
+	bindTexture(texture.GetHandle())
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, int32(min))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, int32(mag))
+	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAX_ANISOTROPY_EXT, texture.filter.anisotropy)
 }
 
 func (texture *Texture) GetWidth() float32 {
@@ -103,5 +108,5 @@ func (texture *Texture) GetHeight() float32 {
 }
 
 func (texture *Texture) Release() {
-	gl.DeleteTextures(1, &texture.textureId)
+	deleteTexture(texture.textureId)
 }
