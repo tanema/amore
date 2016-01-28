@@ -12,9 +12,6 @@ type (
 	Drawable interface {
 		Draw(args ...float32)
 	}
-	QuadDrawable interface {
-		Drawq(quad Quad, args ...float32)
-	}
 )
 
 const defaultPointCount = 30
@@ -152,10 +149,6 @@ func NewScreenshot() image.Image {
 
 func Draw(drawable Drawable, args ...float32) {
 	drawable.Draw(args...)
-}
-
-func Drawq(drawable QuadDrawable, quad Quad, args ...float32) {
-	drawable.Drawq(quad, args...)
 }
 
 func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, float32, float32, float32, float32, float32) {

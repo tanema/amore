@@ -26,6 +26,7 @@ var (
 	use_shader = false
 	vibrating  = false
 	canvas     *gfx.Canvas
+	quad       *gfx.Quad
 )
 
 func main() {
@@ -33,7 +34,8 @@ func main() {
 	keyboard.SetKeyReleaseCB(keyUp)
 
 	canvas = gfx.NewCanvas(800, 600)
-	tree, _ = gfx.NewImage("images/palm_tree.png")
+	tree = gfx.NewImage("images/palm_tree.png")
+	quad = gfx.NewQuad(tree, 0, 0, 200, 200)
 	ttf = gfx.NewFont("fonts/arial.ttf", 20)
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
@@ -102,6 +104,7 @@ func draw() {
 	gfx.SetColor(255, 255, 255, 255)
 	//x, y, rotate radians, scale x, y, offset x, y, shear x, y
 	gfx.Draw(tree, 500, 50, -0.4, 0.5, 0.8, -100, -200, -0.2, 0.4)
+	gfx.Draw(quad, 1000, 500)
 
 	// image font
 	gfx.SetFont(image_font)

@@ -95,8 +95,8 @@ func (texture *Texture) GetHandle() uint32 {
 func (texture *Texture) generateVerticies() {
 	w := float32(texture.GetWidth())
 	h := float32(texture.GetHeight())
-	texture.coords = []float32{0, 0, 0, h, w, h, w, 0}
-	texture.texcoords = []float32{0, 0, 0, 1, 1, 1, 1, 0}
+	texture.coords = []float32{0, 0, 0, h, w, 0, w, h}
+	texture.texcoords = []float32{0, 0, 0, 1, 1, 0, 1, 1}
 }
 
 func (texture *Texture) SetWrap(wrap_s, wrap_t WrapMode) {
@@ -187,7 +187,7 @@ func (texture *Texture) drawv(model *mgl32.Mat4, coords, texcoords []float32) {
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 0, gl.Ptr(texcoords))
 
-	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
+	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 	gl.DisableVertexAttribArray(ATTRIB_TEXCOORD)
 	gl.DisableVertexAttribArray(ATTRIB_POS)
@@ -195,9 +195,4 @@ func (texture *Texture) drawv(model *mgl32.Mat4, coords, texcoords []float32) {
 
 func (texture *Texture) Draw(args ...float32) {
 	texture.drawv(generateModelMatFromArgs(args), texture.coords, texture.texcoords)
-}
-
-func (texture *Texture) Drawq(quad Quad, args ...float32) {
-	coords, texcoords := quad.getVertices()
-	texture.drawv(generateModelMatFromArgs(args), coords, texcoords)
 }

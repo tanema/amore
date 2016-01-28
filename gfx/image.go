@@ -13,10 +13,10 @@ type Image struct {
 	filePath string
 }
 
-func NewImage(path string) (*Image, error) {
+func NewImage(path string) *Image {
 	new_image := &Image{filePath: path}
 	registerVolatile(new_image)
-	return new_image, nil
+	return new_image
 }
 
 func (img *Image) loadVolatile() bool {

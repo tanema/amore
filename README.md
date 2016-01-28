@@ -37,8 +37,8 @@ TODO
   - ~~Textures~~
   - ~~Images~~
   - ~~Font~~
-  - Canvas
-  - Quad
+  - ~~Canvas~~
+  - ~~Quad~~
   - SpriteBatch
   - Mesh
   - Stencil
