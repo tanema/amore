@@ -55,17 +55,17 @@ func pow2(x uint32) uint32 {
 
 func NewFont(filename string, font_size float32) *TTFont {
 	new_font := &TTFont{FontBase: FontBase{filepath: filename}, font_size: font_size}
-	Register(new_font)
+	registerVolatile(new_font)
 	return new_font
 }
 
 func NewImageFont(filename, glyph_hints string) *ImageFont {
 	new_font := &ImageFont{FontBase: FontBase{filepath: filename}, glyph_hints: glyph_hints}
-	Register(new_font)
+	registerVolatile(new_font)
 	return new_font
 }
 
-func (font *TTFont) LoadVolatile() bool {
+func (font *TTFont) loadVolatile() bool {
 	fontBytes, err := file.Read(font.filepath)
 	ttf, err := freetype.ParseFont(fontBytes)
 	if err != nil {
@@ -121,11 +121,11 @@ func (font *TTFont) LoadVolatile() bool {
 		}
 	}
 
-	font.Texture, err = LoadImageTexture(rgba)
+	font.Texture, err = newImageTexture(rgba)
 	return err == nil
 }
 
-func (font *ImageFont) LoadVolatile() bool {
+func (font *ImageFont) loadVolatile() bool {
 	glyph_rune_hints := []rune(font.glyph_hints)
 
 	imgFile, err := file.NewFile(font.filepath)
@@ -174,7 +174,7 @@ func (font *ImageFont) LoadVolatile() bool {
 		}
 	}
 
-	font.Texture, err = LoadImageTexture(rgba)
+	font.Texture, err = newImageTexture(rgba)
 	return err == nil
 }
 
@@ -182,7 +182,7 @@ func (f *FontBase) Index(ch rune) {
 }
 
 func (f *FontBase) Release() {
-	f.UnloadVolatile()
+	f.unloadVolatile()
 }
 
 func Printf(x, y float32, fs string, argv ...interface{}) {

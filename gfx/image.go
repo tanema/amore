@@ -15,11 +15,11 @@ type Image struct {
 
 func NewImage(path string) (*Image, error) {
 	new_image := &Image{filePath: path}
-	Register(new_image)
+	registerVolatile(new_image)
 	return new_image, nil
 }
 
-func (img *Image) LoadVolatile() bool {
+func (img *Image) loadVolatile() bool {
 	imgFile, new_err := file.NewFile(img.filePath)
 	defer imgFile.Close()
 	if new_err != nil {
@@ -31,11 +31,10 @@ func (img *Image) LoadVolatile() bool {
 		return false
 	}
 
-	img.Texture, img_err = LoadImageTexture(decoded_img)
+	img.Texture, img_err = newImageTexture(decoded_img)
 	if img_err != nil {
 		return false
 	}
 
-	img.generateVerticies()
 	return true
 }

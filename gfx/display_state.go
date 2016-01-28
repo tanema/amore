@@ -21,7 +21,7 @@ type displayState struct {
 	colorMask              ColorMask
 	wireframe              bool
 	pixelSize              float32
-	canvases               []Canvas
+	canvases               []*Canvas
 	defaultFilter          Filter
 	defaultMipmapFilter    FilterMode
 	defaultMipmapSharpness float32
@@ -34,6 +34,7 @@ type glState struct {
 	viewport               Viewport
 	framebufferSRGBEnabled bool
 	defaultTexture         uint32
+	defaultFBO             uint32
 	projectionStack        *matstack.MatStack
 	viewStack              *matstack.MatStack
 	currentCanvas          *Canvas

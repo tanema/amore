@@ -38,8 +38,8 @@ var (
 	maxRenderTargets       int32
 	maxRenderbufferSamples int32
 	maxTextureUnits        int32
-	screen_width           = 0
-	screen_height          = 0
+	screen_width           = int32(0)
+	screen_height          = int32(0)
 	modelIdent             = mgl32.Ident4()
 	defaultShader          *Shader
 
@@ -47,7 +47,7 @@ var (
 	states   = displayStateStack{newDisplayState()}
 )
 
-func InitContext(w, h int) {
+func InitContext(w, h int32) {
 	if gl_state.initialized {
 		return
 	}
@@ -59,6 +59,7 @@ func InitContext(w, h int) {
 	opengl_version = gl.GoStr(gl.GetString(gl.VERSION))
 	opengl_vendor = gl.GoStr(gl.GetString(gl.VENDOR))
 	gl_state.framebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
+	gl_state.defaultFBO = getCurrentFBO()
 	gl.GetIntegerv(gl.VIEWPORT, &gl_state.viewport[0])
 	// And the current scissor - but we need to compensate for GL scissors
 	// starting at the bottom left instead of top left.
@@ -114,7 +115,7 @@ func InitContext(w, h int) {
 
 	gl_state.initialized = true
 
-	LoadAllVolatile()
+	loadAllVolatile()
 }
 
 // Set the 'default' texture (id 0) as a repeating white pixel. Otherwise,
@@ -181,6 +182,67 @@ func bindTextureToUnit(texture, textureunit uint32, restoreprev bool) error {
 	return nil
 }
 
+func SetFramebufferSRGB(enable bool) {
+	if enable {
+		gl.Enable(gl.FRAMEBUFFER_SRGB)
+	} else {
+		gl.Disable(gl.FRAMEBUFFER_SRGB)
+	}
+	gl_state.framebufferSRGBEnabled = enable
+}
+
+func HasFramebufferSRGB() bool {
+	return gl_state.framebufferSRGBEnabled
+}
+
+func bindFramebuffer(target, framebuffer uint32) {
+	gl.BindFramebuffer(target, framebuffer)
+}
+
+func getDefaultFBO() uint32 {
+	return gl_state.defaultFBO
+}
+
+func getCurrentFBO() uint32 {
+	var current_fbo int32
+	gl.GetIntegerv(gl.DRAW_FRAMEBUFFER_BINDING, &current_fbo)
+	return uint32(current_fbo)
+}
+
+func GetMaxTextureSize() int32 {
+	return maxTextureSize
+}
+
+func GetMaxRenderTargets() int32 {
+	return maxRenderTargets
+}
+
+func GetMaxRenderbufferSamples() int32 {
+	return maxRenderbufferSamples
+}
+
+func GetMaxTextureUnits() int32 {
+	return maxTextureUnits
+}
+
+func GetVendor() string {
+	return opengl_vendor
+}
+
+func setFramebufferSRGB(enable bool) {
+	if enable {
+		gl.Enable(gl.FRAMEBUFFER_SRGB)
+	} else {
+		gl.Disable(gl.FRAMEBUFFER_SRGB)
+	}
+
+	gl_state.framebufferSRGBEnabled = enable
+}
+
+func hasFramebufferSRGB() bool {
+	return gl_state.framebufferSRGBEnabled
+}
+
 func deleteTexture(texture uint32) {
 	// glDeleteTextures binds texture 0 to all texture units the deleted texture
 	// was bound to before deletion.
@@ -194,7 +256,7 @@ func deleteTexture(texture uint32) {
 }
 
 func DeInit() {
-	UnloadAllVolatile()
+	unloadAllVolatile()
 	gl.DeleteTextures(1, &gl_state.defaultTexture)
 	gl_state.defaultTexture = 0
 }
@@ -203,13 +265,17 @@ func GetViewport() Viewport {
 	return gl_state.viewport
 }
 
-func SetViewportSize(w, h int) {
+func SetViewportSize(w, h int32) {
+	SetViewport(0, 0, w, h)
+}
+
+func SetViewport(x, y, w, h int32) {
 	screen_width = w
 	screen_height = h
 	// Set the viewport to top-left corner.
-	gl.Viewport(0, 0, int32(screen_width), int32(screen_height))
-	gl_state.viewport = Viewport{0, 0, int32(screen_width), int32(screen_height)}
-	gl_state.projectionStack.Load(mgl32.Ortho(0, float32(screen_width), float32(screen_height), 0, -1, 1))
+	gl.Viewport(y, x, screen_width, screen_height)
+	gl_state.viewport = Viewport{y, x, screen_width, screen_height}
+	gl_state.projectionStack.Load(mgl32.Ortho(float32(x), float32(screen_width), float32(screen_height), float32(y), -1, 1))
 	setScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
 }
 
@@ -395,19 +461,21 @@ func GetFont() Font {
 	return states.back().font
 }
 
-func SetCanvas(canvases ...Canvas) {
+func SetCanvas(canvases ...*Canvas) error {
 	if canvases == nil || len(canvases) < 0 {
 		states.back().canvases = nil
 		if gl_state.currentCanvas != nil {
-			gl_state.currentCanvas.stopGrab()
+			gl_state.currentCanvas.stopGrab(false)
+			gl_state.currentCanvas = nil
 		}
 	} else {
 		states.back().canvases = canvases
-		states.back().canvases[0].startGrab(canvases[1:]...)
+		return states.back().canvases[0].startGrab(canvases[1:]...)
 	}
+	return nil
 }
 
-func GetCanvas() []Canvas {
+func GetCanvas() []*Canvas {
 	return states.back().canvases
 }
 

@@ -25,12 +25,14 @@ var (
 	bomb       *audio.Source
 	use_shader = false
 	vibrating  = false
+	canvas     *gfx.Canvas
 )
 
 func main() {
 	window.GetCurrent().SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
 
+	canvas = gfx.NewCanvas(800, 600)
 	tree, _ = gfx.NewImage("images/palm_tree.png")
 	ttf = gfx.NewFont("fonts/arial.ttf", 20)
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
@@ -51,7 +53,7 @@ func keyUp(key keyboard.Key) {
 	case keyboard.Key2:
 		bomb.Play()
 	case keyboard.Key3:
-		img := gfx.NewScreenshot(true)
+		img := gfx.NewScreenshot()
 		out, _ := os.Create("./output.png")
 		png.Encode(out, img)
 	}
@@ -71,9 +73,13 @@ func draw() {
 	}
 
 	// rectangle
+	gfx.SetCanvas(canvas)
 	gfx.SetColor(0, 170, 0, 155)
 	gfx.Rect("fill", 20.0, 20.0, 200.0, 200.0)
 	gfx.Rect("line", 250.0, 20.0, 200.0, 200.0)
+	gfx.SetCanvas()
+	gfx.SetColor(255, 255, 255, 255)
+	gfx.Draw(canvas, 300, 100)
 
 	// circle
 	gfx.SetColor(170, 0, 0, 255)

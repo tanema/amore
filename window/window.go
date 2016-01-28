@@ -47,15 +47,15 @@ func newWindow() (*Window, error) {
 		panic(err)
 	}
 
-	config.Minwidth = int(math.Max(float64(config.Minwidth), 1.0))
-	config.Minheight = int(math.Max(float64(config.Minheight), 1.0))
+	config.Minwidth = int32(math.Max(float64(config.Minwidth), 1.0))
+	config.Minheight = int32(math.Max(float64(config.Minheight), 1.0))
 	config.Display = int(math.Min(math.Max(float64(config.Display), 0.0), float64(GetDisplayCount()-1)))
 
 	if config.Width == 0 || config.Height == 0 {
 		var mode sdl.DisplayMode
 		sdl.GetDesktopDisplayMode(config.Display, &mode)
-		config.Width = int(mode.W)
-		config.Height = int(mode.H)
+		config.Width = mode.W
+		config.Height = mode.H
 	}
 
 	sdlflags := uint32(sdl.WINDOW_OPENGL)
@@ -78,8 +78,8 @@ func newWindow() (*Window, error) {
 				}
 			}
 
-			config.Width = int(mode.W)
-			config.Height = int(mode.H)
+			config.Width = mode.W
+			config.Height = mode.H
 		}
 	}
 
@@ -99,8 +99,8 @@ func newWindow() (*Window, error) {
 		// The position needs to be in the global coordinate space.
 		var displaybounds sdl.Rect
 		sdl.GetDisplayBounds(config.Display, &displaybounds)
-		config.X += int(displaybounds.X)
-		config.Y += int(displaybounds.Y)
+		config.X += displaybounds.X
+		config.Y += displaybounds.Y
 	} else {
 		if config.Centered {
 			config.X = sdl.WINDOWPOS_CENTERED
@@ -154,7 +154,7 @@ func createWindowAndContext(config *WindowConfig, windowflags uint32) (*Window, 
 	_, debug := os.LookupEnv("AMORE_DEBUG")
 	setGLContextAttributes(2, 1, debug)
 
-	window, err := sdl.CreateWindow(config.Title, config.X, config.Y, config.Width, config.Height, windowflags)
+	window, err := sdl.CreateWindow(config.Title, int(config.X), int(config.Y), int(config.Width), int(config.Height), windowflags)
 	if err != nil {
 		panic(err)
 	}
@@ -207,9 +207,10 @@ func setGLContextAttributes(versionMajor, versionMinor int, debug bool) {
 }
 
 func (window *Window) OnSizeChanged(width, height int32) {
-	window.config.Width = int(width)
-	window.config.Height = int(height)
-	window.config.PixelWidth, window.config.PixelHeight = sdl.GL_GetDrawableSize(window.sdl_window)
+	window.config.Width = width
+	window.config.Height = height
+	w, h := sdl.GL_GetDrawableSize(window.sdl_window)
+	window.config.PixelWidth, window.config.PixelHeight = int32(w), int32(h)
 	gfx.SetViewportSize(window.config.PixelWidth, window.config.PixelHeight)
 }
 
@@ -217,7 +218,8 @@ func (window *Window) UpdateSettings() {
 	wflags := window.sdl_window.GetFlags()
 
 	// Set the new display mode as the current display mode.
-	window.config.Width, window.config.Height = window.sdl_window.GetSize()
+	w, h := window.sdl_window.GetSize()
+	window.config.Width, window.config.Height = int32(w), int32(h)
 	window.pixel_width, window.pixel_height = sdl.GL_GetDrawableSize(window.sdl_window)
 
 	if (wflags & sdl.WINDOW_FULLSCREEN_DESKTOP) == sdl.WINDOW_FULLSCREEN_DESKTOP {
@@ -236,14 +238,16 @@ func (window *Window) UpdateSettings() {
 		window.config.Minwidth = 1
 		window.config.Minheight = 1
 	} else {
-		window.config.Minwidth, window.config.Minheight = window.sdl_window.GetMinimumSize()
+		mw, mh := window.sdl_window.GetMinimumSize()
+		window.config.Minwidth, window.config.Minheight = int32(mw), int32(mh)
 	}
 
 	window.config.Resizable = (wflags & sdl.WINDOW_RESIZABLE) != 0
 	window.config.Borderless = (wflags & sdl.WINDOW_BORDERLESS) != 0
 	window.config.Centered = true
 
-	window.config.X, window.config.Y = window.sdl_window.GetPosition()
+	x, y := window.sdl_window.GetPosition()
+	window.config.X, window.config.Y = int32(x), int32(y)
 
 	window.config.Highdpi = (wflags & sdl.WINDOW_ALLOW_HIGHDPI) != 0
 
@@ -315,11 +319,11 @@ func (window *Window) GetTitle() string {
 	return window.config.Title
 }
 
-func (window *Window) GetWidth() int {
+func (window *Window) GetWidth() int32 {
 	return window.config.Width
 }
 
-func (window *Window) GetHeight() int {
+func (window *Window) GetHeight() int32 {
 	return window.config.Height
 }
 
@@ -399,7 +403,7 @@ func (window *Window) GetMouseVisible() bool {
 	return sdl.ShowCursor(sdl.QUERY) == sdl.ENABLE
 }
 
-func (window *Window) GetPixelDimensions() (int, int) {
+func (window *Window) GetPixelDimensions() (int32, int32) {
 	return window.config.PixelWidth, window.config.PixelHeight
 }
 
@@ -429,12 +433,16 @@ func (window *Window) SetMouseGrab(grabbed bool) {
 	window.sdl_window.SetGrab(grabbed)
 }
 
-func (window *Window) SetMinimumSize(w, h int) {
-	window.sdl_window.SetMinimumSize(w, h)
+func (window *Window) SetMinimumSize(w, h int32) {
+	window.config.Minwidth = w
+	window.config.Minheight = h
+	window.sdl_window.SetMinimumSize(int(w), int(h))
 }
 
-func (window *Window) SetPosition(x, y int) {
-	window.sdl_window.SetPosition(x, y)
+func (window *Window) SetPosition(x, y int32) {
+	window.config.X = x
+	window.config.Y = y
+	window.sdl_window.SetPosition(int(x), int(y))
 }
 
 func (window *Window) GetPosition() (int, int) {

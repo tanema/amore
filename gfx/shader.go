@@ -26,11 +26,11 @@ func NewShader(paths ...string) *Shader {
 	new_shader := &Shader{}
 	code := pathsToCode(paths...)
 	new_shader.vertex_code, new_shader.pixel_code = shaderCodeToGLSL(code...)
-	Register(new_shader)
+	registerVolatile(new_shader)
 	return new_shader
 }
 
-func (shader *Shader) LoadVolatile() bool {
+func (shader *Shader) loadVolatile() bool {
 	vert := compileCode(gl.VERTEX_SHADER, shader.vertex_code)
 	frag := compileCode(gl.FRAGMENT_SHADER, shader.pixel_code)
 	shader.program = gl.CreateProgram()
@@ -64,12 +64,12 @@ func (shader *Shader) LoadVolatile() bool {
 	return true
 }
 
-func (shader *Shader) UnloadVolatile() {
+func (shader *Shader) unloadVolatile() {
 	gl.DeleteProgram(shader.program)
 }
 
 func (shader *Shader) mapUniforms() {
-	// Built-in uniform locations default to -1 (nonexistant.)
+	// Built-in uniform locations default to -1 (nonexistent.)
 	shader.uniforms = map[string]Uniform{}
 
 	var numuniforms int32

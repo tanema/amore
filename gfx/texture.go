@@ -26,7 +26,7 @@ type (
 	}
 	Texture struct {
 		textureId     uint32
-		Width, Height float32
+		Width, Height int32
 		coords        []float32
 		texcoords     []float32
 		filter        Filter
@@ -58,29 +58,33 @@ const (
 	FILTER_NEAREST       FilterMode = FilterMode(gl.NEAREST)
 )
 
-func LoadImageTexture(img image.Image) (*Texture, error) {
+func newTexture(width, height int32) *Texture {
 	var texture_id uint32
 	gl.GenTextures(1, &texture_id)
 
-	bounds := img.Bounds()
 	new_texture := &Texture{
 		textureId: texture_id,
-		Width:     float32(bounds.Dx()),
-		Height:    float32(bounds.Dy()),
+		Width:     width,
+		Height:    height,
 		wrap:      newWrap(),
 		filter:    newFilter(),
 	}
 
+	new_texture.SetFilter(FILTER_NEAREST, FILTER_NEAREST)
+	new_texture.SetWrap(WRAP_CLAMP, WRAP_CLAMP)
+	new_texture.generateVerticies()
+
+	return new_texture
+}
+
+func newImageTexture(img image.Image) (*Texture, error) {
+	bounds := img.Bounds()
+	new_texture := newTexture(int32(bounds.Dx()), int32(bounds.Dy()))
 	//generate a uniform image and upload to vram
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
-
 	bindTexture(new_texture.GetHandle())
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(bounds.Dx()), int32(bounds.Dy()), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
-
-	new_texture.SetFilter(FILTER_NEAREST, FILTER_NEAREST)
-	new_texture.SetWrap(WRAP_CLAMP, WRAP_CLAMP)
-
 	return new_texture, nil
 }
 
@@ -89,8 +93,8 @@ func (texture *Texture) GetHandle() uint32 {
 }
 
 func (texture *Texture) generateVerticies() {
-	w := texture.GetWidth()
-	h := texture.GetHeight()
+	w := float32(texture.GetWidth())
+	h := float32(texture.GetHeight())
 	texture.coords = []float32{0, 0, 0, h, w, h, w, 0}
 	texture.texcoords = []float32{0, 0, 0, 1, 1, 1, 1, 0}
 }
@@ -101,6 +105,10 @@ func (texture *Texture) SetWrap(wrap_s, wrap_t WrapMode) {
 	bindTexture(texture.GetHandle())
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, int32(wrap_s))
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int32(wrap_t))
+}
+
+func (texture *Texture) GetWrap() Wrap {
+	return texture.wrap
 }
 
 func (texture *Texture) SetFilter(min, mag FilterMode) error {
@@ -119,6 +127,10 @@ func (texture *Texture) SetFilter(min, mag FilterMode) error {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, int32(mag))
 	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAX_ANISOTROPY_EXT, texture.filter.anisotropy)
 	return nil
+}
+
+func (texture *Texture) GetFilter() Filter {
+	return texture.filter
 }
 
 func (texture *Texture) validateFilter() bool {
@@ -141,19 +153,23 @@ func (texture *Texture) validateFilter() bool {
 	return true
 }
 
-func (texture *Texture) GetWidth() float32 {
+func (texture *Texture) GetWidth() int32 {
 	return texture.Width
 }
 
-func (texture *Texture) GetHeight() float32 {
+func (texture *Texture) GetHeight() int32 {
 	return texture.Height
+}
+
+func (texture *Texture) GetDimensions() (int32, int32) {
+	return texture.Width, texture.Height
 }
 
 func (texture *Texture) Release() {
 	deleteTexture(texture.textureId)
 }
 
-func (texture *Texture) UnloadVolatile() {
+func (texture *Texture) unloadVolatile() {
 	if texture != nil {
 		return
 	}

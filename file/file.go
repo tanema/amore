@@ -1,5 +1,5 @@
 /*
- * This pacakge is meant to take care of all asset file opening
+ * This package is meant to take care of all asset file opening
  * In the future this will be made to use a pre configured directory
  * also when put onto mobile it will be made to access thos appropriately as well
  */

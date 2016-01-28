@@ -41,6 +41,7 @@ TODO
   - Quad
   - SpriteBatch
   - Mesh
+  - Stencil
   - Shader 
     * ~~Uniforms~~
     * ~~default shaders~~

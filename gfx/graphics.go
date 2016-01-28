@@ -8,6 +8,15 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+type (
+	Drawable interface {
+		Draw(args ...float32)
+	}
+	QuadDrawable interface {
+		Drawq(quad Quad, args ...float32)
+	}
+)
+
 const defaultPointCount = 30
 
 func Circle(mode string, x, y, radius float32) {
@@ -118,7 +127,7 @@ func Polygon(mode string, coords []float32) {
 	}
 }
 
-func NewScreenshot(copyAlpha bool) image.Image {
+func NewScreenshot() image.Image {
 	// Temporarily unbind the currently active canvas (glReadPixels reads the active framebuffer, not the main one.)
 	canvases := GetCanvas()
 	SetCanvas()
@@ -127,14 +136,7 @@ func NewScreenshot(copyAlpha bool) image.Image {
 	screenshot := image.NewRGBA(image.Rect(0, 0, int(w), int(h)))
 	stride := int32(screenshot.Stride)
 	pixels := make([]byte, len(screenshot.Pix))
-	gl.ReadPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
-
-	if !copyAlpha {
-		// Replace alpha values with full opacity.
-		for i := 3; i < len(screenshot.Pix); i += 4 {
-			pixels[i] = 255
-		}
-	}
+	gl.ReadPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pixels))
 
 	// OpenGL sucks and reads pixels from the lower-left. Let's fix that.
 	for y := int32(0); y < h; y++ {
@@ -152,10 +154,27 @@ func Draw(drawable Drawable, args ...float32) {
 	drawable.Draw(args...)
 }
 
+func Drawq(drawable QuadDrawable, quad Quad, args ...float32) {
+	drawable.Drawq(quad, args...)
+}
+
 func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, float32, float32, float32, float32, float32) {
 	if args == nil || len(args) < 2 {
 		panic("not enough params passed to draw call")
 	}
+	/**
+	 * Normalized an array of floats into these params if they exist
+	 * if they are not present then thier default values are returned
+	 * x The position of the object along the x-axis.
+	 * y The position of the object along the y-axis.
+	 * angle The angle of the object (in radians).
+	 * sx The scale factor along the x-axis.
+	 * sy The scale factor along the y-axis.
+	 * ox The origin offset along the x-axis.
+	 * oy The origin offset along the y-axis.
+	 * kx Shear along the x-axis.
+	 * ky Shear along the y-axis.
+	 **/
 	var x, y, angle, sx, sy, ox, oy, kx, ky float32
 	sx = 1
 	sy = 1

@@ -1,4 +1,5 @@
 // +build linux
+
 package window
 
 func requestAttention(continuous bool) {
