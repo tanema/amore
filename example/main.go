@@ -35,7 +35,7 @@ func main() {
 
 	canvas = gfx.NewCanvas(800, 600)
 	tree = gfx.NewImage("images/palm_tree.png")
-	quad = gfx.NewQuad(tree, 0, 0, 200, 200)
+	quad = gfx.NewQuad(0, 0, 200, 200, tree.GetWidth(), tree.GetHeight())
 	ttf = gfx.NewFont("fonts/arial.ttf", 20)
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
@@ -104,7 +104,7 @@ func draw() {
 	gfx.SetColor(255, 255, 255, 255)
 	//x, y, rotate radians, scale x, y, offset x, y, shear x, y
 	gfx.Draw(tree, 500, 50, -0.4, 0.5, 0.8, -100, -200, -0.2, 0.4)
-	gfx.Draw(quad, 1000, 500)
+	gfx.Drawq(tree, quad, 1000, 500)
 
 	// image font
 	gfx.SetFont(image_font)

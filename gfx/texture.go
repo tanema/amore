@@ -196,3 +196,7 @@ func (texture *Texture) drawv(model *mgl32.Mat4, coords, texcoords []float32) {
 func (texture *Texture) Draw(args ...float32) {
 	texture.drawv(generateModelMatFromArgs(args), texture.coords, texture.texcoords)
 }
+
+func (texture *Texture) Drawq(quad *Quad, args ...float32) {
+	texture.drawv(generateModelMatFromArgs(args), quad.coords, quad.texcoords)
+}
