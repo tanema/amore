@@ -24,29 +24,20 @@ TODO
     * Ogg Vorbis
     * MOD
 * GFX [ref](https://love2d.org/wiki/love.graphics)
-  - ~~primitives~~
-    * ~~polygons~~
-    * ~~polyline~~
-    * ~~line styles~~
-    * ~~color~~
-  - ~~Transforms~~
-    * ~~rotate~~
-    * ~~scale~~
-    * ~~shear~~
-    * ~~offset~~
+  - ~~primitives (polygons, lines, color)~~
+  - ~~Transforms (rotate, scale, shear, offset)~~
   - ~~Textures~~
-  - ~~Images~~
-  - ~~Font~~
-  - ~~Canvas~~
+  - ~~Font (image, ttf)~~
+  - ~~Canvas (Just RGBA8/Normal)~~
   - ~~Quad~~
+  - ~~Shader~~
+  - Images
+    * mipmaps
+  - Video
+  - Text
   - SpriteBatch
   - Mesh
   - Stencil
-  - Shader 
-    * ~~Uniforms~~
-    * ~~default shaders~~
-    * sendTexture / texture pool
-    * temporary attach to send variables to a non attached shader
 * ~~Events~~
 * ~~Window~~ [ref](https://love2d.org/wiki/love.window) (Need support from SDL library)
 * ~~System~~

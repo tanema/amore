@@ -24,6 +24,9 @@ type (
 	Wrap struct {
 		s, t WrapMode
 	}
+	iTexture interface {
+		GetHandle() uint32
+	}
 	Texture struct {
 		textureId     uint32
 		Width, Height int32

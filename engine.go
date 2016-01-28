@@ -29,7 +29,8 @@ func Start(update func(float32), draw func()) (err error) {
 		update(timer.GetDelta())
 
 		// draw
-		gfx.Reset()
+		gfx.ClearC(gfx.GetBackgroundColorC())
+		gfx.Origin()
 		draw()
 		current_window.SwapBuffers()
 

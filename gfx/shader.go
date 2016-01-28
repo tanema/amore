@@ -16,10 +16,12 @@ import (
 type BuiltinUniform int
 
 type Shader struct {
-	vertex_code string
-	pixel_code  string
-	program     uint32
-	uniforms    map[string]Uniform // Uniform location buffer map
+	vertex_code    string
+	pixel_code     string
+	program        uint32
+	uniforms       map[string]Uniform // Uniform location buffer map
+	texUnitPool    map[string]int32
+	activeTexUnits []uint32
 }
 
 func NewShader(paths ...string) *Shader {
@@ -34,6 +36,8 @@ func (shader *Shader) loadVolatile() bool {
 	vert := compileCode(gl.VERTEX_SHADER, shader.vertex_code)
 	frag := compileCode(gl.FRAGMENT_SHADER, shader.pixel_code)
 	shader.program = gl.CreateProgram()
+	shader.texUnitPool = make(map[string]int32)
+	shader.activeTexUnits = make([]uint32, GetMaxTextureUnits())
 
 	gl.AttachShader(shader.program, vert)
 	gl.AttachShader(shader.program, frag)
@@ -65,7 +69,15 @@ func (shader *Shader) loadVolatile() bool {
 }
 
 func (shader *Shader) unloadVolatile() {
+	// active texture list is probably invalid, clear it
 	gl.DeleteProgram(shader.program)
+
+	// decrement global texture id counters for texture units which had textures bound from this shader
+	for i := 0; i < len(shader.activeTexUnits); i++ {
+		if shader.activeTexUnits[i] > 0 {
+			gl_state.textureCounters[i] = gl_state.textureCounters[i] - 1
+		}
+	}
 }
 
 func (shader *Shader) mapUniforms() {
@@ -98,8 +110,23 @@ func (shader *Shader) mapUniforms() {
 	}
 }
 
-func (shader *Shader) Attach() {
-	gl.UseProgram(shader.program)
+func (shader *Shader) attach(temporary bool) {
+	if gl_state.currentShader != shader {
+		gl.UseProgram(shader.program)
+		gl_state.currentShader = shader
+	}
+	if !temporary {
+		// make sure all sent textures are properly bound to their respective texture units
+		// note: list potentially contains texture ids of deleted/invalid textures!
+		for i := 0; i < len(shader.activeTexUnits); i++ {
+			if shader.activeTexUnits[i] > 0 {
+				bindTextureToUnit(shader.activeTexUnits[i], int32(i+1), false)
+			}
+		}
+
+		// We always want to use texture unit 0 for everyhing else.
+		setTextureUnit(0)
+	}
 }
 
 func (shader *Shader) getUniformAndCheck(name string, expected_type UniformType, value_count int) (Uniform, error) {
@@ -117,6 +144,9 @@ func (shader *Shader) getUniformAndCheck(name string, expected_type UniformType,
 }
 
 func (shader *Shader) SendInt(name string, values ...int32) error {
+	shader.attach(true)
+	defer states.back().shader.attach(false)
+
 	uniform, err := shader.getUniformAndCheck(name, UNIFORM_INT, len(values))
 	if err != nil {
 		return err
@@ -140,6 +170,9 @@ func (shader *Shader) SendInt(name string, values ...int32) error {
 }
 
 func (shader *Shader) SendFloat(name string, values ...float32) error {
+	shader.attach(true)
+	defer states.back().shader.attach(false)
+
 	uniform, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, len(values))
 	if err != nil {
 		return err
@@ -163,6 +196,9 @@ func (shader *Shader) SendFloat(name string, values ...float32) error {
 }
 
 func (shader *Shader) SendMat4(name string, mat mgl32.Mat4) error {
+	shader.attach(true)
+	defer states.back().shader.attach(false)
+
 	uniform, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 4)
 	if err != nil {
 		return err
@@ -172,6 +208,9 @@ func (shader *Shader) SendMat4(name string, mat mgl32.Mat4) error {
 }
 
 func (shader *Shader) SendMat3(name string, mat mgl32.Mat3) error {
+	shader.attach(true)
+	defer states.back().shader.attach(false)
+
 	uniform, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 3)
 	if err != nil {
 		return err
@@ -181,6 +220,9 @@ func (shader *Shader) SendMat3(name string, mat mgl32.Mat3) error {
 }
 
 func (shader *Shader) SendMat2(name string, mat mgl32.Mat2) error {
+	shader.attach(true)
+	defer states.back().shader.attach(false)
+
 	uniform, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 3)
 	if err != nil {
 		return err
@@ -189,15 +231,64 @@ func (shader *Shader) SendMat2(name string, mat mgl32.Mat2) error {
 	return nil
 }
 
-func (shader *Shader) sendTexture(name string, tex *Texture) error {
+func (shader *Shader) SendTexture(name string, texture iTexture) error {
+	shader.attach(true)
+	defer states.back().shader.attach(false)
+
+	gltex := texture.GetHandle()
+	texunit := shader.getTextureUnit(name)
+
 	uniform, err := shader.getUniformAndCheck(name, UNIFORM_SAMPLER, 1)
 	if err != nil {
 		return err
 	}
 
-	//REDO with pool, this is just a quick hack to make thing work right away
-	gl.Uniform1i(uniform.Location, 0)
+	bindTextureToUnit(gltex, texunit, true)
+
+	gl.Uniform1i(uniform.Location, texunit)
+
+	// increment global shader texture id counter for this texture unit, if we haven't already
+	if shader.activeTexUnits[texunit-1] == 0 {
+		gl_state.textureCounters[texunit-1]++
+	}
+
+	// store texture id so it can be re-bound to the proper texture unit later
+	shader.activeTexUnits[texunit-1] = gltex
+
 	return nil
+}
+
+func (shader *Shader) getTextureUnit(name string) int32 {
+	unit, found := shader.texUnitPool[name]
+	if found {
+		return unit
+	}
+
+	texunit := -1
+	// prefer texture units which are unused by all other shaders
+	for i := 0; i < len(gl_state.textureCounters); i++ {
+		if gl_state.textureCounters[i] == 0 {
+			texunit = i + 1
+			break
+		}
+	}
+
+	if texunit == -1 {
+		// no completely unused texture units exist, try to use next free slot in our own list
+		for i := 0; i < len(shader.activeTexUnits); i++ {
+			if shader.activeTexUnits[i] == 0 {
+				texunit = i + 1
+				break
+			}
+		}
+
+		if texunit == -1 {
+			panic("No more texture units available for shader.")
+		}
+	}
+
+	shader.texUnitPool[name] = int32(texunit)
+	return shader.texUnitPool[name]
 }
 
 func createVertexCode(code string) string {

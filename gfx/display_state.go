@@ -30,7 +30,7 @@ type displayState struct {
 type glState struct {
 	initialized            bool
 	boundTextures          []uint32
-	curTextureUnit         uint32
+	curTextureUnit         int32
 	viewport               Viewport
 	framebufferSRGBEnabled bool
 	defaultTexture         uint32
@@ -38,10 +38,13 @@ type glState struct {
 	projectionStack        *matstack.MatStack
 	viewStack              *matstack.MatStack
 	currentCanvas          *Canvas
+	currentShader          *Shader
+	textureCounters        []int
 }
 
 func newDisplayState() displayState {
 	return displayState{
+		blend_mode:             BLENDMODE_ALPHA,
 		pointSize:              1,
 		pixelSize:              1,
 		line_width:             1,

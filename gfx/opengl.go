@@ -71,6 +71,7 @@ func InitContext(w, h int32) {
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
 	gl.GetIntegerv(gl.MAX_SAMPLES, &maxRenderbufferSamples)
 	gl.GetIntegerv(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits)
+	gl_state.textureCounters = make([]int, maxTextureUnits)
 	gl.GetIntegerv(gl.MAX_DRAW_BUFFERS, &maxRenderTargets)
 	var maxattachments int32
 	gl.GetIntegerv(gl.MAX_COLOR_ATTACHMENTS, &maxattachments)
@@ -80,6 +81,7 @@ func InitContext(w, h int32) {
 
 	// Enable blending
 	gl.Enable(gl.BLEND)
+	SetBlendMode(BLENDMODE_ALPHA)
 	// Auto-generated mipmaps should be the best quality possible
 	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
 	// Make sure antialiasing works when set elsewhere
@@ -97,7 +99,7 @@ func InitContext(w, h int32) {
 	gl_state.boundTextures = make([]uint32, maxTextureUnits)
 	var curgltextureunit int32
 	gl.GetIntegerv(gl.ACTIVE_TEXTURE, &curgltextureunit)
-	gl_state.curTextureUnit = uint32(curgltextureunit) - gl.TEXTURE0
+	gl_state.curTextureUnit = curgltextureunit - gl.TEXTURE0
 	// Retrieve currently bound textures for each texture unit.
 	for i := 0; i < len(gl_state.boundTextures); i++ {
 		gl.ActiveTexture(gl.TEXTURE0 + uint32(i))
@@ -111,11 +113,13 @@ func InitContext(w, h int32) {
 
 	// We always need a default shader.
 	defaultShader = NewShader()
-	SetShader(defaultShader)
 
 	gl_state.initialized = true
 
 	loadAllVolatile()
+
+	//have to set this after loadallvolatile() so we are sure the  default shader is loaded
+	SetShader(nil)
 }
 
 // Set the 'default' texture (id 0) as a repeating white pixel. Otherwise,
@@ -140,20 +144,20 @@ func prepareDraw(model *mgl32.Mat4) {
 		model = &modelIdent
 	}
 
-	states.back().shader.SendMat4("ProjectionMat", gl_state.projectionStack.Peek())
-	states.back().shader.SendMat4("ViewMat", gl_state.viewStack.Peek())
-	states.back().shader.SendMat4("ModelMat", *model)
-	states.back().shader.SendFloat("ScreenSize", float32(screen_width), float32(screen_height), 0, 0)
-	states.back().shader.SendFloat("PointSize", states.back().pointSize)
+	gl_state.currentShader.SendMat4("ProjectionMat", gl_state.projectionStack.Peek())
+	gl_state.currentShader.SendMat4("ViewMat", gl_state.viewStack.Peek())
+	gl_state.currentShader.SendMat4("ModelMat", *model)
+	gl_state.currentShader.SendFloat("ScreenSize", float32(screen_width), float32(screen_height), 0, 0)
+	gl_state.currentShader.SendFloat("PointSize", states.back().pointSize)
 }
 
-func setTextureUnit(textureunit uint32) error {
+func setTextureUnit(textureunit int32) error {
 	if textureunit < 0 || int(textureunit) >= len(gl_state.boundTextures) {
 		return fmt.Errorf("Invalid texture unit index (%v).", textureunit)
 	}
 
 	if textureunit != gl_state.curTextureUnit {
-		gl.ActiveTexture(gl.TEXTURE0 + textureunit)
+		gl.ActiveTexture(gl.TEXTURE0 + uint32(textureunit))
 	}
 
 	gl_state.curTextureUnit = textureunit
@@ -167,7 +171,7 @@ func bindTexture(texture uint32) {
 	}
 }
 
-func bindTextureToUnit(texture, textureunit uint32, restoreprev bool) error {
+func bindTextureToUnit(texture uint32, textureunit int32, restoreprev bool) error {
 	if texture != gl_state.boundTextures[textureunit] {
 		oldtextureunit := gl_state.curTextureUnit
 		if err := setTextureUnit(textureunit); err != nil {
@@ -276,16 +280,16 @@ func SetViewport(x, y, w, h int32) {
 	gl.Viewport(y, x, screen_width, screen_height)
 	gl_state.viewport = Viewport{y, x, screen_width, screen_height}
 	gl_state.projectionStack.Load(mgl32.Ortho(float32(x), float32(screen_width), float32(screen_height), float32(y), -1, 1))
-	setScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
+	SetScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
 }
 
-func Reset() {
-	Origin()
-	SetBlendMode(BLENDMODE_ALPHA)
-	Clear()
+func Clear(r, g, b, a float32) {
+	gl.ClearColor(r/255.0, g/255.0, b/255.0, a/255.0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-func Clear() {
+func ClearC(c Color) {
+	gl.ClearColor(c[0], c[1], c[2], c[3])
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
@@ -344,22 +348,25 @@ func Pop() {
 	states.pop()
 }
 
-func setScissor(x, y, width, height int32) {
-	if gl_state.currentCanvas != nil {
-		gl.Scissor(x, y, width, height)
+func SetScissor(args ...int32) {
+	if args == nil {
+		gl.Disable(gl.SCISSOR_TEST)
+		states.back().scissor = false
+	} else if len(args) == 4 {
+		x, y, width, height := args[0], args[1], args[2], args[3]
+		gl.Enable(gl.SCISSOR_TEST)
+		if gl_state.currentCanvas != nil {
+			gl.Scissor(x, y, width, height)
+		} else {
+			// With no Canvas active, we need to compensate for glScissor starting
+			// from the lower left of the viewport instead of the top left.
+			gl.Scissor(x, gl_state.viewport[3]-(y+height), width, height)
+		}
+		states.back().scissorBox = Viewport{x, y, width, height}
+		states.back().scissor = true
 	} else {
-		// With no Canvas active, we need to compensate for glScissor starting
-		// from the lower left of the viewport instead of the top left.
-		gl.Scissor(x, gl_state.viewport[3]-(y+height), width, height)
+		panic("incorrect number of arguments to setscissor")
 	}
-	states.back().scissorBox = Viewport{x, y, width, height}
-	states.back().scissor = true
-}
-
-func SetScissor(x, y, width, height int32) {
-	gl.Enable(gl.SCISSOR_TEST)
-	// OpenGL's reversed y-coordinate is compensated for in OpenGL::setScissor.
-	setScissor(x, y, width, height)
 }
 
 func ClearScissor() {
@@ -431,7 +438,7 @@ func SetShader(shader *Shader) {
 	} else {
 		states.back().shader = shader
 	}
-	states.back().shader.Attach()
+	states.back().shader.attach(false)
 }
 
 func SetBackgroundColor(r, g, b, a float32) {
@@ -439,9 +446,27 @@ func SetBackgroundColor(r, g, b, a float32) {
 	gl.ClearColor(r/255.0, g/255.0, b/255.0, a/255.0)
 }
 
+func SetBackgroundColorC(c Color) {
+	states.back().background_color = c
+	gl.ClearColor(c[0], c[1], c[2], c[3])
+}
+
+func GetBackgroundColor() (r, g, b, a float32) {
+	bc := states.back().background_color
+	return bc[0], bc[1], bc[2], bc[3]
+}
+
+func GetBackgroundColorC() Color {
+	return states.back().background_color
+}
+
+func setColor(r, g, b, a float32) {
+	states.back().color = Color{r, g, b, a}
+	gl.VertexAttrib4f(ATTRIB_COLOR, r, g, b, a)
+}
+
 func SetColor(r, g, b, a float32) {
-	states.back().color = Color{r / 255.0, g / 255.0, b / 255.0, a / 255.0}
-	gl.VertexAttrib4f(ATTRIB_COLOR, r/255.0, g/255.0, b/255.0, a/255.0)
+	setColor(r/255.0, g/255.0, b/255.0, a/255.0)
 }
 
 func SetColorC(c Color) {
@@ -533,6 +558,10 @@ func SetDefaultFilter(min, mag FilterMode, anisotropy float32) {
 		mag:        mag,
 		anisotropy: float32(math.Min(math.Max(float64(anisotropy), 1.0), float64(maxAnisotropy))),
 	}
+}
+
+func SetDefaultFilterF(f Filter) {
+	states.back().defaultFilter = f
 }
 
 func GetDefaultFilter() Filter {
