@@ -38,7 +38,7 @@ func (canvas *Canvas) loadVolatile() bool {
 		return false
 	}
 
-	canvas.Texture = newTexture(canvas.width, canvas.height)
+	canvas.Texture = newTexture(canvas.width, canvas.height, false)
 	//NULL means reserve texture memory, but texels are undefined
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, canvas.width, canvas.height, 0, gl.BGRA, gl.UNSIGNED_BYTE, gl.Ptr(nil))
 	if gl.GetError() != gl.NO_ERROR {

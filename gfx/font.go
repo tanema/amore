@@ -121,7 +121,7 @@ func (font *TTFont) loadVolatile() bool {
 		}
 	}
 
-	font.Texture, err = newImageTexture(rgba)
+	font.Texture, err = newImageTexture(rgba, false)
 	return err == nil
 }
 
@@ -174,7 +174,7 @@ func (font *ImageFont) loadVolatile() bool {
 		}
 	}
 
-	font.Texture, err = newImageTexture(rgba)
+	font.Texture, err = newImageTexture(rgba, false)
 	return err == nil
 }
 

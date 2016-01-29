@@ -25,15 +25,12 @@ func Start(update func(float32), draw func()) (err error) {
 	for !current_window.ShouldClose() {
 		// update
 		timer.Step()
-
 		update(timer.GetDelta())
-
 		// draw
 		gfx.ClearC(gfx.GetBackgroundColorC())
 		gfx.Origin()
 		draw()
 		current_window.SwapBuffers()
-
 		// get user interactions
 		event.Poll()
 	}

@@ -567,3 +567,12 @@ func SetDefaultFilterF(f Filter) {
 func GetDefaultFilter() Filter {
 	return states.back().defaultFilter
 }
+
+func SetDefaultMipmapFilter(filter FilterMode, sharpness float32) {
+	states.back().defaultMipmapFilter = filter
+	states.back().defaultMipmapSharpness = sharpness
+}
+
+func GetDefaultMipmapFilter() (filter FilterMode, sharpness float32) {
+	return states.back().defaultMipmapFilter, states.back().defaultMipmapSharpness
+}

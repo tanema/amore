@@ -31,8 +31,7 @@ TODO
   - ~~Canvas (Just RGBA8/Normal)~~
   - ~~Quad~~
   - ~~Shader~~
-  - Images
-    * mipmaps
+  - ~~Images (gif, jpeg, png)~~
   - Video
   - Text
   - SpriteBatch

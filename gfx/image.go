@@ -2,6 +2,7 @@ package gfx
 
 import (
 	"image"
+	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 
@@ -11,10 +12,23 @@ import (
 type Image struct {
 	*Texture
 	filePath string
+	mipmaps  bool
 }
 
 func NewImage(path string) *Image {
-	new_image := &Image{filePath: path}
+	new_image := &Image{
+		filePath: path,
+		mipmaps:  false,
+	}
+	registerVolatile(new_image)
+	return new_image
+}
+
+func NewMipmappedImage(path string) *Image {
+	new_image := &Image{
+		filePath: path,
+		mipmaps:  true,
+	}
 	registerVolatile(new_image)
 	return new_image
 }
@@ -31,7 +45,7 @@ func (img *Image) loadVolatile() bool {
 		return false
 	}
 
-	img.Texture, img_err = newImageTexture(decoded_img)
+	img.Texture, img_err = newImageTexture(decoded_img, img.mipmaps)
 	if img_err != nil {
 		return false
 	}
