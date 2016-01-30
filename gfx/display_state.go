@@ -14,8 +14,8 @@ type displayState struct {
 	pointSize              float32
 	scissor                bool
 	scissorBox             Viewport
-	stencilTest            bool
-	stencilInvert          bool
+	stencilCompare         CompareMode
+	stencilTestValue       int32
 	font                   Font
 	shader                 *Shader
 	colorMask              ColorMask
@@ -29,6 +29,7 @@ type displayState struct {
 
 type glState struct {
 	initialized            bool
+	active                 bool
 	boundTextures          []uint32
 	curTextureUnit         int32
 	viewport               Viewport
@@ -40,6 +41,7 @@ type glState struct {
 	currentCanvas          *Canvas
 	currentShader          *Shader
 	textureCounters        []int
+	writingToStencil       bool
 }
 
 func newDisplayState() displayState {
@@ -47,6 +49,7 @@ func newDisplayState() displayState {
 		blend_mode:             BLENDMODE_ALPHA,
 		pointSize:              1,
 		pixelSize:              1,
+		stencilCompare:         COMPARE_ALWAYS,
 		line_width:             1,
 		line_join:              LINE_JOIN_MITER,
 		line_style:             LINE_SMOOTH,
@@ -54,6 +57,7 @@ func newDisplayState() displayState {
 		defaultFilter:          newFilter(),
 		defaultMipmapFilter:    FILTER_NEAREST,
 		defaultMipmapSharpness: 0.0,
+		colorMask:              ColorMask{r: true, g: true, b: true, a: true},
 	}
 }
 

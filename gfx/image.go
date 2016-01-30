@@ -15,13 +15,31 @@ type Image struct {
 	mipmaps  bool
 }
 
-func NewImage(path string) *Image {
+func NewImage(path string) (*Image, error) {
+	//we do this first time to check the image before volitile load
+	imgFile, new_err := file.NewFile(path)
+	defer imgFile.Close()
+	if new_err != nil {
+		return nil, new_err
+	}
+
+	decoded_img, _, img_err := image.Decode(imgFile)
+	if img_err != nil {
+		return nil, img_err
+	}
+
+	bounds := decoded_img.Bounds()
 	new_image := &Image{
 		filePath: path,
 		mipmaps:  false,
+		Texture: &Texture{
+			Width:  int32(bounds.Dx()),
+			Height: int32(bounds.Dy()),
+		},
 	}
+
 	registerVolatile(new_image)
-	return new_image
+	return new_image, nil
 }
 
 func NewMipmappedImage(path string) *Image {

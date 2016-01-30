@@ -7,25 +7,8 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
-)
 
-const (
-	ATTRIB_POS = iota
-	ATTRIB_TEXCOORD
-	ATTRIB_COLOR
-	ATTRIB_MAX_ENUM
-)
-
-type BlendMode int
-
-const (
-	BLENDMODE_ALPHA BlendMode = iota
-	BLENDMODE_MULTIPLICATIVE
-	BLENDMODE_PREMULTIPLIED
-	BLENDMODE_SUBTRACTIVE
-	BLENDMODE_ADDITIVE
-	BLENDMODE_SCREEN
-	BLENDMODE_REPLACE
+	"github.com/tanema/amore/window"
 )
 
 type Viewport [4]int32 //The Viewport Values (X, Y, Width, Height)
@@ -186,15 +169,6 @@ func bindTextureToUnit(texture uint32, textureunit int32, restoreprev bool) erro
 	return nil
 }
 
-func SetFramebufferSRGB(enable bool) {
-	if enable {
-		gl.Enable(gl.FRAMEBUFFER_SRGB)
-	} else {
-		gl.Disable(gl.FRAMEBUFFER_SRGB)
-	}
-	gl_state.framebufferSRGBEnabled = enable
-}
-
 func HasFramebufferSRGB() bool {
 	return gl_state.framebufferSRGBEnabled
 }
@@ -233,16 +207,6 @@ func GetVendor() string {
 	return opengl_vendor
 }
 
-func setFramebufferSRGB(enable bool) {
-	if enable {
-		gl.Enable(gl.FRAMEBUFFER_SRGB)
-	} else {
-		gl.Disable(gl.FRAMEBUFFER_SRGB)
-	}
-
-	gl_state.framebufferSRGBEnabled = enable
-}
-
 func hasFramebufferSRGB() bool {
 	return gl_state.framebufferSRGBEnabled
 }
@@ -263,6 +227,7 @@ func DeInit() {
 	unloadAllVolatile()
 	gl.DeleteTextures(1, &gl_state.defaultTexture)
 	gl_state.defaultTexture = 0
+	gl_state.initialized = false
 }
 
 func GetViewport() Viewport {
@@ -289,8 +254,40 @@ func Clear(r, g, b, a float32) {
 }
 
 func ClearC(c Color) {
-	gl.ClearColor(c[0], c[1], c[2], c[3])
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	Clear(c[0], c[1], c[2], c[3])
+}
+
+func Present() {
+	if !IsActive() {
+		return
+	}
+
+	// Make sure we don't have a canvas active.
+	canvases := states.back().canvases
+	SetCanvas()
+	window.GetCurrent().SwapBuffers()
+	// Restore the currently active canvas, if there is one.
+	SetCanvas(canvases...)
+}
+
+func IsActive() bool {
+	// The graphics module is only completely 'active' if there's a window, a
+	// context, and the active variable is set.
+	return gl_state.active && isCreated() && window.GetCurrent().IsOpen()
+}
+
+func SetActive(enable bool) {
+	// Make sure all pending OpenGL commands have fully executed before
+	// returning, when going from active to inactive. This is required on iOS.
+	if isCreated() && gl_state.active && !enable {
+		gl.Finish()
+	}
+
+	gl_state.active = enable
+}
+
+func isCreated() bool {
+	return gl_state.initialized
 }
 
 func Origin() {
@@ -369,9 +366,84 @@ func SetScissor(args ...int32) {
 	}
 }
 
+func IntersectScissor(x, y, width, height int32) {
+	rect := states.back().scissorBox
+
+	if !states.back().scissor {
+		rect[0] = 0
+		rect[1] = 0
+		rect[2] = math.MaxInt32
+		rect[3] = math.MaxInt32
+	}
+
+	x1 := int32(math.Max(float64(rect[0]), float64(x)))
+	y1 := int32(math.Max(float64(rect[1]), float64(y)))
+	x2 := int32(math.Min(float64(rect[0]+rect[2]), float64(x+width)))
+	y2 := int32(math.Min(float64(rect[1]+rect[3]), float64(y+height)))
+
+	SetScissor(x1, y1, int32(math.Max(0, float64(x2-x1))), int32(math.Max(0, float64(y2-y1))))
+}
+
 func ClearScissor() {
 	gl.Disable(gl.SCISSOR_TEST)
 	states.back().scissor = false
+}
+
+func Stencil(stencil_func func()) {
+	StencilExt(stencil_func, STENCIL_REPLACE, 1, false)
+}
+
+func StencilExt(stencil_func func(), action StencilAction, value int32, keepvalues bool) {
+	gl_state.writingToStencil = true
+	if !keepvalues {
+		clearStencil()
+	}
+	if gl_state.currentCanvas != nil {
+		gl_state.currentCanvas.checkCreateStencil()
+	}
+	gl.Enable(gl.STENCIL_TEST)
+	gl.ColorMask(false, false, false, false)
+	gl.StencilFunc(gl.ALWAYS, value, 0xFF)
+	gl.StencilOp(gl.KEEP, gl.KEEP, uint32(action))
+
+	stencil_func()
+
+	gl_state.writingToStencil = false
+	SetColorMask(states.back().colorMask)
+	SetStencilTest(states.back().stencilCompare, states.back().stencilTestValue)
+}
+
+func SetStencilTest(compare CompareMode, value int32) {
+	if gl_state.writingToStencil {
+		return
+	}
+
+	states.back().stencilCompare = compare
+	states.back().stencilTestValue = value
+	if compare == COMPARE_ALWAYS {
+		gl.Disable(gl.STENCIL_TEST)
+		return
+	}
+
+	if gl_state.currentCanvas != nil {
+		gl_state.currentCanvas.checkCreateStencil()
+	}
+
+	gl.Enable(gl.STENCIL_TEST)
+	gl.StencilFunc(uint32(compare), value, 0xFF)
+	gl.StencilOp(gl.KEEP, gl.KEEP, gl.REPLACE)
+}
+
+func ClearStencilTest() {
+	SetStencilTest(COMPARE_ALWAYS, 0)
+}
+
+func GetStencilTest() (CompareMode, int32) {
+	return states.back().stencilCompare, states.back().stencilTestValue
+}
+
+func clearStencil() {
+	gl.Clear(gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
 func GetScissor() (int32, int32, int32, int32) {

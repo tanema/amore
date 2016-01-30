@@ -18,9 +18,7 @@ var filters = map[string]int32{"linear": gl.LINEAR, "nearest": gl.NEAREST}
 var wraps = map[string]int32{"clamp": gl.CLAMP_TO_EDGE, "repeat": gl.REPEAT}
 
 type (
-	WrapMode   int
-	FilterMode int
-	Filter     struct {
+	Filter struct {
 		min, mag, mipmap FilterMode
 		anisotropy       float32
 	}
@@ -36,6 +34,9 @@ type (
 		wrap          Wrap
 		mipmaps       bool
 	}
+	iTexture interface {
+		GetHandle() uint32
+	}
 )
 
 func newFilter() Filter {
@@ -50,15 +51,6 @@ func newFilter() Filter {
 func newWrap() Wrap {
 	return Wrap{s: WRAP_CLAMP, t: WRAP_CLAMP}
 }
-
-const (
-	WRAP_CLAMP           WrapMode   = WrapMode(gl.CLAMP)
-	WRAP_REPEAT          WrapMode   = WrapMode(gl.REPEAT)
-	WRAP_MIRRORED_REPEAT WrapMode   = WrapMode(gl.MIRRORED_REPEAT)
-	FILTER_NONE          FilterMode = FilterMode(gl.NONE)
-	FILTER_LINEAR        FilterMode = FilterMode(gl.LINEAR)
-	FILTER_NEAREST       FilterMode = FilterMode(gl.NEAREST)
-)
 
 func newTexture(width, height int32, mipmaps bool) *Texture {
 	var texture_id uint32

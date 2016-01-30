@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image/png"
 	"math"
 	"os"
@@ -34,16 +33,14 @@ func main() {
 	keyboard.SetKeyReleaseCB(keyUp)
 
 	canvas = gfx.NewCanvas(800, 600)
-	tree = gfx.NewImage("images/palm_tree.png")
+	tree, _ = gfx.NewImage("images/palm_tree.png")
 	quad = gfx.NewQuad(0, 0, 200, 200, tree.GetWidth(), tree.GetHeight())
 	ttf = gfx.NewFont("fonts/arial.ttf", 20)
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
 	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
 
-	if err := amore.Start(update, draw); err != nil {
-		fmt.Println("Error starting engine: %v", err)
-	}
+	amore.Start(update, draw)
 }
 
 func keyUp(key keyboard.Key) {
@@ -66,6 +63,10 @@ func update(deltaTime float32) {
 	mx, my = window.GetCurrent().PixelToWindowCoords(mx, my)
 }
 
+func myStencilFunction() {
+	gfx.Rect("fill", 426, 240, 426, 240)
+}
+
 func draw() {
 	gfx.SetLineWidth(10)
 	if use_shader {
@@ -73,6 +74,12 @@ func draw() {
 	} else {
 		gfx.SetShader(nil)
 	}
+	//stencil
+	gfx.Stencil(myStencilFunction)
+	gfx.SetStencilTest(gfx.COMPARE_EQUAL, 0)
+	gfx.SetColor(239, 96, 17, 255)
+	gfx.Rect("fill", 400, 200, 826, 440)
+	gfx.ClearStencilTest()
 
 	// rectangle
 	gfx.SetCanvas(canvas)

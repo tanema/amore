@@ -24,7 +24,7 @@ TODO
     * Ogg Vorbis
     * MOD
 * GFX [ref](https://love2d.org/wiki/love.graphics)
-  - ~~primitives (polygons, lines, color)~~
+  - ~~primitives (polygons, lines, color, stencil, scissor)~~
   - ~~Transforms (rotate, scale, shear, offset)~~
   - ~~Textures~~
   - ~~Font (image, ttf)~~
@@ -36,7 +36,6 @@ TODO
   - Text
   - SpriteBatch
   - Mesh
-  - Stencil
 * ~~Events~~
 * ~~Window~~ [ref](https://love2d.org/wiki/love.window) (Need support from SDL library)
 * ~~System~~

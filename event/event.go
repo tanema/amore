@@ -3,6 +3,7 @@ package event
 import (
 	"github.com/veandco/go-sdl2/sdl"
 
+	"github.com/tanema/amore/gfx"
 	"github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"
 	"github.com/tanema/amore/mouse"
@@ -12,8 +13,6 @@ import (
 func Poll() {
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 		switch e := event.(type) {
-		case *sdl.CommonEvent:
-			println("common event")
 		case *sdl.WindowEvent:
 			switch e.Type {
 			case sdl.WINDOWEVENT_NONE:
@@ -21,6 +20,21 @@ func Poll() {
 			case sdl.WINDOWEVENT_ENTER, sdl.WINDOWEVENT_LEAVE:
 				mouse.Delegate(event)
 			default:
+				switch e.Event {
+				case sdl.WINDOWEVENT_NONE:
+					return
+				case sdl.WINDOWEVENT_ENTER, sdl.WINDOWEVENT_LEAVE:
+					mouse.Delegate(event)
+				case sdl.WINDOWEVENT_SHOWN, sdl.WINDOWEVENT_FOCUS_GAINED:
+					gfx.SetActive(true)
+				case sdl.WINDOWEVENT_HIDDEN, sdl.WINDOWEVENT_FOCUS_LOST:
+					gfx.SetActive(false)
+				case sdl.WINDOWEVENT_RESIZED, sdl.WINDOWEVENT_SIZE_CHANGED:
+					w, h := window.GetCurrent().GetDrawableSize()
+					gfx.SetViewportSize(w, h)
+				case sdl.WINDOWEVENT_CLOSE:
+					window.GetCurrent().SetShouldClose(true)
+				}
 				window.GetCurrent().Delegate(e)
 			}
 		case *sdl.KeyDownEvent, *sdl.KeyUpEvent, *sdl.TextEditingEvent, *sdl.TextInputEvent:
@@ -43,8 +57,8 @@ func Poll() {
 			println("OS event")
 		case *sdl.QuitEvent:
 			window.GetCurrent().SetShouldClose(true)
-		default:
-			break
+		case *sdl.CommonEvent:
+			println("common")
 		}
 	}
 }

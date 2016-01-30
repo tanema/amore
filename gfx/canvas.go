@@ -178,6 +178,46 @@ func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
 	return screenshot, nil
 }
 
+func (canvas *Canvas) checkCreateStencil() bool {
+	// Do nothing if we've already created the stencil buffer.
+	if canvas.depth_stencil != 0 {
+		return true
+	}
+
+	if gl_state.currentCanvas != canvas {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, canvas.fbo)
+	}
+
+	format := gl.STENCIL_INDEX8
+	attachment := gl.STENCIL_ATTACHMENT
+
+	gl.GenRenderbuffers(1, &canvas.depth_stencil)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, canvas.depth_stencil)
+	gl.RenderbufferStorage(gl.RENDERBUFFER, uint32(format), canvas.width, canvas.height)
+
+	// Attach the stencil buffer to the framebuffer object.
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, uint32(attachment), gl.RENDERBUFFER, canvas.depth_stencil)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, 0)
+
+	success := (gl.CheckFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE)
+
+	// We don't want the stencil buffer filled with garbage.
+	if success {
+		gl.Clear(gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	} else {
+		gl.DeleteRenderbuffers(1, &canvas.depth_stencil)
+		canvas.depth_stencil = 0
+	}
+
+	if gl_state.currentCanvas != nil && gl_state.currentCanvas != canvas {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, gl_state.currentCanvas.fbo)
+	} else if gl_state.currentCanvas == nil {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, getDefaultFBO())
+	}
+
+	return success
+}
+
 func (canvas *Canvas) GetStatus() uint32 {
 	return canvas.status
 }

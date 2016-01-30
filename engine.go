@@ -1,7 +1,6 @@
 package amore
 
 import (
-	"errors"
 	"runtime"
 
 	"github.com/tanema/amore/event"
@@ -14,28 +13,25 @@ var (
 	current_window *window.Window
 )
 
-func Start(update func(float32), draw func()) (err error) {
+func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.LockOSThread() //important SDL and OpenGl Demand it and stamp thier feet if you dont
+}
 
-	if current_window = window.GetCurrent(); current_window == nil {
-		return errors.New("Cound not get a window")
-	}
+func Start(update func(float32), draw func()) {
+	current_window = window.GetCurrent()
 	defer current_window.Destroy()
-
+	gfx.InitContext(current_window.GetWidth(), current_window.GetHeight())
+	defer gfx.DeInit()
 	for !current_window.ShouldClose() {
-		// update
 		timer.Step()
 		update(timer.GetDelta())
-		// draw
 		gfx.ClearC(gfx.GetBackgroundColorC())
 		gfx.Origin()
 		draw()
-		current_window.SwapBuffers()
-		// get user interactions
+		gfx.Present()
 		event.Poll()
 	}
-
-	return
 }
 
 func Quit() {

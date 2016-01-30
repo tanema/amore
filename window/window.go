@@ -3,12 +3,9 @@ package window
 import (
 	"math"
 	"os"
-	"runtime"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/sdl_image"
-
-	"github.com/tanema/amore/gfx"
 )
 
 var (
@@ -31,11 +28,10 @@ type Window struct {
 	should_close              bool
 	config                    *WindowConfig
 	refresh_rate              int32
+	open                      bool
 }
 
 func newWindow() (*Window, error) {
-	runtime.LockOSThread() //important SDL and OpenGl Demand it and stamp thier feet if you dont
-
 	var config *WindowConfig
 	var err error
 
@@ -144,7 +140,7 @@ func newWindow() (*Window, error) {
 
 	window.UpdateSettings()
 
-	gfx.InitContext(config.Width, config.Height)
+	window.open = true
 
 	return window, nil
 }
@@ -209,9 +205,12 @@ func setGLContextAttributes(versionMajor, versionMinor int, debug bool) {
 func (window *Window) OnSizeChanged(width, height int32) {
 	window.config.Width = width
 	window.config.Height = height
+	window.config.PixelWidth, window.config.PixelHeight = window.GetDrawableSize()
+}
+
+func (window *Window) GetDrawableSize() (int32, int32) {
 	w, h := sdl.GL_GetDrawableSize(window.sdl_window)
-	window.config.PixelWidth, window.config.PixelHeight = int32(w), int32(h)
-	gfx.SetViewportSize(window.config.PixelWidth, window.config.PixelHeight)
+	return int32(w), int32(h)
 }
 
 func (window *Window) UpdateSettings() {
@@ -507,12 +506,16 @@ func (window *Window) HasMouseFocus() bool {
 	return sdl.GetMouseFocus() == window.sdl_window
 }
 
+func (window *Window) IsOpen() bool {
+	return window.open
+}
+
 func (window *Window) Raise() {
 	window.sdl_window.Raise()
 }
 
 func (window *Window) Destroy() {
-	gfx.DeInit()
+	window.open = false
 	sdl.GL_DeleteContext(window.context)
 	window.sdl_window.Destroy()
 	// The old window may have generated pending events which are no longer

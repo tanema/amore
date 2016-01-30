@@ -7,9 +7,7 @@ import (
 )
 
 type (
-	LineStyle int
-	LineJoin  int
-	polyLine  struct {
+	polyLine struct {
 		style      LineStyle
 		join       LineJoin
 		overdraw   bool
@@ -19,16 +17,6 @@ type (
 		normals    []mgl32.Vec2
 		vertices   []mgl32.Vec2
 	}
-)
-
-const (
-	// treat adjacent segments with angles between their directions <5 degree as straight
-	LINES_PARALLEL_EPS float32   = 0.05
-	LINE_ROUGH         LineStyle = iota
-	LINE_SMOOTH
-	LINE_JOIN_NONE LineJoin = iota
-	LINE_JOIN_MITER
-	LINE_JOIN_BEVEL
 )
 
 func determinant(vec1, vec2 mgl32.Vec2) float32 {
