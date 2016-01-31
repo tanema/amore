@@ -13,6 +13,8 @@ type (
 	LineStyle     int
 	LineJoin      int
 	UniformType   int
+	MeshDrawMode  uint32
+	Usage         uint32
 )
 
 const (
@@ -88,4 +90,15 @@ const (
 	UNIFORM_BASE UniformType = iota
 	UNIFORM_VEC
 	UNIFORM_MAT
+
+	//mesh draw modes
+	DRAWMODE_FAN       MeshDrawMode = MeshDrawMode(gl.TRIANGLE_FAN)
+	DRAWMODE_STRIP     MeshDrawMode = MeshDrawMode(gl.TRIANGLE_STRIP)
+	DRAWMODE_TRIANGLES MeshDrawMode = MeshDrawMode(gl.TRIANGLES)
+	DRAWMODE_POINTS    MeshDrawMode = MeshDrawMode(gl.POINTS)
+
+	//mesh and spritebatch usage
+	USAGE_STREAM  Usage = Usage(gl.STREAM_DRAW)
+	USAGE_DYNAMIC Usage = Usage(gl.DYNAMIC_DRAW)
+	USAGE_STATIC  Usage = Usage(gl.STATIC_DRAW)
 )

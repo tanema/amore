@@ -8,17 +8,15 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type (
-	Canvas struct {
-		*Texture
-		fbo              uint32
-		depth_stencil    uint32
-		status           uint32
-		attachedCanvases []*Canvas
-		width, height    int32
-		systemViewport   Viewport
-	}
-)
+type Canvas struct {
+	*Texture
+	fbo              uint32
+	depth_stencil    uint32
+	status           uint32
+	attachedCanvases []*Canvas
+	width, height    int32
+	systemViewport   Viewport
+}
 
 func NewCanvas(width, height int32) *Canvas {
 	new_canvas := &Canvas{
