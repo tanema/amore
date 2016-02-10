@@ -8,13 +8,13 @@ import (
 
 type (
 	glBuffer struct {
-		is_bound               bool     // Whether the buffer is currently bound.
-		is_mapped              bool     // Whether the buffer is currently mapped to main memory.
-		size                   int      // The size of the buffer, in bytes.
-		target                 uint32   // The target buffer object. (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER).
-		usage                  Usage    // Usage hint. GL_[DYNAMIC, STATIC, STREAM]_DRAW.
-		vbo                    uint32   // The VBO identifier. Assigned by OpenGL.
-		memory_map             []uint32 // A pointer to mapped memory.
+		is_bound               bool      // Whether the buffer is currently bound.
+		is_mapped              bool      // Whether the buffer is currently mapped to main memory.
+		size                   int       // The size of the buffer, in bytes.
+		target                 uint32    // The target buffer object. (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER).
+		usage                  Usage     // Usage hint. GL_[DYNAMIC, STATIC, STREAM]_DRAW.
+		vbo                    uint32    // The VBO identifier. Assigned by OpenGL.
+		memory_map             []float32 // A pointer to mapped memory.
 		modified_offset        int
 		modified_size          int
 		mapExplicitRangeModify bool
@@ -22,7 +22,7 @@ type (
 	quadIndices struct {
 		size        int
 		indexBuffer *glBuffer
-		indices     []uint32
+		indices     []float32
 	}
 )
 
@@ -49,10 +49,11 @@ type (
  * duplicated data and saves some memory.
  */
 func newQuadIndices(size int) *quadIndices {
+	buffer_size := size * 6
 	new_qi := &quadIndices{
 		size:        size,
-		indexBuffer: newGlBuffer(size*6, gl.ELEMENT_ARRAY_BUFFER, gl.STATIC_DRAW, false),
-		indices:     make([]uint32, size*6),
+		indexBuffer: newGlBuffer(buffer_size, []float32{}, gl.ELEMENT_ARRAY_BUFFER, gl.STATIC_DRAW, false),
+		indices:     make([]float32, buffer_size),
 	}
 
 	// 0----2
@@ -60,36 +61,39 @@ func newQuadIndices(size int) *quadIndices {
 	// | /  |
 	// 1----3
 	for i := 0; i < len(new_qi.indices); i++ {
-		new_qi.indices[i*6+0] = uint32(i*4 + 0)
-		new_qi.indices[i*6+1] = uint32(i*4 + 1)
-		new_qi.indices[i*6+2] = uint32(i*4 + 2)
+		new_qi.indices[i*6+0] = float32(i*4 + 0)
+		new_qi.indices[i*6+1] = float32(i*4 + 1)
+		new_qi.indices[i*6+2] = float32(i*4 + 2)
 
-		new_qi.indices[i*6+3] = uint32(i*4 + 2)
-		new_qi.indices[i*6+4] = uint32(i*4 + 1)
-		new_qi.indices[i*6+5] = uint32(i*4 + 3)
+		new_qi.indices[i*6+3] = float32(i*4 + 2)
+		new_qi.indices[i*6+4] = float32(i*4 + 1)
+		new_qi.indices[i*6+5] = float32(i*4 + 3)
 	}
 
 	new_qi.indexBuffer.bind()
 	defer new_qi.indexBuffer.unbind()
 
-	new_qi.indexBuffer.fill(0, new_qi.indexBuffer.size, new_qi.indices)
+	new_qi.indexBuffer.fill(0, new_qi.indices)
 
 	return new_qi
 }
 
-func newGlBuffer(size int, target uint32, usage Usage, mapExplicitRangeModify bool) *glBuffer {
+func newGlBuffer(size int, data []float32, target uint32, usage Usage, mapExplicitRangeModify bool) *glBuffer {
 	new_buffer := &glBuffer{
 		size:                   size,
 		target:                 target,
 		usage:                  usage,
-		memory_map:             make([]uint32, size),
+		memory_map:             make([]float32, size),
 		mapExplicitRangeModify: mapExplicitRangeModify,
+	}
+	if len(data) > 0 {
+		copy(new_buffer.memory_map, data[:size])
 	}
 	registerVolatile(new_buffer)
 	return new_buffer
 }
 
-func (buffer *glBuffer) mapp() []uint32 {
+func (buffer *glBuffer) mapp() []float32 {
 	if buffer.is_mapped {
 		return buffer.memory_map
 	}
@@ -183,7 +187,8 @@ func (buffer *glBuffer) unbind() {
 	buffer.is_bound = false
 }
 
-func (buffer *glBuffer) fill(offset, size int, data []uint32) {
+func (buffer *glBuffer) fill(offset int, data []float32) {
+	size := len(data)
 	copy(buffer.memory_map[offset:], data[:size-1])
 	if buffer.is_mapped {
 		buffer.setMappedRangeModified(offset, size)
@@ -194,13 +199,9 @@ func (buffer *glBuffer) fill(offset, size int, data []uint32) {
 
 func (buffer *glBuffer) loadVolatile() bool {
 	gl.GenBuffers(1, &buffer.vbo)
-
 	buffer.bind()
 	defer buffer.unbind()
-
-	// Note that if 'src' is '0', no data will be copied.
-	gl.BufferData(buffer.target, buffer.size, gl.Ptr(buffer.memory_map), uint32(buffer.usage))
-
+	gl.BufferData(buffer.target, buffer.size, gl.Ptr(nil), uint32(buffer.usage))
 	return true
 }
 

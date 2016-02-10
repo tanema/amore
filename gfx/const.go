@@ -5,16 +5,18 @@ import (
 )
 
 type (
-	WrapMode      int
-	FilterMode    int
-	BlendMode     int
-	StencilAction uint32
-	CompareMode   uint32
-	LineStyle     int
-	LineJoin      int
-	UniformType   int
-	MeshDrawMode  uint32
-	Usage         uint32
+	WrapMode             int
+	FilterMode           int
+	BlendMode            int
+	StencilAction        uint32
+	CompareMode          uint32
+	LineStyle            int
+	LineJoin             int
+	UniformType          int
+	MeshDrawMode         uint32
+	Usage                uint32
+	ParticleDistribution int
+	ParticleInsertion    int
 )
 
 const (
@@ -101,4 +103,14 @@ const (
 	USAGE_STREAM  Usage = Usage(gl.STREAM_DRAW)
 	USAGE_DYNAMIC Usage = Usage(gl.DYNAMIC_DRAW)
 	USAGE_STATIC  Usage = Usage(gl.STATIC_DRAW)
+
+	//particle distrobution
+	DISTRIBUTION_NONE ParticleDistribution = iota
+	DISTRIBUTION_UNIFORM
+	DISTRIBUTION_NORMAL
+
+	//particle insertion
+	INSERT_MODE_TOP ParticleInsertion = iota
+	INSERT_MODE_BOTTOM
+	INSERT_MODE_RANDOM
 )

@@ -5,3 +5,6 @@ github.com/veandco/go-sdl2 b642688f5453492e7ad27f48dd19559aeaac4655
 github.com/BurntSushi/toml 056c9bc7be7190eaa7715723883caffa5f8fa3e4
 github.com/go-gl/mathgl 667e7964455c5d0db23927d59cfd72852686e419
 github.com/jteeuwen/go-bindata a0ff2567cfb70903282db057e799fd826784d41d
+github.com/tcolgate/mp3 77b1e88f4c81c59354903d8612c64c2317835c45
+github.com/eaburns/flac c03c2470b98a1ad3d8d07c31e8e4529de3561c8e
+github.com/neguse/go-box2d-lite a5bc474a1e240cfcdec89e1c352b076b6dd19c1b

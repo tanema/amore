@@ -36,6 +36,8 @@ type (
 	}
 	iTexture interface {
 		GetHandle() uint32
+		GetWidth() int32
+		GetHeight() int32
 	}
 )
 

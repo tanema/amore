@@ -243,3 +243,12 @@ func generateModelMatFromArgs(args []float32) *mgl32.Mat4 {
 
 	return &mat
 }
+
+func matTransform(mat mgl32.Mat4, src []mgl32.Vec2) []mgl32.Vec2 {
+	dst := make([]mgl32.Vec2, len(src))
+	for i := 0; i < len(src); i++ {
+		dst[i][0] = (mat[0] * src[i][0]) + (mat[4] * src[i][1]) + (0) + (mat[12])
+		dst[i][1] = (mat[1] * src[i][0]) + (mat[5] * src[i][1]) + (0) + (mat[13])
+	}
+	return dst
+}

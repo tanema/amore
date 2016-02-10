@@ -30,6 +30,5 @@ func Delegate(event sdl.Event) {
 		case sdl.CONTROLLERDEVICEREMAPPED:
 			println("joystick event: controller device remapped")
 		}
-	case *sdl.TouchFingerEvent:
 	}
 }
