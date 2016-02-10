@@ -37,7 +37,7 @@ TODO
   - SpriteBatch
   - Mesh
   - Particle System
-* ~~Physics~~ (just use github.com/neguse/go-box2d-lite)
+* ~~Physics~~ (just use [github.com/neguse/go-box2d-lite](github.com/neguse/go-box2d-lite))
 * ~~Events~~
 * ~~Window~~ [ref](https://love2d.org/wiki/love.window) (Need support from SDL library)
 * ~~System~~
