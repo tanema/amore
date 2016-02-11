@@ -370,39 +370,34 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
-	gl.EnableVertexAttribArray(ATTRIB_POS)
+	useVertexAttribArrays(ATTRIBFLAG_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
 	gl.DrawElements(gl.TRIANGLES, int32((len(polyline.vertices)/4)*6), gl.UNSIGNED_SHORT, gl.Ptr(indices))
 	if polyline.overdraw {
 		c := GetColor()
 		colors := polyline.generateColorArray(len(overdraw_verts), c)
-		gl.EnableVertexAttribArray(ATTRIB_COLOR)
+		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
 		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
 		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw_verts))
 		gl.DrawElements(gl.TRIANGLES, int32((len(overdraw_verts)/4)*6), gl.UNSIGNED_SHORT, gl.Ptr(indices))
-		gl.DisableVertexAttribArray(ATTRIB_COLOR)
 		SetColorC(c)
 	}
-
-	gl.DisableVertexAttribArray(ATTRIB_POS)
 }
 
 func (polyline *polyLine) drawTriangleStrip(is_looping bool) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
-	gl.EnableVertexAttribArray(ATTRIB_POS)
+	useVertexAttribArrays(ATTRIBFLAG_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(polyline.vertices)))
 	if polyline.overdraw { // prepare colors:
 		c := GetColor()
 		overdraw := polyline.renderOverdraw(is_looping)
 		colors := polyline.generateColorArray(len(overdraw), c)
-		gl.EnableVertexAttribArray(ATTRIB_COLOR)
+		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
 		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
 		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(overdraw)))
-		gl.DisableVertexAttribArray(ATTRIB_COLOR)
 		SetColorC(c)
 	}
-	gl.DisableVertexAttribArray(ATTRIB_POS)
 }

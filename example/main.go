@@ -26,6 +26,7 @@ var (
 	vibrating  = false
 	canvas     *gfx.Canvas
 	quad       *gfx.Quad
+	psystem    *gfx.ParticleSystem
 )
 
 func main() {
@@ -39,6 +40,12 @@ func main() {
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
 	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
+
+	psystem = gfx.NewParticleSystem(tree, 200)
+	psystem.SetParticleLifetime(2, 5) // Particles live at least 2s and at most 5s.
+	psystem.SetEmissionRate(5)
+	psystem.SetSizeVariation(1)
+	psystem.SetLinearAcceleration(-20, -20, 20, 20) // Random movement in all directions.
 
 	amore.Start(update, draw)
 }
@@ -61,6 +68,7 @@ func keyUp(key keyboard.Key) {
 func update(deltaTime float32) {
 	mx, my = mouse.GetPosition()
 	mx, my = window.GetCurrent().PixelToWindowCoords(mx, my)
+	psystem.Update(deltaTime)
 }
 
 func myStencilFunction() {
@@ -126,6 +134,8 @@ func draw() {
 	//FPS
 	gfx.SetColor(0, 170, 170, 255)
 	gfx.Printf(1200, 10, "fps: %v", timer.GetFPS())
+
+	gfx.Draw(psystem, 200, 200)
 
 	//mouse position
 	gfx.Circle("fill", mx, my, 20.0)

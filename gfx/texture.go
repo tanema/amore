@@ -28,8 +28,7 @@ type (
 	Texture struct {
 		textureId     uint32
 		Width, Height int32
-		coords        []float32
-		texcoords     []float32
+		vertices      []float32
 		filter        Filter
 		wrap          Wrap
 		mipmaps       bool
@@ -38,6 +37,7 @@ type (
 		GetHandle() uint32
 		GetWidth() int32
 		GetHeight() int32
+		getVerticies() []float32
 	}
 )
 
@@ -108,8 +108,16 @@ func (texture *Texture) GetHandle() uint32 {
 func (texture *Texture) generateVerticies() {
 	w := float32(texture.GetWidth())
 	h := float32(texture.GetHeight())
-	texture.coords = []float32{0, 0, 0, h, w, 0, w, h}
-	texture.texcoords = []float32{0, 0, 0, 1, 1, 0, 1, 1}
+	texture.vertices = []float32{
+		0, 0, 0, 0,
+		0, h, 0, 1,
+		w, 0, 1, 0,
+		w, h, 1, 1,
+	}
+}
+
+func (texture *Texture) getVerticies() []float32 {
+	return texture.vertices
 }
 
 func (texture *Texture) generateMipmaps() {
@@ -249,26 +257,21 @@ func (texture *Texture) unloadVolatile() {
 	texture = nil
 }
 
-func (texture *Texture) drawv(model *mgl32.Mat4, coords, texcoords []float32) {
+func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	prepareDraw(model)
 	bindTexture(texture.GetHandle())
+	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD)
 
-	gl.EnableVertexAttribArray(ATTRIB_POS)
-	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
-
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 0, gl.Ptr(texcoords))
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 4*4, gl.Ptr(vertices))
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 4*4, gl.Ptr(&vertices[2]))
 
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
-
-	gl.DisableVertexAttribArray(ATTRIB_TEXCOORD)
-	gl.DisableVertexAttribArray(ATTRIB_POS)
 }
 
 func (texture *Texture) Draw(args ...float32) {
-	texture.drawv(generateModelMatFromArgs(args), texture.coords, texture.texcoords)
+	texture.drawv(generateModelMatFromArgs(args), texture.vertices)
 }
 
 func (texture *Texture) Drawq(quad *Quad, args ...float32) {
-	texture.drawv(generateModelMatFromArgs(args), quad.coords, quad.texcoords)
+	texture.drawv(generateModelMatFromArgs(args), quad.getVertices())
 }

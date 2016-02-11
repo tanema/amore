@@ -62,6 +62,11 @@ func InitContext(w, h int32) {
 		maxRenderTargets = maxattachments
 	}
 
+	glcolor := [4]float32{1.0, 1.0, 1.0, 1.0}
+	gl.VertexAttrib4fv(ATTRIB_COLOR, &glcolor[0])
+	gl.VertexAttrib4fv(ATTRIB_CONSTANTCOLOR, &glcolor[0])
+	useVertexAttribArrays(0)
+
 	// Enable blending
 	gl.Enable(gl.BLEND)
 	SetBlendMode(BLENDMODE_ALPHA)
@@ -132,6 +137,37 @@ func prepareDraw(model *mgl32.Mat4) {
 	gl_state.currentShader.SendMat4("ModelMat", *model)
 	gl_state.currentShader.SendFloat("ScreenSize", float32(screen_width), float32(screen_height), 0, 0)
 	gl_state.currentShader.SendFloat("PointSize", states.back().pointSize)
+}
+
+func useVertexAttribArrays(arraybits uint32) {
+	diff := arraybits ^ gl_state.enabledAttribArrays
+
+	if diff == 0 {
+		return
+	}
+
+	// Max 32 attributes. As of when this was written, no GL driver exposes more
+	// than 32. Lets hope that doesn't change...
+	for i := uint32(0); i < 32; i++ {
+		bit := uint32(1 << i)
+		if (diff & bit) > 0 {
+			if (arraybits & bit) > 0 {
+				gl.EnableVertexAttribArray(i)
+			} else {
+				gl.DisableVertexAttribArray(i)
+			}
+		}
+	}
+
+	gl_state.enabledAttribArrays = arraybits
+
+	// glDisableVertexAttribArray will make the constant value for a vertex
+	// attribute undefined. We rely on the per-vertex color attribute being
+	// white when no per-vertex color is used, so we set it here.
+	// FIXME: Is there a better place to do this?
+	if (diff&ATTRIBFLAG_COLOR) > 0 && (arraybits&ATTRIBFLAG_COLOR) == 0 {
+		gl.VertexAttrib4f(ATTRIB_COLOR, 1.0, 1.0, 1.0, 1.0)
+	}
 }
 
 func setTextureUnit(textureunit int32) error {
@@ -533,8 +569,7 @@ func GetBackgroundColorC() Color {
 }
 
 func setColor(r, g, b, a float32) {
-	states.back().color = Color{r, g, b, a}
-	gl.VertexAttrib4f(ATTRIB_COLOR, r, g, b, a)
+	SetColorC(Color{r, g, b, a})
 }
 
 func SetColor(r, g, b, a float32) {
@@ -543,7 +578,8 @@ func SetColor(r, g, b, a float32) {
 
 func SetColorC(c Color) {
 	states.back().color = c
-	gl.VertexAttrib4f(ATTRIB_COLOR, c[0], c[1], c[2], c[3])
+
+	gl.VertexAttrib4f(ATTRIB_CONSTANTCOLOR, c[0], c[1], c[2], c[3])
 }
 
 func GetColor() Color {

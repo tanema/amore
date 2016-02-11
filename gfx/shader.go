@@ -45,6 +45,7 @@ func (shader *Shader) loadVolatile() bool {
 	gl.BindAttribLocation(shader.program, ATTRIB_POS, gl.Str("VertexPosition\x00"))
 	gl.BindAttribLocation(shader.program, ATTRIB_TEXCOORD, gl.Str("VertexTexCoord\x00"))
 	gl.BindAttribLocation(shader.program, ATTRIB_COLOR, gl.Str("VertexColor\x00"))
+	gl.BindAttribLocation(shader.program, ATTRIB_CONSTANTCOLOR, gl.Str("ConstantColor\x00"))
 
 	gl.LinkProgram(shader.program)
 	gl.DeleteShader(vert)

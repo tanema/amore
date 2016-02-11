@@ -3,7 +3,7 @@ package gfx
 import (
 	"math"
 
-	//"github.com/go-gl/gl/v2.1/gl"
+	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -76,7 +76,7 @@ type (
 		relativeRotation          bool
 
 		// array of transformed vertex data for all particles, for drawing
-		particleVerts []mgl32.Vec2
+		particleVerts []float32
 		// Vertex index buffer.
 		quadIndices *quadIndices
 	}
@@ -119,10 +119,10 @@ func (system *ParticleSystem) resetOffset() {
 
 func (system *ParticleSystem) createBuffers(size int) {
 	system.particles = make([]*Particle, size)
-	system.particleVerts = make([]mgl32.Vec2, size)
+	system.particleVerts = make([]float32, size*8)
 }
 
-func (system *ParticleSystem) setBufferSize(size uint32) {
+func (system *ParticleSystem) SetBufferSize(size uint32) {
 	if size == 0 || size > MAX_PARTICLES {
 		panic("Invalid buffer size")
 	}
@@ -132,7 +132,7 @@ func (system *ParticleSystem) setBufferSize(size uint32) {
 	system.reset()
 }
 
-func (system *ParticleSystem) getBufferSize() uint32 {
+func (system *ParticleSystem) GetBufferSize() uint32 {
 	return system.maxParticles
 }
 
@@ -221,46 +221,46 @@ func (system *ParticleSystem) removeParticle(p *Particle) {
 	system.particles = append(system.particles[:found], system.particles[found+1:]...)
 }
 
-func (system *ParticleSystem) setTexture(tex iTexture) {
+func (system *ParticleSystem) SetTexture(tex iTexture) {
 	system.texture = tex
 	if system.defaultOffset {
 		system.resetOffset()
 	}
 }
 
-func (system *ParticleSystem) getTexture() iTexture {
+func (system *ParticleSystem) GetTexture() iTexture {
 	return system.texture
 }
 
-func (system *ParticleSystem) setInsertMode(mode ParticleInsertion) {
+func (system *ParticleSystem) SetInsertMode(mode ParticleInsertion) {
 	system.insertMode = mode
 }
 
-func (system *ParticleSystem) getInsertMode() ParticleInsertion {
+func (system *ParticleSystem) GetInsertMode() ParticleInsertion {
 	return system.insertMode
 }
 
-func (system *ParticleSystem) setEmissionRate(rate float32) {
+func (system *ParticleSystem) SetEmissionRate(rate float32) {
 	if rate < 0.0 {
 		panic("Invalid emission rate")
 	}
 	system.emissionRate = rate
 }
 
-func (system *ParticleSystem) getEmissionRate() float32 {
+func (system *ParticleSystem) GetEmissionRate() float32 {
 	return system.emissionRate
 }
 
-func (system *ParticleSystem) setEmitterLifetime(life float32) {
+func (system *ParticleSystem) SetEmitterLifetime(life float32) {
 	system.life = life
 	system.lifetime = life
 }
 
-func (system *ParticleSystem) getEmitterLifetime() float32 {
+func (system *ParticleSystem) GetEmitterLifetime() float32 {
 	return system.lifetime
 }
 
-func (system *ParticleSystem) setParticleLifetime(min, max float32) {
+func (system *ParticleSystem) SetParticleLifetime(min, max float32) {
 	system.particleLifeMin = min
 	if max == 0 {
 		system.particleLifeMax = min
@@ -269,16 +269,16 @@ func (system *ParticleSystem) setParticleLifetime(min, max float32) {
 	}
 }
 
-func (system *ParticleSystem) getParticleLifetime() (float32, float32) {
+func (system *ParticleSystem) GetParticleLifetime() (float32, float32) {
 	return system.particleLifeMin, system.particleLifeMax
 }
 
-func (system *ParticleSystem) setPosition(x, y float32) {
+func (system *ParticleSystem) SetPosition(x, y float32) {
 	system.position = mgl32.Vec2{x, y}
 	system.prevPosition = system.position
 }
 
-func (system *ParticleSystem) getPosition() (float32, float32) {
+func (system *ParticleSystem) GetPosition() (float32, float32) {
 	return system.position[0], system.position[1]
 }
 
@@ -286,144 +286,144 @@ func (system *ParticleSystem) moveTo(x, y float32) {
 	system.position = mgl32.Vec2{x, y}
 }
 
-func (system *ParticleSystem) setAreaSpread(distribution ParticleDistribution, x, y float32) {
+func (system *ParticleSystem) SetAreaSpread(distribution ParticleDistribution, x, y float32) {
 	system.areaSpread = mgl32.Vec2{x, y}
 	system.areaSpreadDistribution = distribution
 }
 
-func (system *ParticleSystem) getAreaSpreadDistribution() ParticleDistribution {
+func (system *ParticleSystem) GetAreaSpreadDistribution() ParticleDistribution {
 	return system.areaSpreadDistribution
 }
 
-func (system *ParticleSystem) getAreaSpreadParameters() (float32, float32) {
+func (system *ParticleSystem) GetAreaSpreadParameters() (float32, float32) {
 	return system.areaSpread[0], system.areaSpread[1]
 }
 
-func (system *ParticleSystem) setDirection(direction float32) {
+func (system *ParticleSystem) SetDirection(direction float32) {
 	system.direction = direction
 }
 
-func (system *ParticleSystem) getDirection() float32 {
+func (system *ParticleSystem) GetDirection() float32 {
 	return system.direction
 }
 
-func (system *ParticleSystem) setSpread(spread float32) {
+func (system *ParticleSystem) SetSpread(spread float32) {
 	system.spread = spread
 }
 
-func (system *ParticleSystem) getSpread() float32 {
+func (system *ParticleSystem) GetSpread() float32 {
 	return system.spread
 }
 
-func (system *ParticleSystem) setSpeed(min, max float32) {
+func (system *ParticleSystem) SetSpeed(min, max float32) {
 	system.speedMin = min
 	system.speedMax = max
 }
 
-func (system *ParticleSystem) getSpeed() (float32, float32) {
+func (system *ParticleSystem) GetSpeed() (float32, float32) {
 	return system.speedMin, system.speedMax
 }
 
-func (system *ParticleSystem) setLinearAcceleration(xmin, ymin, xmax, ymax float32) {
+func (system *ParticleSystem) SetLinearAcceleration(xmin, ymin, xmax, ymax float32) {
 	system.linearAccelerationMin = mgl32.Vec2{xmin, ymin}
 	system.linearAccelerationMax = mgl32.Vec2{xmax, ymax}
 }
 
-func (system *ParticleSystem) getLinearAcceleration() (xmin, ymin, xmax, ymax float32) {
+func (system *ParticleSystem) GetLinearAcceleration() (xmin, ymin, xmax, ymax float32) {
 	return system.linearAccelerationMin[0], system.linearAccelerationMin[1], system.linearAccelerationMax[0], system.linearAccelerationMax[1]
 }
 
-func (system *ParticleSystem) setRadialAcceleration(min, max float32) {
+func (system *ParticleSystem) SetRadialAcceleration(min, max float32) {
 	system.radialAccelerationMin = min
 	system.radialAccelerationMax = max
 }
 
-func (system *ParticleSystem) getRadialAcceleration() (min, max float32) {
+func (system *ParticleSystem) GetRadialAcceleration() (min, max float32) {
 	return system.radialAccelerationMin, system.radialAccelerationMax
 }
 
-func (system *ParticleSystem) setTangentialAcceleration(min, max float32) {
+func (system *ParticleSystem) SetTangentialAcceleration(min, max float32) {
 	system.tangentialAccelerationMin = min
 	system.tangentialAccelerationMax = max
 }
 
-func (system *ParticleSystem) getTangentialAcceleration() (min, max float32) {
+func (system *ParticleSystem) GetTangentialAcceleration() (min, max float32) {
 	return system.tangentialAccelerationMin, system.tangentialAccelerationMax
 }
 
-func (system *ParticleSystem) setLinearDamping(min, max float32) {
+func (system *ParticleSystem) SetLinearDamping(min, max float32) {
 	system.linearDampingMin = min
 	system.linearDampingMax = max
 }
 
-func (system *ParticleSystem) getLinearDamping() (min, max float32) {
+func (system *ParticleSystem) GetLinearDamping() (min, max float32) {
 	return system.linearDampingMin, system.linearDampingMax
 }
 
-func (system *ParticleSystem) setSize(size float32) {
+func (system *ParticleSystem) SetSize(size float32) {
 	system.sizes = []float32{size}
 }
 
-func (system *ParticleSystem) setSizes(newSizes []float32) {
+func (system *ParticleSystem) SetSizes(newSizes []float32) {
 	system.sizes = newSizes
 }
 
-func (system *ParticleSystem) getSizes() []float32 {
+func (system *ParticleSystem) GetSizes() []float32 {
 	return system.sizes
 }
 
-func (system *ParticleSystem) setSizeVariation(variation float32) {
+func (system *ParticleSystem) SetSizeVariation(variation float32) {
 	system.sizeVariation = variation
 }
 
-func (system *ParticleSystem) getSizeVariation() float32 {
+func (system *ParticleSystem) GetSizeVariation() float32 {
 	return system.sizeVariation
 }
 
-func (system *ParticleSystem) setRotation(min, max float32) {
+func (system *ParticleSystem) SetRotation(min, max float32) {
 	system.rotationMin = min
 	system.rotationMax = max
 }
 
-func (system *ParticleSystem) getRotation() (min, max float32) {
+func (system *ParticleSystem) GetRotation() (min, max float32) {
 	return system.rotationMin, system.rotationMax
 }
 
-func (system *ParticleSystem) setSpin(start, end float32) {
+func (system *ParticleSystem) SetSpin(start, end float32) {
 	system.spinStart = start
 	system.spinEnd = end
 }
 
-func (system *ParticleSystem) getSpin() (start, end float32) {
+func (system *ParticleSystem) GetSpin() (start, end float32) {
 	return system.spinStart, system.spinEnd
 }
 
-func (system *ParticleSystem) setSpinVariation(variation float32) {
+func (system *ParticleSystem) SetSpinVariation(variation float32) {
 	system.spinVariation = variation
 }
 
-func (system *ParticleSystem) getSpinVariation() float32 {
+func (system *ParticleSystem) GetSpinVariation() float32 {
 	return system.spinVariation
 }
 
-func (system *ParticleSystem) setOffset(x, y float32) {
+func (system *ParticleSystem) SetOffset(x, y float32) {
 	system.offset = mgl32.Vec2{x, y}
 	system.defaultOffset = false
 }
 
-func (system *ParticleSystem) getOffset() (x, y float32) {
+func (system *ParticleSystem) GetOffset() (x, y float32) {
 	return system.offset[0], system.offset[1]
 }
 
-func (system *ParticleSystem) setColor(newColors []Color) {
+func (system *ParticleSystem) SetColor(newColors []Color) {
 	system.colors = newColors
 }
 
-func (system *ParticleSystem) getColor() []Color {
+func (system *ParticleSystem) GetColor() []Color {
 	return system.colors
 }
 
-func (system *ParticleSystem) setQuads(newQuads []Quad) {
+func (system *ParticleSystem) SetQuads(newQuads []Quad) {
 	system.quads = newQuads
 	if system.defaultOffset {
 		system.resetOffset()
@@ -434,11 +434,11 @@ func (system *ParticleSystem) clearQuads() {
 	system.quads = []Quad{}
 }
 
-func (system *ParticleSystem) getQuads() []Quad {
+func (system *ParticleSystem) GetQuads() []Quad {
 	return system.quads
 }
 
-func (system *ParticleSystem) setRelativeRotation(enable bool) {
+func (system *ParticleSystem) SetRelativeRotation(enable bool) {
 	system.relativeRotation = enable
 }
 
@@ -446,7 +446,7 @@ func (system *ParticleSystem) hasRelativeRotation() bool {
 	return system.relativeRotation
 }
 
-func (system *ParticleSystem) getCount() uint32 {
+func (system *ParticleSystem) GetCount() uint32 {
 	return system.activeParticles
 }
 
@@ -502,7 +502,7 @@ func (system *ParticleSystem) isFull() bool {
 	return system.activeParticles == system.maxParticles
 }
 
-func (system *ParticleSystem) update(dt float32) {
+func (system *ParticleSystem) Update(dt float32) {
 	if dt == 0.0 || system.activeParticles == 0 {
 		return
 	}
@@ -618,60 +618,53 @@ func (system *ParticleSystem) update(dt float32) {
 }
 
 func (system *ParticleSystem) Draw(args ...float32) {
-	pCount := system.getCount()
+	pCount := system.GetCount()
 
 	if pCount == 0 || system.particleVerts == nil {
 		return
 	}
 
-	//textureVerts := system.texture.getVertices()
-	//pVerts := system.particleVerts
-	//useQuads := len(system.quads) == 0
+	model := generateModelMatFromArgs(args)
+	textureVerts := system.texture.getVerticies()
+	useQuads := len(system.quads) == 0
 
-	//// set the vertex data for each particle (transformation, texcoords, color)
-	//for _, p := range system.particles {
-	//if system.useQuads {
-	//textureVerts = system.quads[p.quadIndex].getVertices()
-	//}
+	// set the vertex data for each particle (transformation, texcoords, color)
+	for _, p := range system.particles {
+		if useQuads {
+			textureVerts = system.quads[p.quadIndex].getVertices()
+		}
 
-	//// particle vertices are image vertices transformed by particle info
-	//t := generateModelMatFromArgs([]float32{p.position[0], p.position[1], p.angle, p.size, p.size, system.offset[0], system.offset[1], 0.0, 0.0})
-	//pVerts = matTransform(t, textureVerts, 4)
+		// particle vertices are image vertices transformed by particle info
+		mat := generateModelMatFromArgs([]float32{p.position[0], p.position[1], p.angle, p.size, p.size, system.offset[0], system.offset[1], 0.0, 0.0})
 
-	//// set the texture coordinate and color data for particle vertices
-	//for v := 0; v < 4; v++ {
-	//pVerts[v].s = textureVerts[v].s
-	//pVerts[v].t = textureVerts[v].t
+		particleVerts := make([]float32, 48)
+		for i := 0; i < 48; i += 8 {
+			j := (i / 2)
+			particleVerts[i+0] = (mat[0] * textureVerts[j+0]) + (mat[4] * textureVerts[j+1]) + mat[12]
+			particleVerts[i+1] = (mat[1] * textureVerts[j+0]) + (mat[5] * textureVerts[j+1]) + mat[13]
+			particleVerts[i+2] = textureVerts[j+2]
+			particleVerts[i+3] = textureVerts[j+3]
+			particleVerts[i+4] = p.color[0]
+			particleVerts[i+5] = p.color[1]
+			particleVerts[i+6] = p.color[2]
+			particleVerts[i+7] = p.color[3]
+		}
 
-	//// Particle colors are stored as floats (0-1) but vertex colors are
-	//// unsigned bytes (0-255).
-	//pVerts[v].r = p.color.r * 255
-	//pVerts[v].g = p.color.g * 255
-	//pVerts[v].b = p.color.b * 255
-	//pVerts[v].a = p.color.a * 255
-	//}
+		system.particleVerts = append(system.particleVerts, particleVerts...)
+	}
 
-	//pVerts += 4
-	//}
+	prepareDraw(model)
+	bindTexture(system.texture.GetHandle())
 
-	//prepareDraw(nil)
-	//bindTexture(system.texture.getHandle())
+	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
 
-	//gl.EnableVertexAttribArray(ATTRIB_POS)
-	//gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
-	//gl.EnableVertexAttribArray(ATTRIB_COLOR)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 4*4, gl.Ptr(&system.particleVerts))
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 4*4, gl.Ptr(&system.particleVerts[2]))
+	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 4*4, gl.Ptr(&system.particleVerts[4]))
 
-	//gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, false, sizeof(Vertex), &particleVerts[0].r)
-	//gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, sizeof(Vertex), &particleVerts[0].x)
-	//gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, sizeof(Vertex), &particleVerts[0].s)
-
-	//// We use a client-side index array instead of an Index Buffers, because
-	//// at least one graphics driver (the one for Kepler nvidia GPUs in OS X
-	//// 10.11) fails to render geometry if an index buffer is used with
-	//// client-side vertex arrays.
-	//gl.DrawElements(gl.TRIANGLES, pCount*6, gl.FLOAT, quadIndices.indices)
-
-	//gl.DisableVertexAttribArray(ATTRIB_COLOR)
-	//gl.DisableVertexAttribArray(ATTRIB_TEXCOORD)
-	//gl.DisableVertexAttribArray(ATTRIB_POS)
+	// We use a client-side index array instead of an Index Buffers, because
+	// at least one graphics driver (the one for Kepler nvidia GPUs in OS X
+	// 10.11) fails to render geometry if an index buffer is used with
+	// client-side vertex arrays.
+	gl.DrawElements(gl.TRIANGLES, int32(pCount*6), gl.FLOAT, gl.Ptr(system.quadIndices.indices))
 }

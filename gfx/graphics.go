@@ -95,10 +95,9 @@ func Ellipsep(mode string, x, y, a, b float32, points int) {
 func Point(x, y float32) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
-	gl.EnableVertexAttribArray(ATTRIB_POS)
+	useVertexAttribArrays(ATTRIBFLAG_POS)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{x, y}))
 	gl.DrawArrays(gl.POINTS, 0, 1)
-	gl.DisableVertexAttribArray(ATTRIB_POS)
 }
 
 func Line(args ...float32) {
@@ -120,10 +119,9 @@ func Polygon(mode string, coords []float32) {
 	} else {
 		prepareDraw(nil)
 		bindTexture(gl_state.defaultTexture)
-		gl.EnableVertexAttribArray(ATTRIB_POS)
+		useVertexAttribArrays(ATTRIBFLAG_POS)
 		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, int32(len(coords))/2-1)
-		gl.DisableVertexAttribArray(ATTRIB_POS)
 	}
 }
 
@@ -242,13 +240,4 @@ func generateModelMatFromArgs(args []float32) *mgl32.Mat4 {
 	mat[13] = y - ox*mat[1] - oy*mat[5]
 
 	return &mat
-}
-
-func matTransform(mat mgl32.Mat4, src []mgl32.Vec2) []mgl32.Vec2 {
-	dst := make([]mgl32.Vec2, len(src))
-	for i := 0; i < len(src); i++ {
-		dst[i][0] = (mat[0] * src[i][0]) + (mat[4] * src[i][1]) + (0) + (mat[12])
-		dst[i][1] = (mat[1] * src[i][0]) + (mat[5] * src[i][1]) + (0) + (mat[13])
-	}
-	return dst
 }

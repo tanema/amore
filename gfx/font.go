@@ -202,11 +202,9 @@ func (font *FontBase) Printf(x, y float32, fs string, argv ...interface{}) {
 	x = x - float32(font.Offset)
 	y = y - (float32(font.Offset) / 4.0)
 
-	gl.EnableVertexAttribArray(ATTRIB_POS)
-	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
-
 	prepareDraw(nil)
 	bindTexture(font.GetHandle())
+	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD)
 
 	for _, ch := range formatted_string {
 		if glyph, ok := font.Glyphs[ch]; ok {
@@ -227,8 +225,5 @@ func (font *FontBase) Printf(x, y float32, fs string, argv ...interface{}) {
 			x = x + float32(glyph.Advance)
 		}
 	}
-
-	gl.DisableVertexAttribArray(ATTRIB_TEXCOORD)
-	gl.DisableVertexAttribArray(ATTRIB_POS)
 
 }

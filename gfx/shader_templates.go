@@ -25,6 +25,7 @@ uniform vec4 ScreenSize;
 attribute vec3 VertexPosition;
 attribute vec2 VertexTexCoord;
 attribute vec4 VertexColor;
+attribute vec4 ConstantColor;
 varying vec2 VaryingTexCoord;
 varying vec4 VaryingColor;
 uniform float PointSize;
@@ -33,7 +34,7 @@ uniform float PointSize;
 	VERTEX_FOOTER = `
 void main() {
 	VaryingTexCoord = VertexTexCoord;
-	VaryingColor = VertexColor;
+	VaryingColor = VertexColor * ConstantColor;
 	gl_PointSize = PointSize;
 	gl_Position = position(ProjectionMat, ViewMat, ModelMat, VertexPosition);
 }`

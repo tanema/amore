@@ -2,14 +2,13 @@ package gfx
 
 type (
 	Quad struct {
-		coords    []float32
-		texcoords []float32
-		x         float32
-		y         float32
-		w         float32
-		h         float32
-		sw        float32
-		sh        float32
+		vertices []float32
+		x        float32
+		y        float32
+		w        float32
+		h        float32
+		sw       float32
+		sh       float32
 	}
 )
 
@@ -27,17 +26,16 @@ func NewQuad(x, y, w, h, sw, sh int32) *Quad {
 }
 
 func (quad *Quad) generateVertices() {
-	quad.coords = []float32{0, 0, 0, quad.h, quad.w, 0, quad.w, quad.h}
-	quad.texcoords = []float32{
-		quad.x / quad.sw,
-		quad.y / quad.sh,
-		quad.x / quad.sw,
-		(quad.y + quad.h) / quad.sh,
-		(quad.x + quad.w) / quad.sw,
-		quad.y / quad.sh,
-		(quad.x + quad.w) / quad.sw,
-		(quad.y + quad.h) / quad.sh,
+	quad.vertices = []float32{
+		0, 0, quad.x / quad.sw, quad.y / quad.sh,
+		0, quad.h, quad.x / quad.sw, (quad.y + quad.h) / quad.sh,
+		quad.w, 0, (quad.x + quad.w) / quad.sw, quad.y / quad.sh,
+		quad.w, quad.h, (quad.x + quad.w) / quad.sw, (quad.y + quad.h) / quad.sh,
 	}
+}
+
+func (quad *Quad) getVertices() []float32 {
+	return quad.vertices
 }
 
 func (quad *Quad) SetViewport(x, y, w, h float32) {

@@ -7,44 +7,22 @@ import (
 )
 
 type Mesh struct {
-	coords    []float32
-	texcoords []float32
-	colors    []float32
+	verticies []float32
 	mode      MeshDrawMode
 	texture   iTexture
 }
 
-func NewMesh(components ...[]float32) *Mesh {
-	return NewMeshExt(DRAWMODE_FAN, USAGE_DYNAMIC, components...)
+func NewMesh(verticies []float32) *Mesh {
+	return NewMeshExt(verticies, DRAWMODE_FAN, USAGE_DYNAMIC)
 }
 
-func NewMeshExt(mode MeshDrawMode, usage Usage, components ...[]float32) *Mesh {
-	if components == nil {
-		panic("Cannot create mesh without verticies")
-	}
-
+func NewMeshExt(verticies []float32, mode MeshDrawMode, usage Usage) *Mesh {
 	new_mesh := &Mesh{
-		mode: mode,
+		mode:      mode,
+		verticies: verticies,
 	}
 
-	switch len(components) {
-	case 3:
-		new_mesh.colors = components[2]
-		fallthrough
-	case 2:
-		new_mesh.texcoords = components[1]
-		fallthrough
-	case 1:
-		new_mesh.coords = components[0]
-	}
-
-	return &Mesh{}
-}
-
-func (mesh *Mesh) loadVolatile() {
-}
-
-func (mesh *Mesh) unloadVolatile() {
+	return new_mesh
 }
 
 func (mesh *Mesh) SetMode(mode MeshDrawMode) {
@@ -67,7 +45,7 @@ func (mesh *Mesh) GetTexture() iTexture {
 	return mesh.texture
 }
 
-func (mesh *Mesh) drawv(model *mgl32.Mat4, coords, texcoords []float32) {
+func (mesh *Mesh) drawv(model *mgl32.Mat4, verticies []float32) {
 	prepareDraw(model)
 	if mesh.texture != nil {
 		bindTexture(mesh.texture.GetHandle())
@@ -75,25 +53,20 @@ func (mesh *Mesh) drawv(model *mgl32.Mat4, coords, texcoords []float32) {
 		bindTexture(gl_state.defaultTexture)
 	}
 
-	gl.EnableVertexAttribArray(ATTRIB_POS)
-	gl.EnableVertexAttribArray(ATTRIB_TEXCOORD)
-	gl.EnableVertexAttribArray(ATTRIB_COLOR)
-
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 0, gl.Ptr(texcoords))
-	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 0, gl.Ptr(mesh.colors))
-
+	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
+	//gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
+	//gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(2*4))
+	//gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.PtrOffset(4*4))
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.Ptr(verticies))
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.Ptr(&verticies[2]))
+	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.Ptr(&verticies[4]))
 	gl.DrawArrays(uint32(mesh.mode), 0, 4)
-
-	gl.DisableVertexAttribArray(ATTRIB_COLOR)
-	gl.DisableVertexAttribArray(ATTRIB_TEXCOORD)
-	gl.DisableVertexAttribArray(ATTRIB_POS)
 }
 
 func (mesh *Mesh) Draw(args ...float32) {
-	mesh.drawv(generateModelMatFromArgs(args), mesh.coords, mesh.texcoords)
+	mesh.drawv(generateModelMatFromArgs(args), mesh.verticies)
 }
 
 func (mesh *Mesh) Drawq(quad *Quad, args ...float32) {
-	mesh.drawv(generateModelMatFromArgs(args), quad.coords, quad.texcoords)
+	mesh.drawv(generateModelMatFromArgs(args), quad.getVertices())
 }
