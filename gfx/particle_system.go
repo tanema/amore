@@ -36,15 +36,14 @@ type (
 	ParticleSystem struct {
 		particles                 []*Particle
 		texture                   iTexture
-		active                    bool
 		insertMode                ParticleInsertion
-		maxParticles              uint32
-		activeParticles           uint32
+		areaSpreadDistribution    ParticleDistribution
+		active                    bool
+		maxParticles              int
 		emissionRate              float32
 		emitCounter               float32
 		position                  mgl32.Vec2
 		prevPosition              mgl32.Vec2
-		areaSpreadDistribution    ParticleDistribution
 		areaSpread                mgl32.Vec2
 		lifetime                  float32
 		life                      float32
@@ -74,11 +73,7 @@ type (
 		colors                    []Color
 		quads                     []Quad
 		relativeRotation          bool
-
-		// array of transformed vertex data for all particles, for drawing
-		particleVerts []float32
-		// Vertex index buffer.
-		quadIndices *quadIndices
+		quadIndices               *quadIndices
 	}
 )
 
@@ -89,11 +84,11 @@ func calculate_variation(inner, outer, v float32) float32 {
 	return low*(1-r) + high*r
 }
 
-func NewParticleSystem(texture iTexture, size uint32) *ParticleSystem {
+func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
 	if size == 0 || size > MAX_PARTICLES {
 		panic("Invalid ParticleSystem size.")
 	}
-	return &ParticleSystem{
+	new_ps := &ParticleSystem{
 		texture:                texture,
 		active:                 true,
 		insertMode:             INSERT_MODE_TOP,
@@ -103,9 +98,12 @@ func NewParticleSystem(texture iTexture, size uint32) *ParticleSystem {
 		defaultOffset:          true,
 		colors:                 []Color{Color{1.0, 1.0, 1.0, 1.0}},
 		sizes:                  []float32{1.0},
-		particles:              make([]*Particle, size),
+		particles:              []*Particle{},
 		maxParticles:           size,
+		quadIndices:            newQuadIndices(size),
 	}
+
+	return new_ps
 }
 
 func (system *ParticleSystem) resetOffset() {
@@ -117,27 +115,25 @@ func (system *ParticleSystem) resetOffset() {
 	}
 }
 
-func (system *ParticleSystem) createBuffers(size int) {
-	system.particles = make([]*Particle, size)
-	system.particleVerts = make([]float32, size*8)
-}
-
-func (system *ParticleSystem) SetBufferSize(size uint32) {
+func (system *ParticleSystem) SetBufferSize(size int) {
 	if size == 0 || size > MAX_PARTICLES {
 		panic("Invalid buffer size")
 	}
+	if len(system.particles) > int(size) {
+		system.particles = system.particles[:int(size)]
+	}
 	system.maxParticles = size
-	system.createBuffers(int(size))
-	system.quadIndices = newQuadIndices(int(size))
-	system.reset()
+	system.quadIndices = newQuadIndices(size)
+	system.life = system.lifetime
+	system.emitCounter = 0
 }
 
-func (system *ParticleSystem) GetBufferSize() uint32 {
+func (system *ParticleSystem) GetBufferSize() int {
 	return system.maxParticles
 }
 
 func (system *ParticleSystem) addParticle(t float32) {
-	if system.isFull() {
+	if system.IsFull() {
 		return
 	}
 	// Gets a free particle and updates the allocation pointer.
@@ -151,22 +147,20 @@ func (system *ParticleSystem) addParticle(t float32) {
 		i := int(rng.RandMax(float32(system.maxParticles - 1)))
 		system.particles = append(system.particles[:i], append([]*Particle{p}, system.particles[i:]...)...)
 	}
-	system.activeParticles++
 }
 
 func (system *ParticleSystem) initParticle(t float32) *Particle {
+	// Linearly interpolate between the previous and current emitter position.
 	pos := system.prevPosition.Add(system.position.Sub(system.prevPosition).Mul(t))
+
 	p := &Particle{
-		// Linearly interpolate between the previous and current emitter position.
 		position: pos,
 	}
 
-	min := system.particleLifeMin
-	max := system.particleLifeMax
-	if min == max {
-		p.life = min
+	if system.particleLifeMin == system.particleLifeMax {
+		p.life = system.particleLifeMin
 	} else {
-		p.life = rng.RandRange(min, max)
+		p.life = rng.RandRange(system.particleLifeMin, system.particleLifeMax)
 	}
 	p.lifetime = p.life
 
@@ -178,7 +172,7 @@ func (system *ParticleSystem) initParticle(t float32) *Particle {
 		p.position[0] += rng.RandomNormal(system.areaSpread[0])
 		p.position[1] += rng.RandomNormal(system.areaSpread[1])
 	case DISTRIBUTION_NONE:
-		//discard
+		//done
 	}
 
 	p.origin = pos
@@ -218,7 +212,11 @@ func (system *ParticleSystem) removeParticle(p *Particle) {
 			break
 		}
 	}
-	system.particles = append(system.particles[:found], system.particles[found+1:]...)
+	if found == len(system.particles)-1 {
+		system.particles = system.particles[:found]
+	} else if found > -1 {
+		system.particles = append(system.particles[:found], system.particles[found+1:]...)
+	}
 }
 
 func (system *ParticleSystem) SetTexture(tex iTexture) {
@@ -430,7 +428,7 @@ func (system *ParticleSystem) SetQuads(newQuads []Quad) {
 	}
 }
 
-func (system *ParticleSystem) clearQuads() {
+func (system *ParticleSystem) ClearQuads() {
 	system.quads = []Quad{}
 }
 
@@ -446,64 +444,58 @@ func (system *ParticleSystem) hasRelativeRotation() bool {
 	return system.relativeRotation
 }
 
-func (system *ParticleSystem) GetCount() uint32 {
-	return system.activeParticles
+func (system *ParticleSystem) GetCount() int {
+	return len(system.particles)
 }
 
-func (system *ParticleSystem) start() {
+func (system *ParticleSystem) Start() {
 	system.active = true
 }
 
-func (system *ParticleSystem) stop() {
+func (system *ParticleSystem) Stop() {
 	system.active = false
 	system.life = system.lifetime
 	system.emitCounter = 0
 }
 
-func (system *ParticleSystem) pause() {
+func (system *ParticleSystem) Pause() {
 	system.active = false
 }
 
-func (system *ParticleSystem) reset() {
-	system.activeParticles = 0
-	system.life = system.lifetime
-	system.emitCounter = 0
-}
-
-func (system *ParticleSystem) emit(num uint32) {
+func (system *ParticleSystem) Emit(num int) {
 	if !system.active {
 		return
 	}
 
-	num = uint32(math.Min(float64(num), float64(system.maxParticles-system.activeParticles)))
+	num = int(math.Min(float64(num), float64(system.maxParticles-len(system.particles))))
 
 	for ; num > 0; num-- {
 		system.addParticle(1.0)
 	}
 }
 
-func (system *ParticleSystem) isActive() bool {
+func (system *ParticleSystem) IsActive() bool {
 	return system.active
 }
 
-func (system *ParticleSystem) isPaused() bool {
+func (system *ParticleSystem) IsPaused() bool {
 	return !system.active && system.life < system.lifetime
 }
 
-func (system *ParticleSystem) isStopped() bool {
+func (system *ParticleSystem) IsStopped() bool {
 	return !system.active && system.life >= system.lifetime
 }
 
-func (system *ParticleSystem) isEmpty() bool {
-	return system.activeParticles == 0
+func (system *ParticleSystem) IsEmpty() bool {
+	return len(system.particles) == 0
 }
 
-func (system *ParticleSystem) isFull() bool {
-	return system.activeParticles == system.maxParticles
+func (system *ParticleSystem) IsFull() bool {
+	return len(system.particles) == system.maxParticles
 }
 
 func (system *ParticleSystem) Update(dt float32) {
-	if dt == 0.0 || system.activeParticles == 0 {
+	if dt == 0.0 {
 		return
 	}
 
@@ -517,7 +509,10 @@ func (system *ParticleSystem) Update(dt float32) {
 		} else {
 			ppos := p.position
 			// Get vector from particle center to particle.
-			radial := ppos.Sub(p.origin).Normalize()
+			radial := ppos.Sub(p.origin)
+			if radial.Len() > 0 {
+				radial = radial.Normalize()
+			}
 			tangential := radial
 
 			// Resize radial acceleration.
@@ -578,7 +573,14 @@ func (system *ParticleSystem) Update(dt float32) {
 				k += 1 // boundary check (prevents failing on t = 1.0f)
 			}
 			s -= float32(i) // 0 <= s <= 1
-			p.color = *system.colors[i].Mul(1.0 - s).Add(system.colors[k].Mul(s))
+			//p.color = *system.colors[i].Mul(1.0 - s).Add(system.colors[k].Mul(s))
+
+			// Update color according to given intervals (as above)
+			//s = t * (float)(colors.size() - 1);
+			//i = (size_t)s;
+			//k = (i == colors.size() - 1) ? i : i + 1;
+			//s -= (float)i;                            // 0 <= s <= 1
+			//p->color = colors[i] * (1.0f - s) + colors[k] * s;
 
 			// Update the quad index.
 			k = len(system.quads)
@@ -610,7 +612,7 @@ func (system *ParticleSystem) Update(dt float32) {
 
 		system.life -= dt
 		if system.lifetime != -1 && system.life < 0 {
-			system.stop()
+			system.Stop()
 		}
 	}
 
@@ -618,53 +620,51 @@ func (system *ParticleSystem) Update(dt float32) {
 }
 
 func (system *ParticleSystem) Draw(args ...float32) {
-	pCount := system.GetCount()
-
-	if pCount == 0 || system.particleVerts == nil {
+	if !system.active || len(system.particles) == 0 {
 		return
 	}
 
-	model := generateModelMatFromArgs(args)
+	useQuads := len(system.quads) > 0
+	particleVerts := make([]float32, 32*len(system.particles))
 	textureVerts := system.texture.getVerticies()
-	useQuads := len(system.quads) == 0
-
-	// set the vertex data for each particle (transformation, texcoords, color)
-	for _, p := range system.particles {
+	for particle_index, particle := range system.particles {
 		if useQuads {
-			textureVerts = system.quads[p.quadIndex].getVertices()
+			textureVerts = system.quads[particle.quadIndex].getVertices()
 		}
 
 		// particle vertices are image vertices transformed by particle info
-		mat := generateModelMatFromArgs([]float32{p.position[0], p.position[1], p.angle, p.size, p.size, system.offset[0], system.offset[1], 0.0, 0.0})
+		mat := generateModelMatFromArgs([]float32{
+			particle.position[0], particle.position[1],
+			particle.angle,
+			particle.size, particle.size,
+			system.offset[0], system.offset[1],
+		})
 
-		particleVerts := make([]float32, 48)
-		for i := 0; i < 48; i += 8 {
+		pvi := 32 * particle_index
+		for i := 0; i < 32; i += 8 {
 			j := (i / 2)
-			particleVerts[i+0] = (mat[0] * textureVerts[j+0]) + (mat[4] * textureVerts[j+1]) + mat[12]
-			particleVerts[i+1] = (mat[1] * textureVerts[j+0]) + (mat[5] * textureVerts[j+1]) + mat[13]
-			particleVerts[i+2] = textureVerts[j+2]
-			particleVerts[i+3] = textureVerts[j+3]
-			particleVerts[i+4] = p.color[0]
-			particleVerts[i+5] = p.color[1]
-			particleVerts[i+6] = p.color[2]
-			particleVerts[i+7] = p.color[3]
+			particleVerts[pvi+i+0] = (mat[0] * textureVerts[j+0]) + (mat[4] * textureVerts[j+1]) + mat[12]
+			particleVerts[pvi+i+1] = (mat[1] * textureVerts[j+0]) + (mat[5] * textureVerts[j+1]) + mat[13]
+			particleVerts[pvi+i+2] = textureVerts[j+2]
+			particleVerts[pvi+i+3] = textureVerts[j+3]
+			particleVerts[pvi+i+4] = particle.color[0]
+			particleVerts[pvi+i+5] = particle.color[1]
+			particleVerts[pvi+i+6] = particle.color[2]
+			particleVerts[pvi+i+7] = particle.color[3]
 		}
-
-		system.particleVerts = append(system.particleVerts, particleVerts...)
 	}
 
-	prepareDraw(model)
+	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(system.texture.GetHandle())
 
 	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
-
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 4*4, gl.Ptr(&system.particleVerts))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 4*4, gl.Ptr(&system.particleVerts[2]))
-	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 4*4, gl.Ptr(&system.particleVerts[4]))
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.Ptr(particleVerts))
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[2]))
+	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[4]))
 
 	// We use a client-side index array instead of an Index Buffers, because
 	// at least one graphics driver (the one for Kepler nvidia GPUs in OS X
 	// 10.11) fails to render geometry if an index buffer is used with
 	// client-side vertex arrays.
-	gl.DrawElements(gl.TRIANGLES, int32(pCount*6), gl.FLOAT, gl.Ptr(system.quadIndices.indices))
+	gl.DrawElements(gl.TRIANGLES, int32(len(system.particles)*6), gl.UNSIGNED_INT, gl.Ptr(system.quadIndices.indices))
 }

@@ -41,11 +41,16 @@ func main() {
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
 	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
 
-	psystem = gfx.NewParticleSystem(tree, 200)
+	particle, _ := gfx.NewImage("images/particle.png")
+	psystem = gfx.NewParticleSystem(particle, 32)
 	psystem.SetParticleLifetime(2, 5) // Particles live at least 2s and at most 5s.
 	psystem.SetEmissionRate(5)
 	psystem.SetSizeVariation(1)
 	psystem.SetLinearAcceleration(-20, -20, 20, 20) // Random movement in all directions.
+	psystem.SetSpeed(3, 5)
+	psystem.SetPosition(200, 200)
+	psystem.SetSpin(0.1, 0.5)
+	psystem.SetSpinVariation(1)
 
 	amore.Start(update, draw)
 }
@@ -135,7 +140,7 @@ func draw() {
 	gfx.SetColor(0, 170, 170, 255)
 	gfx.Printf(1200, 10, "fps: %v", timer.GetFPS())
 
-	gfx.Draw(psystem, 200, 200)
+	gfx.Draw(psystem, 20, 200)
 
 	//mouse position
 	gfx.Circle("fill", mx, my, 20.0)

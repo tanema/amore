@@ -8,21 +8,19 @@ import (
 
 type (
 	glBuffer struct {
-		is_bound               bool      // Whether the buffer is currently bound.
-		is_mapped              bool      // Whether the buffer is currently mapped to main memory.
-		size                   int       // The size of the buffer, in bytes.
-		target                 uint32    // The target buffer object. (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER).
-		usage                  Usage     // Usage hint. GL_[DYNAMIC, STATIC, STREAM]_DRAW.
-		vbo                    uint32    // The VBO identifier. Assigned by OpenGL.
-		memory_map             []float32 // A pointer to mapped memory.
-		modified_offset        int
-		modified_size          int
-		mapExplicitRangeModify bool
+		is_bound        bool      // Whether the buffer is currently bound.
+		size            int       // The size of the buffer, in bytes.
+		target          uint32    // The target buffer object. (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER).
+		usage           Usage     // Usage hint. GL_[DYNAMIC, STATIC, STREAM]_DRAW.
+		vbo             uint32    // The VBO identifier. Assigned by OpenGL.
+		data            []float32 // A pointer to mapped memory.
+		modified_offset int
+		modified_size   int
 	}
 	quadIndices struct {
 		size        int
 		indexBuffer *glBuffer
-		indices     []float32
+		indices     []uint32
 	}
 )
 
@@ -52,78 +50,68 @@ func newQuadIndices(size int) *quadIndices {
 	buffer_size := size * 6
 	new_qi := &quadIndices{
 		size:        size,
-		indexBuffer: newGlBuffer(buffer_size, []float32{}, gl.ELEMENT_ARRAY_BUFFER, gl.STATIC_DRAW, false),
-		indices:     make([]float32, buffer_size),
+		indexBuffer: newGlBuffer(buffer_size, []float32{}, gl.ELEMENT_ARRAY_BUFFER, gl.STATIC_DRAW),
+		indices:     make([]uint32, buffer_size),
 	}
 
 	// 0----2
 	// |  / |
 	// | /  |
 	// 1----3
-	for i := 0; i < len(new_qi.indices); i++ {
-		new_qi.indices[i*6+0] = float32(i*4 + 0)
-		new_qi.indices[i*6+1] = float32(i*4 + 1)
-		new_qi.indices[i*6+2] = float32(i*4 + 2)
+	for i := 0; i < size; i++ {
+		new_qi.indices[i*6+0] = uint32(i*4 + 0)
+		new_qi.indices[i*6+1] = uint32(i*4 + 1)
+		new_qi.indices[i*6+2] = uint32(i*4 + 2)
 
-		new_qi.indices[i*6+3] = float32(i*4 + 2)
-		new_qi.indices[i*6+4] = float32(i*4 + 1)
-		new_qi.indices[i*6+5] = float32(i*4 + 3)
+		new_qi.indices[i*6+3] = uint32(i*4 + 2)
+		new_qi.indices[i*6+4] = uint32(i*4 + 1)
+		new_qi.indices[i*6+5] = uint32(i*4 + 3)
 	}
 
-	new_qi.indexBuffer.bind()
-	defer new_qi.indexBuffer.unbind()
-
-	new_qi.indexBuffer.fill(0, new_qi.indices)
-
+	registerVolatile(new_qi)
 	return new_qi
 }
 
-func newGlBuffer(size int, data []float32, target uint32, usage Usage, mapExplicitRangeModify bool) *glBuffer {
+func (qi *quadIndices) loadVolatile() bool {
+	qi.indexBuffer.bind()
+	defer qi.indexBuffer.unbind()
+	//qi.indexBuffer.fill(0, qi.indices)
+	return true
+}
+
+func (qi *quadIndices) unloadVolatile() {}
+
+func newGlBuffer(size int, data []float32, target uint32, usage Usage) *glBuffer {
 	new_buffer := &glBuffer{
-		size:                   size,
-		target:                 target,
-		usage:                  usage,
-		memory_map:             make([]float32, size),
-		mapExplicitRangeModify: mapExplicitRangeModify,
+		size:   size,
+		target: target,
+		usage:  usage,
+		data:   make([]float32, size),
 	}
 	if len(data) > 0 {
-		copy(new_buffer.memory_map, data[:size])
+		copy(new_buffer.data, data[:size])
 	}
 	registerVolatile(new_buffer)
 	return new_buffer
 }
 
-func (buffer *glBuffer) mapp() []float32 {
-	if buffer.is_mapped {
-		return buffer.memory_map
-	}
-	buffer.is_mapped = true
-	buffer.modified_offset = 0
-	buffer.modified_size = 0
-	return buffer.memory_map
-}
-
-func (buffer *glBuffer) unmapStatic() {
+func (buffer *glBuffer) bufferStatic() {
 	if buffer.modified_size == 0 {
 		return
 	}
 	// Upload the mapped data to the buffer.
-	gl.BufferSubData(buffer.target, buffer.modified_offset, buffer.modified_size, gl.Ptr(buffer.memory_map[buffer.modified_offset]))
+	gl.BufferSubData(buffer.target, buffer.modified_offset, buffer.modified_size, gl.Ptr(&buffer.data[buffer.modified_offset]))
 }
 
-func (buffer *glBuffer) unmapStream() {
+func (buffer *glBuffer) bufferStream() {
 	// "orphan" current buffer to avoid implicit synchronisation on the GPU:
 	// http://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-AsynchronousBufferTransfers.pdf
 	gl.BufferData(buffer.target, buffer.size, gl.Ptr(nil), uint32(buffer.usage))
-	gl.BufferData(buffer.target, buffer.size, gl.Ptr(buffer.memory_map), uint32(buffer.usage))
+	gl.BufferData(buffer.target, buffer.size, gl.Ptr(buffer.data), uint32(buffer.usage))
 }
 
-func (buffer *glBuffer) unmap() {
-	if !buffer.is_mapped {
-		return
-	}
-
-	if buffer.mapExplicitRangeModify {
+func (buffer *glBuffer) bufferData() {
+	if buffer.modified_size != 0 { //if there is no modified size might as well do the whole buffer
 		buffer.modified_offset = int(math.Min(float64(buffer.modified_offset), float64(buffer.size-1)))
 		buffer.modified_size = int(math.Min(float64(buffer.modified_size), float64(buffer.size-buffer.modified_offset)))
 	} else {
@@ -140,44 +128,27 @@ func (buffer *glBuffer) unmap() {
 	if buffer.modified_size > 0 {
 		switch buffer.usage {
 		case USAGE_STATIC:
-			buffer.unmapStatic()
+			buffer.bufferStatic()
 		case USAGE_STREAM:
-			buffer.unmapStream()
+			buffer.bufferStream()
 		case USAGE_DYNAMIC:
 			// It's probably more efficient to treat it like a streaming buffer if
 			// at least a third of its contents have been modified during the map().
 			if buffer.modified_size >= buffer.size/3 {
-				buffer.unmapStream()
+				buffer.bufferStream()
 			} else {
-				buffer.unmapStatic()
+				buffer.bufferStatic()
 			}
 		}
 	}
+
 	buffer.modified_offset = 0
 	buffer.modified_size = 0
-	buffer.is_mapped = false
-}
-
-func (buffer *glBuffer) setMappedRangeModified(offset, modifiedsize int) {
-	if !buffer.is_mapped || buffer.mapExplicitRangeModify {
-		return
-	}
-
-	// We're being conservative right now by internally marking the whole range
-	// from the start of section a to the end of section b as modified if both
-	// a and b are marked as modified.
-	old_range_end := buffer.modified_offset + buffer.modified_size
-	buffer.modified_offset = int(math.Min(float64(buffer.modified_offset), float64(offset)))
-
-	new_range_end := int(math.Max(float64(offset+modifiedsize), float64(old_range_end)))
-	buffer.modified_size = new_range_end - buffer.modified_offset
 }
 
 func (buffer *glBuffer) bind() {
-	if !buffer.is_mapped {
-		gl.BindBuffer(buffer.target, buffer.vbo)
-		buffer.is_bound = true
-	}
+	gl.BindBuffer(buffer.target, buffer.vbo)
+	buffer.is_bound = true
 }
 
 func (buffer *glBuffer) unbind() {
@@ -188,25 +159,27 @@ func (buffer *glBuffer) unbind() {
 }
 
 func (buffer *glBuffer) fill(offset int, data []float32) {
-	size := len(data)
-	copy(buffer.memory_map[offset:], data[:size-1])
-	if buffer.is_mapped {
-		buffer.setMappedRangeModified(offset, size)
-	} else {
-		gl.BufferSubData(buffer.target, offset, size, gl.Ptr(data))
-	}
+	copy(buffer.data[offset:], data[:len(data)-1])
+	// We're being conservative right now by internally marking the whole range
+	// from the start of section a to the end of section b as modified if both
+	// a and b are marked as modified.
+	old_range_end := buffer.modified_offset + buffer.modified_size
+	buffer.modified_offset = int(math.Min(float64(buffer.modified_offset), float64(offset)))
+	new_range_end := int(math.Max(float64(offset+len(data)), float64(old_range_end)))
+	buffer.modified_size = new_range_end - buffer.modified_offset
+
+	buffer.bufferData()
 }
 
 func (buffer *glBuffer) loadVolatile() bool {
 	gl.GenBuffers(1, &buffer.vbo)
 	buffer.bind()
 	defer buffer.unbind()
-	gl.BufferData(buffer.target, buffer.size, gl.Ptr(nil), uint32(buffer.usage))
+	buffer.bufferData()
 	return true
 }
 
 func (buffer *glBuffer) unloadVolatile() {
-	buffer.is_mapped = false
 	gl.DeleteBuffers(1, &buffer.vbo)
 	buffer.vbo = 0
 }

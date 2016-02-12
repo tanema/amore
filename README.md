@@ -1,12 +1,12 @@
 # amore
 
-An experimental/WIP game framework based on the API and workflow of Love 2D. It
-is by no means stable
+An experimental/WIP game framework based on the API and workflow of Love 2D with
+usage of sdl2 and opengl 2.1. It is by no means stable.
 
 Objectives
 ==========
-* Enable making games fast 
-* Making games portable
+* Enable making games easy, fast and fun with access still available to underlying mechanics.
+* Making games portable, cross platform and with a single executable deployment strategy.
  
 Requirements
 ============
@@ -32,12 +32,12 @@ TODO
   - ~~Quad~~
   - ~~Shader~~
   - ~~Images (gif, jpeg, png)~~
+  - ~~Particle System~~
   - Video
   - Text
   - SpriteBatch
   - Mesh
-  - Particle System
-* ~~Physics~~ (just use [github.com/neguse/go-box2d-lite](github.com/neguse/go-box2d-lite))
+* ~~Physics~~ (just use [github.com/neguse/go-box2d-lite](https://github.com/neguse/go-box2d-lite))
 * ~~Events~~
 * ~~Window~~ [ref](https://love2d.org/wiki/love.window) (Need support from SDL library)
 * ~~System~~
@@ -55,8 +55,22 @@ Notes and ideas
 
 * Simplify Cross-Compilation possibly with [shared libraries already linked to c libs](http://blog.ralch.com/tutorial/golang-sharing-libraries/)
   - it would be nice to be able to provide amore as a library for each platform and not have the user install libs
-* [Asset Bundling](https://github.com/jteeuwen/go-bindata) to make deployment easier
-  - it would be nice to embed the assets and config into the binary so it is just single file deploy
-  - I want to make it work with the file package though so that there is a single entry point to all assets
-  - hard to do since the assets would be bundled into the final game and not amore espectially if amore is precompiled
+
+Asset Bundling design:
+ 
+[https://github.com/rakyll/statik](https://github.com/rakyll/statik) bundles everything into 
+zip data and registers it with the fs when it is included. I could use this strategy
+to do the same only not dependant on http.File but rather os.File. The when no assets
+are bundled I can just use fs asset folder.
+
+```golang
+import (
+  "github.com/tanema/amore/file"
+  //dont include it and assets come from file system from the assets directory
+  _ "{{project_path}}/static_assets" //include this and assets will come from bundle
+)
+func main() {
+	tree, _ = gfx.NewImage("images/palm_tree.png") //no change in usage
+}
+```
 
