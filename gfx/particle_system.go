@@ -666,5 +666,5 @@ func (system *ParticleSystem) Draw(args ...float32) {
 	// at least one graphics driver (the one for Kepler nvidia GPUs in OS X
 	// 10.11) fails to render geometry if an index buffer is used with
 	// client-side vertex arrays.
-	system.quadIndices.drawElementsLocal(0, len(system.particles))
+	system.quadIndices.drawElementsLocal(gl.TRIANGLES, 0, len(system.particles))
 }
