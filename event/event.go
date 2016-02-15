@@ -17,15 +17,15 @@ func Poll() {
 		case *sdl.WindowEvent:
 			delegateWindowEvent(event, e)
 		case *sdl.KeyDownEvent, *sdl.KeyUpEvent, *sdl.TextEditingEvent, *sdl.TextInputEvent:
-			go keyboard.Delegate(e)
+			keyboard.Delegate(e)
 		case *sdl.MouseMotionEvent, *sdl.MouseButtonEvent, *sdl.MouseWheelEvent:
-			go mouse.Delegate(e)
+			mouse.Delegate(e)
 		case *sdl.JoyAxisEvent, *sdl.JoyBallEvent, *sdl.JoyHatEvent,
 			*sdl.JoyButtonEvent, *sdl.JoyDeviceEvent, *sdl.ControllerAxisEvent,
 			*sdl.ControllerButtonEvent, *sdl.ControllerDeviceEvent:
-			go joystick.Delegate(e)
+			joystick.Delegate(e)
 		case *sdl.TouchFingerEvent:
-			go touch.Delegate(e)
+			touch.Delegate(e)
 		case *sdl.QuitEvent:
 			window.GetCurrent().SetShouldClose(true)
 		case *sdl.DropEvent, *sdl.RenderEvent, *sdl.UserEvent,

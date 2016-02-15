@@ -33,10 +33,10 @@ TODO
   - ~~Shader~~
   - ~~Images (gif, jpeg, png)~~
   - ~~Particle System~~
-  - Video
-  - Text
+  - ~~Mesh~~
   - SpriteBatch
-  - Mesh
+  - Text
+  - Video
 * ~~Physics~~ (just use [github.com/neguse/go-box2d-lite](https://github.com/neguse/go-box2d-lite))
 * ~~Events~~
 * ~~Window~~ [ref](https://love2d.org/wiki/love.window) (Need support from SDL library)

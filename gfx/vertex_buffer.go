@@ -8,7 +8,6 @@ import (
 
 type vertexBuffer struct {
 	is_bound        bool      // Whether the buffer is currently bound.
-	size            int       // The size of the buffer, in bytes.
 	usage           Usage     // Usage hint. GL_[DYNAMIC, STATIC, STREAM]_DRAW.
 	vbo             uint32    // The VBO identifier. Assigned by OpenGL.
 	data            []float32 // A pointer to mapped memory.
@@ -18,7 +17,6 @@ type vertexBuffer struct {
 
 func newVertexBuffer(size int, data []float32, usage Usage) *vertexBuffer {
 	new_buffer := &vertexBuffer{
-		size:  size,
 		usage: usage,
 		data:  make([]float32, size),
 	}
@@ -34,23 +32,23 @@ func (buffer *vertexBuffer) bufferStatic() {
 		return
 	}
 	// Upload the mapped data to the buffer.
-	gl.BufferSubData(gl.ARRAY_BUFFER, buffer.modified_offset, buffer.modified_size, gl.Ptr(&buffer.data[buffer.modified_offset]))
+	gl.BufferSubData(gl.ARRAY_BUFFER, buffer.modified_offset*4, buffer.modified_size*4, gl.Ptr(&buffer.data[buffer.modified_offset]))
 }
 
 func (buffer *vertexBuffer) bufferStream() {
 	// "orphan" current buffer to avoid implicit synchronisation on the GPU:
 	// http://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-AsynchronousBufferTransfers.pdf
-	gl.BufferData(gl.ARRAY_BUFFER, buffer.size, gl.Ptr(nil), uint32(buffer.usage))
-	gl.BufferData(gl.ARRAY_BUFFER, buffer.size, gl.Ptr(buffer.data), uint32(buffer.usage))
+	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.data)*4, gl.Ptr(nil), uint32(buffer.usage))
+	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.data)*4, gl.Ptr(buffer.data), uint32(buffer.usage))
 }
 
 func (buffer *vertexBuffer) bufferData() {
 	if buffer.modified_size != 0 { //if there is no modified size might as well do the whole buffer
-		buffer.modified_offset = int(math.Min(float64(buffer.modified_offset), float64(buffer.size-1)))
-		buffer.modified_size = int(math.Min(float64(buffer.modified_size), float64(buffer.size-buffer.modified_offset)))
+		buffer.modified_offset = int(math.Min(float64(buffer.modified_offset), float64(len(buffer.data)-1)))
+		buffer.modified_size = int(math.Min(float64(buffer.modified_size), float64(len(buffer.data)-buffer.modified_offset)))
 	} else {
 		buffer.modified_offset = 0
-		buffer.modified_size = buffer.size
+		buffer.modified_size = len(buffer.data)
 	}
 
 	buffer.bind()
@@ -63,7 +61,7 @@ func (buffer *vertexBuffer) bufferData() {
 		case USAGE_DYNAMIC:
 			// It's probably more efficient to treat it like a streaming buffer if
 			// at least a third of its contents have been modified during the map().
-			if buffer.modified_size >= buffer.size/3 {
+			if buffer.modified_size >= len(buffer.data)/3 {
 				buffer.bufferStream()
 			} else {
 				buffer.bufferStatic()
@@ -105,7 +103,7 @@ func (buffer *vertexBuffer) loadVolatile() bool {
 	gl.GenBuffers(1, &buffer.vbo)
 	buffer.bind()
 	defer buffer.unbind()
-	gl.BufferData(gl.ARRAY_BUFFER, buffer.size, gl.Ptr(buffer.data), uint32(buffer.usage))
+	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.data)*4, gl.Ptr(buffer.data), uint32(buffer.usage))
 	return true
 }
 

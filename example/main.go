@@ -1,9 +1,7 @@
 package main
 
 import (
-	"image/png"
 	"math"
-	"os"
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/audio"
@@ -54,10 +52,23 @@ func main() {
 	psystem.SetSpinVariation(1)
 
 	triangle_mesh, _ = gfx.NewMesh([]float32{
-		25, 0, 255, 255, 255, 255,
-		50, 50, 255, 255, 255, 255,
-		0, 50, 255, 255, 255, 255,
-	}, 3)
+		25, 0,
+		0, 0,
+		255, 0, 0, 255,
+
+		50, 50,
+		1, 0,
+		255, 0, 0, 255,
+
+		0, 50,
+		1, 1,
+		255, 0, 0, 255,
+
+		0, 0,
+		0, 1,
+		255, 0, 0, 255,
+	}, 4)
+	triangle_mesh.SetTexture(tree)
 
 	batch = gfx.NewSpriteBatch(tree, 4)
 	batch.Addq(quad)
@@ -74,9 +85,13 @@ func keyUp(key keyboard.Key) {
 	case keyboard.Key2:
 		bomb.Play()
 	case keyboard.Key3:
-		img := gfx.NewScreenshot()
-		out, _ := os.Create("./output.png")
-		png.Encode(out, img)
+		//img := gfx.NewScreenshot()
+		//out, _ := os.Create("./output.png")
+		//png.Encode(out, img)
+	case keyboard.Key4:
+		triangle_mesh.SetVertexMap([]uint32{0, 1, 2})
+	case keyboard.Key5:
+		triangle_mesh.ClearVertexMap()
 	}
 }
 
@@ -152,8 +167,9 @@ func draw() {
 
 	gfx.Draw(psystem, 200, 200)
 
+	gfx.SetColor(255, 255, 255, 255)
 	gfx.Draw(triangle_mesh, 50, 50)
-	gfx.Draw(batch, 50, 50)
+	//gfx.Draw(batch, 50, 50)
 
 	//mouse position
 	gfx.Circle("fill", mx, my, 20.0)
