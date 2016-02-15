@@ -16,17 +16,19 @@ import (
 )
 
 var (
-	tree       *gfx.Image
-	ttf        gfx.Font
-	image_font gfx.Font
-	mx, my     float32
-	shader     *gfx.Shader
-	bomb       *audio.Source
-	use_shader = false
-	vibrating  = false
-	canvas     *gfx.Canvas
-	quad       *gfx.Quad
-	psystem    *gfx.ParticleSystem
+	tree          *gfx.Image
+	ttf           gfx.Font
+	image_font    gfx.Font
+	mx, my        float32
+	shader        *gfx.Shader
+	bomb          *audio.Source
+	use_shader    = false
+	vibrating     = false
+	canvas        *gfx.Canvas
+	quad          *gfx.Quad
+	psystem       *gfx.ParticleSystem
+	triangle_mesh *gfx.Mesh
+	batch         *gfx.SpriteBatch
 )
 
 func main() {
@@ -48,9 +50,17 @@ func main() {
 	psystem.SetSizeVariation(1)
 	psystem.SetLinearAcceleration(-20, -20, 20, 20) // Random movement in all directions.
 	psystem.SetSpeed(3, 5)
-	psystem.SetPosition(200, 200)
 	psystem.SetSpin(0.1, 0.5)
 	psystem.SetSpinVariation(1)
+
+	triangle_mesh, _ = gfx.NewMesh([]float32{
+		25, 0, 255, 255, 255, 255,
+		50, 50, 255, 255, 255, 255,
+		0, 50, 255, 255, 255, 255,
+	}, 3)
+
+	batch = gfx.NewSpriteBatch(tree, 4)
+	batch.Addq(quad)
 
 	amore.Start(update, draw)
 }
@@ -140,7 +150,10 @@ func draw() {
 	gfx.SetColor(0, 170, 170, 255)
 	gfx.Printf(1200, 10, "fps: %v", timer.GetFPS())
 
-	gfx.Draw(psystem, 20, 200)
+	gfx.Draw(psystem, 200, 200)
+
+	gfx.Draw(triangle_mesh, 50, 50)
+	gfx.Draw(batch, 50, 50)
 
 	//mouse position
 	gfx.Circle("fill", mx, my, 20.0)

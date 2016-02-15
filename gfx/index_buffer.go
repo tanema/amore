@@ -53,12 +53,7 @@ func (buffer *indexBuffer) bufferData() {
 		buffer.modified_size = buffer.size
 	}
 
-	// VBO::bind is a no-op when the VBO is mapped, so we have to make sure it's bound here.
-	if !buffer.is_bound {
-		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.vbo)
-		buffer.is_bound = true
-	}
-
+	buffer.bind()
 	if buffer.modified_size > 0 {
 		switch buffer.usage {
 		case USAGE_STATIC:
@@ -94,6 +89,9 @@ func (buffer *indexBuffer) unbind() {
 
 func (buffer *indexBuffer) fill(offset int, data []uint32) {
 	copy(buffer.data[offset:], data[:len(data)-1])
+	if buffer.vbo == 0 {
+		return
+	}
 	// We're being conservative right now by internally marking the whole range
 	// from the start of section a to the end of section b as modified if both
 	// a and b are marked as modified.

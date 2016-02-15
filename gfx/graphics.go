@@ -157,9 +157,6 @@ func Drawq(drawable QuadDrawable, quad *Quad, args ...float32) {
 }
 
 func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, float32, float32, float32, float32, float32) {
-	if args == nil || len(args) < 2 {
-		panic("not enough params passed to draw call")
-	}
 	/**
 	 * Normalized an array of floats into these params if they exist
 	 * if they are not present then thier default values are returned
@@ -176,6 +173,10 @@ func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, 
 	var x, y, angle, sx, sy, ox, oy, kx, ky float32
 	sx = 1
 	sy = 1
+
+	if args == nil || len(args) < 2 {
+		return x, y, angle, sx, sy, ox, oy, kx, ky
+	}
 
 	args_length := len(args)
 

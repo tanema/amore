@@ -23,10 +23,11 @@ func NewSpriteBatch(text iTexture, size int) *SpriteBatch {
 
 func NewSpriteBatchExt(texture iTexture, size int, usage Usage) *SpriteBatch {
 	return &SpriteBatch{
-		texture:   texture,
-		usage:     usage,
-		color:     &Color{1, 1, 1, 1},
-		array_buf: newVertexBuffer(size*8, []float32{}, usage),
+		texture:      texture,
+		usage:        usage,
+		color:        &Color{1, 1, 1, 1},
+		array_buf:    newVertexBuffer(size*8, []float32{}, usage),
+		quad_indices: newQuadIndices(size),
 	}
 }
 
@@ -79,6 +80,22 @@ func (sprite_batch *SpriteBatch) GetCount() int {
 	return sprite_batch.count
 }
 
+func (sprite_batch *SpriteBatch) SetBufferSize(newsize int) error {
+	if newsize <= 0 {
+		fmt.Errorf("Invalid SpriteBatch size.")
+	} else if newsize == sprite_batch.size {
+		return nil
+	}
+	sprite_batch.array_buf = newVertexBuffer(newsize*8, sprite_batch.array_buf.data, sprite_batch.usage)
+	sprite_batch.quad_indices = newQuadIndices(newsize)
+	sprite_batch.size = newsize
+	return nil
+}
+
+func (sprite_batch *SpriteBatch) GetBufferSize() int {
+	return sprite_batch.size
+}
+
 func (sprite_batch *SpriteBatch) addv(verts []float32, mat *mgl32.Mat4, index int) error {
 	if index == -1 && sprite_batch.count+1 == sprite_batch.size {
 		return fmt.Errorf("Sprite Batch Buffer Full")
@@ -98,12 +115,11 @@ func (sprite_batch *SpriteBatch) addv(verts []float32, mat *mgl32.Mat4, index in
 		sprite[i+7] = sprite_batch.color[3]
 	}
 
-	sprite_batch.array_buf.bind()
-	defer sprite_batch.array_buf.unbind()
-	sprite_batch.array_buf.fill(index*sprite_size, sprite)
-
 	if index == -1 {
+		sprite_batch.array_buf.fill(sprite_batch.count*sprite_size, sprite)
 		sprite_batch.count++
+	} else {
+		sprite_batch.array_buf.fill(index*sprite_size, sprite)
 	}
 
 	return nil

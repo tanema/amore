@@ -33,15 +33,18 @@ func NewMesh(verticies []float32, size int) (*Mesh, error) {
 func NewMeshExt(vertices []float32, size int, mode MeshDrawMode, usage Usage) (*Mesh, error) {
 	count := len(vertices)
 	stride := count / size
+
+	if count == 0 || stride == 0 {
+		return nil, fmt.Errorf("Not enough data to establish a mesh")
+	}
+
 	new_mesh := &Mesh{
+		rangeMin:     -1,
+		rangeMax:     -1,
 		mode:         mode,
 		vertexStride: stride,
 		vertexCount:  count / stride,
 		vbo:          newVertexBuffer(size*stride, vertices, usage),
-	}
-
-	if new_mesh.vertexStride <= 0 {
-		return nil, fmt.Errorf("Not enough data to establish a mesh")
 	}
 
 	new_mesh.generateFlags()
@@ -50,11 +53,10 @@ func NewMeshExt(vertices []float32, size int, mode MeshDrawMode, usage Usage) (*
 }
 
 func (mesh *Mesh) generateFlags() error {
-	mesh.enabledattribs = 0
 	switch mesh.vertexStride {
 	case 8:
 		mesh.enabledattribs = ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR
-	case 5:
+	case 6:
 		mesh.enabledattribs = ATTRIBFLAG_POS | ATTRIBFLAG_COLOR
 	case 4:
 		mesh.enabledattribs = ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD
@@ -100,7 +102,8 @@ func (mesh *Mesh) ClearDrawRange() {
 	mesh.rangeMax = -1
 }
 
-func (mesh *Mesh) GetDrawRange() (min, max int) {
+func (mesh *Mesh) GetDrawRange() (int, int) {
+	var min, max int
 	if mesh.ibo != nil && mesh.elementCount > 0 {
 		max = mesh.elementCount - 1
 	} else {
@@ -169,13 +172,8 @@ func (mesh *Mesh) GetVertexMap() []uint32 {
 }
 
 func (mesh *Mesh) Flush() {
-	mesh.vbo.bind()
-	defer mesh.vbo.unbind()
 	mesh.vbo.bufferData()
-
 	if mesh.ibo != nil {
-		mesh.ibo.bind()
-		defer mesh.ibo.unbind()
 		mesh.ibo.bufferData()
 	}
 }
@@ -187,15 +185,15 @@ func (mesh *Mesh) bindEnabledAttributes() {
 	defer mesh.vbo.unbind()
 
 	offset := 0
-	if (mesh.enabledattribs & ATTRIBFLAG_POS) != 0 {
+	if (mesh.enabledattribs & ATTRIBFLAG_POS) > 0 {
 		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, int32(mesh.vertexStride*4), gl.PtrOffset(offset))
 		offset += 2 * 4
 	}
-	if (mesh.enabledattribs & ATTRIBFLAG_TEXCOORD) != 0 {
+	if (mesh.enabledattribs & ATTRIBFLAG_TEXCOORD) > 0 {
 		gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, int32(mesh.vertexStride*4), gl.PtrOffset(offset))
 		offset += 2 * 4
 	}
-	if (mesh.enabledattribs & ATTRIBFLAG_COLOR) != 0 {
+	if (mesh.enabledattribs & ATTRIBFLAG_COLOR) > 0 {
 		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, int32(mesh.vertexStride*4), gl.PtrOffset(offset))
 	}
 }
