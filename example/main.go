@@ -70,8 +70,13 @@ func main() {
 	}, 4)
 	triangle_mesh.SetTexture(tree)
 
+	q := gfx.NewQuad(50, 50, 50, 50, tree.GetWidth(), tree.GetHeight())
 	batch = gfx.NewSpriteBatch(tree, 4)
-	batch.Addq(quad)
+	batch.Addq(q, 0, 0)
+	batch.Addq(q, 50, 0)
+	batch.Addq(q, 50, 50)
+	batch.Addq(q, 0, 50)
+	batch.Addq(q, 100, 50)
 
 	amore.Start(update, draw)
 }
@@ -92,6 +97,10 @@ func keyUp(key keyboard.Key) {
 		triangle_mesh.SetVertexMap([]uint32{0, 1, 2})
 	case keyboard.Key5:
 		triangle_mesh.ClearVertexMap()
+	case keyboard.Key6:
+		batch.SetDrawRange(2, 4)
+	case keyboard.Key7:
+		batch.ClearDrawRange()
 	}
 }
 
@@ -112,6 +121,10 @@ func draw() {
 	} else {
 		gfx.SetShader(nil)
 	}
+
+	gfx.SetColor(255, 255, 255, 255)
+	gfx.Draw(batch, 50, 150)
+
 	//stencil
 	gfx.Stencil(myStencilFunction)
 	gfx.SetStencilTest(gfx.COMPARE_EQUAL, 0)
@@ -169,7 +182,6 @@ func draw() {
 
 	gfx.SetColor(255, 255, 255, 255)
 	gfx.Draw(triangle_mesh, 50, 50)
-	//gfx.Draw(batch, 50, 50)
 
 	//mouse position
 	gfx.Circle("fill", mx, my, 20.0)

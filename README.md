@@ -34,7 +34,7 @@ TODO
   - ~~Images (gif, jpeg, png)~~
   - ~~Particle System~~
   - ~~Mesh~~
-  - SpriteBatch
+  - ~~SpriteBatch~~
   - Text
   - Video
 * ~~Physics~~ (just use [github.com/neguse/go-box2d-lite](https://github.com/neguse/go-box2d-lite))

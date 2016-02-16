@@ -2,6 +2,7 @@ package gfx
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -15,6 +16,8 @@ type SpriteBatch struct {
 	quad_indices *quadIndices
 	usage        Usage
 	texture      iTexture
+	rangeMin     int
+	rangeMax     int
 }
 
 func NewSpriteBatch(text iTexture, size int) *SpriteBatch {
@@ -23,11 +26,14 @@ func NewSpriteBatch(text iTexture, size int) *SpriteBatch {
 
 func NewSpriteBatchExt(texture iTexture, size int, usage Usage) *SpriteBatch {
 	return &SpriteBatch{
+		size:         size,
 		texture:      texture,
 		usage:        usage,
 		color:        &Color{1, 1, 1, 1},
-		array_buf:    newVertexBuffer(size*8, []float32{}, usage),
+		array_buf:    newVertexBuffer(size*4*8, []float32{}, usage),
 		quad_indices: newQuadIndices(size),
+		rangeMin:     -1,
+		rangeMax:     -1,
 	}
 }
 
@@ -97,12 +103,11 @@ func (sprite_batch *SpriteBatch) GetBufferSize() int {
 }
 
 func (sprite_batch *SpriteBatch) addv(verts []float32, mat *mgl32.Mat4, index int) error {
-	if index == -1 && sprite_batch.count+1 == sprite_batch.size {
+	if index == -1 && sprite_batch.count >= sprite_batch.size {
 		return fmt.Errorf("Sprite Batch Buffer Full")
 	}
 
-	sprite_size := 8 * 4
-	sprite := make([]float32, sprite_size)
+	sprite := make([]float32, 8*4)
 	for i := 0; i < 32; i += 8 {
 		j := (i / 2)
 		sprite[i+0] = (mat[0] * verts[j+0]) + (mat[4] * verts[j+1]) + mat[12]
@@ -116,13 +121,39 @@ func (sprite_batch *SpriteBatch) addv(verts []float32, mat *mgl32.Mat4, index in
 	}
 
 	if index == -1 {
-		sprite_batch.array_buf.fill(sprite_batch.count*sprite_size, sprite)
+		sprite_batch.array_buf.fill(sprite_batch.count*4*8, sprite)
 		sprite_batch.count++
 	} else {
-		sprite_batch.array_buf.fill(index*sprite_size, sprite)
+		sprite_batch.array_buf.fill(index*4*8, sprite)
 	}
 
 	return nil
+}
+
+func (sprite_batch *SpriteBatch) SetDrawRange(min, max int) error {
+	if min < 0 || max < 0 || min > max {
+		return fmt.Errorf("Invalid draw range.")
+	}
+	sprite_batch.rangeMin = min
+	sprite_batch.rangeMax = max
+	return nil
+}
+
+func (sprite_batch *SpriteBatch) ClearDrawRange() {
+	sprite_batch.rangeMin = -1
+	sprite_batch.rangeMax = -1
+}
+
+func (sprite_batch *SpriteBatch) GetDrawRange() (int, int) {
+	min := 0
+	max := sprite_batch.count - 1
+	if sprite_batch.rangeMax >= 0 {
+		max = int(math.Min(float64(sprite_batch.rangeMax), float64(max)))
+	}
+	if sprite_batch.rangeMin >= 0 {
+		min = int(math.Min(float64(sprite_batch.rangeMin), float64(max)))
+	}
+	return min, max
 }
 
 func (sprite_batch *SpriteBatch) Draw(args ...float32) {
@@ -139,7 +170,8 @@ func (sprite_batch *SpriteBatch) Draw(args ...float32) {
 	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
 	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(2*4))
-	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 8*4, gl.PtrOffset(4*4))
+	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.PtrOffset(4*4))
 
-	sprite_batch.quad_indices.drawElements(gl.TRIANGLES, 0, sprite_batch.count)
+	min, max := sprite_batch.GetDrawRange()
+	sprite_batch.quad_indices.drawElements(gl.TRIANGLES, min, max-min+1)
 }

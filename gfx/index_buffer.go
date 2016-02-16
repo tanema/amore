@@ -86,7 +86,7 @@ func (buffer *indexBuffer) unbind() {
 }
 
 func (buffer *indexBuffer) fill(offset int, data []uint32) {
-	copy(buffer.data[offset:], data[:len(data)-1])
+	copy(buffer.data[offset:], data[:len(data)])
 	if buffer.ibo == 0 {
 		return
 	}
@@ -111,7 +111,6 @@ func (buffer *indexBuffer) drawElementsLocal(mode uint32, offset, size int) {
 }
 
 func (buffer *indexBuffer) loadVolatile() bool {
-	println(buffer, buffer.ibo)
 	gl.GenBuffers(1, &buffer.ibo)
 	buffer.bind()
 	defer buffer.unbind()
