@@ -6,18 +6,12 @@
 package file
 
 import (
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"time"
 )
 
 func Read(filename string) ([]byte, error) {
-	buf, err := ioutil.ReadFile(filterPath(filename))
-	if err != nil {
-		return nil, err
-	}
-	return buf, nil
+	return fs.readFile(filename)
 }
 
 func ReadString(filename string) string {
@@ -29,40 +23,28 @@ func ReadString(filename string) string {
 }
 
 func NewFileData(filename string) (os.FileInfo, error) {
-	info, err := os.Stat(filterPath(filename))
-	if err != nil {
-		return nil, err
-	}
-	return info, nil
+	return fs.stat(filename)
 }
 
-func NewFile(filename string) (*os.File, error) {
-	f, err := os.Open(filterPath(filename))
-	if err != nil {
-		return nil, err
-	}
-	return f, nil
+func NewFile(filename string) (File, error) {
+	return fs.open(filename)
 }
 
 func CreateDirectory(filename string) error {
-	return os.MkdirAll(filterPath(filename), os.ModeDir)
+	return fs.mkDir(filename)
 }
 
 func Exists(filename string) bool {
-	info, err := os.Stat(filterPath(filename))
+	info, err := fs.stat(filename)
 	return info != nil && err == nil
 }
 
 func Remove(filename string) error {
-	err := os.Remove(filterPath(filename))
-	if err != nil {
-		return err
-	}
-	return nil
+	return fs.remove(filename)
 }
 
 func IsDirectory(filename string) bool {
-	info, err := os.Stat(filterPath(filename))
+	info, err := fs.stat(filename)
 	if err != nil {
 		return false
 	}
@@ -70,15 +52,11 @@ func IsDirectory(filename string) bool {
 }
 
 func IsFile(filename string) bool {
-	info, err := os.Stat(filterPath(filename))
-	if err != nil {
-		return false
-	}
-	return !info.IsDir()
+	return !IsDirectory(filename)
 }
 
 func IsSymLink(filename string) bool {
-	info, err := os.Stat(filterPath(filename))
+	info, err := fs.stat(filename)
 	if err != nil {
 		return false
 	}
@@ -86,7 +64,7 @@ func IsSymLink(filename string) bool {
 }
 
 func GetSize(filename string) int32 {
-	info, err := os.Stat(filterPath(filename))
+	info, err := fs.stat(filename)
 	if err != nil {
 		return 0
 	}
@@ -94,7 +72,7 @@ func GetSize(filename string) int32 {
 }
 
 func GetLastModified(filename string) time.Time {
-	info, err := os.Stat(filterPath(filename))
+	info, err := fs.stat(filename)
 	if err != nil {
 		return time.Time{}
 	}
@@ -102,12 +80,5 @@ func GetLastModified(filename string) time.Time {
 }
 
 func Ext(filename string) string {
-	return filepath.Ext(filterPath(filename))
-}
-
-func filterPath(filename string) string {
-	if !filepath.IsAbs(filename) {
-		filename = filepath.Join("assets", filename)
-	}
-	return filename
+	return fs.ext(filename)
 }

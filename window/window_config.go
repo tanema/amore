@@ -1,7 +1,16 @@
 package window
 
 import (
+	"os"
+	"path"
+
 	"github.com/BurntSushi/toml"
+
+	"github.com/tanema/amore/file"
+)
+
+const (
+	config_file_name = "conf.toml"
 )
 
 type WindowConfig struct {
@@ -30,8 +39,20 @@ type WindowConfig struct {
 
 func loadConfig() (*WindowConfig, error) {
 	var config WindowConfig
-	if _, err := toml.DecodeFile("conf.toml", &config); err != nil {
+	path := path.Join(".", config_file_name)
+
+	if _, err := file.NewFileData(path); os.IsNotExist(err) {
+		return &config, nil //no added config bail out early
+	}
+
+	config_file, file_err := file.NewFile(config_file_name)
+	if file_err != nil {
+		return nil, file_err
+	}
+
+	if _, err := toml.DecodeReader(config_file, &config); err != nil {
 		return nil, err
 	}
+
 	return &config, nil
 }
