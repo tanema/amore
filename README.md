@@ -39,7 +39,7 @@ TODO
   - Video
 * ~~Physics~~ (just use [github.com/neguse/go-box2d-lite](https://github.com/neguse/go-box2d-lite))
 * ~~Events~~
-* ~~Window~~ [ref](https://love2d.org/wiki/love.window) (Need support from SDL library)
+* ~~Window~~ [ref](https://love2d.org/wiki/love.window)
 * ~~System~~
 * ~~Mouse~~
 * ~~Keyboard~~
