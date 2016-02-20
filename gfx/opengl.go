@@ -586,11 +586,18 @@ func GetColor() Color {
 	return states.back().color
 }
 
-func SetFont(font Font) {
+func SetFont(font *Font) {
 	states.back().font = font
 }
 
-func GetFont() Font {
+func GetFont() *Font {
+	return states.back().font
+}
+
+func getCheckFont() *Font {
+	if states.back().font == nil {
+		SetFont(NewFont("arialbd.ttf", 15))
+	}
 	return states.back().font
 }
 

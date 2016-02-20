@@ -10,9 +10,12 @@ import (
 )
 
 const (
-	namePackage    = "main"
-	nameSourceFile = "asset_bundle.go"
-	amoreVersion   = "0.0.1"
+	amoreVersion = "0.0.3"
+)
+
+var (
+	namePackage    = flag.String("pkg", "main", "name of the go package for the source to be generated in")
+	nameSourceFile = flag.String("out", "asset_bundle.go", "name of the outputted file for bundling")
 )
 
 func main() {
@@ -21,9 +24,13 @@ func main() {
 
 	if len(args) > 0 {
 		if args[0] == "bundle" {
-			bundle()
+			bundle(args[1:]...)
 		} else if args[0] == "init" || args[0] == "new" {
-			newProject()
+			project_name := ""
+			if len(args) > 1 {
+				project_name = args[1]
+			}
+			newProject(project_name)
 		} else if args[0] == "version" {
 			printVersion()
 		}

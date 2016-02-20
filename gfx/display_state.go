@@ -16,7 +16,7 @@ type displayState struct {
 	scissorBox             Viewport
 	stencilCompare         CompareMode
 	stencilTestValue       int32
-	font                   Font
+	font                   *Font
 	shader                 *Shader
 	colorMask              ColorMask
 	wireframe              bool

@@ -41,8 +41,7 @@ func update(deltaTime float32) {
 }
 
 func draw() {
-	gfx.SetColor(239, 96, 17, 255)
-	gfx.Rect("fill", 400, 200, 826, 440)
+	gfx.Printf(50, 50, "Hello World")
 }`)
 
 var bundleTemplate, _ = template.New("bundle").Parse(`package {{.PackageName}}

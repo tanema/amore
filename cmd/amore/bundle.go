@@ -15,19 +15,29 @@ type bundler struct {
 	zipWriter *zip.Writer
 }
 
-func bundle() {
+func bundle(inputs ...string) {
 	b := newBundler()
 
-	err := b.addDir("assets")
-	if err != nil {
-		exitWithError(err)
-	}
-	err = b.addFile("conf.toml")
-	if err != nil {
-		exitWithError(err)
+	if inputs == nil || len(inputs) == 0 {
+		inputs = []string{"assets", "conf.toml"}
 	}
 
-	err = b.writeOut()
+	for _, input := range inputs {
+		fi, err := os.Stat(input)
+		if err != nil {
+			exitWithError(err)
+		}
+		if fi.IsDir() {
+			err = b.addDir(input)
+		} else {
+			err = b.addFile(input)
+		}
+		if err != nil {
+			exitWithError(err)
+		}
+	}
+
+	err := b.writeOut()
 	if err != nil {
 		exitWithError(err)
 	}
@@ -77,11 +87,11 @@ func (bndlr *bundler) writeOut() error {
 	}
 
 	zipData := FprintZipData(bndlr.buffer.Bytes())
-	return writeOutTemplate(nameSourceFile, bundleTemplate, struct {
+	return writeOutTemplate(*nameSourceFile, bundleTemplate, struct {
 		PackageName string
 		Data        *bytes.Buffer
 	}{
-		PackageName: namePackage,
+		PackageName: *namePackage,
 		Data:        zipData,
 	})
 }

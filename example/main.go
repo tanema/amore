@@ -15,8 +15,8 @@ import (
 
 var (
 	tree          *gfx.Image
-	ttf           gfx.Font
-	image_font    gfx.Font
+	ttf           *gfx.Font
+	image_font    *gfx.Font
 	mx, my        float32
 	shader        *gfx.Shader
 	bomb          *audio.Source
@@ -36,8 +36,9 @@ func main() {
 	canvas = gfx.NewCanvas(800, 600)
 	tree, _ = gfx.NewImage("images/palm_tree.png")
 	quad = gfx.NewQuad(0, 0, 200, 200, tree.GetWidth(), tree.GetHeight())
-	ttf = gfx.NewFont("fonts/arial.ttf", 20)
+	ttf = gfx.NewFont("fonts/arialbd.ttf", 20)
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
+	image_font.SetFallbacks(ttf)
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
 	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
 
@@ -166,11 +167,11 @@ func draw() {
 
 	// image font
 	gfx.SetFont(image_font)
-	gfx.Printf(20, 20, "test one two")
+	gfx.Printf(0, 0, "test one two")
 	// ttf font
 	gfx.SetFont(ttf)
 	gfx.Rotate(0.5)
-	gfx.Scale(1.5)
+	gfx.Scale(2)
 	gfx.Printf(200, 100, "test one two")
 	gfx.Origin()
 
