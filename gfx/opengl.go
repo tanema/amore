@@ -591,10 +591,7 @@ func SetFont(font *Font) {
 }
 
 func GetFont() *Font {
-	return states.back().font
-}
-
-func getCheckFont() *Font {
+	//if no font set, use default font
 	if states.back().font == nil {
 		SetFont(NewFont("arialbd.ttf", 15))
 	}

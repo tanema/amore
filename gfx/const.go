@@ -17,6 +17,7 @@ type (
 	Usage                uint32
 	ParticleDistribution int
 	ParticleInsertion    int
+	AlignMode            int
 )
 
 const (
@@ -118,4 +119,8 @@ const (
 	INSERT_MODE_TOP ParticleInsertion = iota
 	INSERT_MODE_BOTTOM
 	INSERT_MODE_RANDOM
+
+	ALIGN_CENTER AlignMode = iota
+	ALIGN_LEFT
+	ALIGN_RIGHT
 )

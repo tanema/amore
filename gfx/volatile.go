@@ -6,41 +6,67 @@ type Volatile interface {
 }
 
 var (
-	all_volatile = []Volatile{}
+	all_volatile    = make(map[string][]Volatile)
+	volatile_groups = []string{}
 )
 
+func init() {
+	CreateGlObjectGroup("amore_default")
+}
+
+func CurrentGlObjectGroup() string {
+	return volatile_groups[len(volatile_groups)-1]
+}
+
+func CreateGlObjectGroup(group string) {
+	volatile_groups = append(volatile_groups, group)
+	all_volatile[group] = []Volatile{}
+}
+
+func ReleaseGlObjectGroup(group string) {
+	for _, vol := range all_volatile[group] {
+		vol.unloadVolatile()
+	}
+	all_volatile[group] = []Volatile{}
+}
+
 func registerVolatile(new_volatile Volatile) {
-	all_volatile = append(all_volatile, new_volatile)
+	current_group := CurrentGlObjectGroup()
+	all_volatile[current_group] = append(all_volatile[current_group], new_volatile)
 	if gl_state.initialized {
 		new_volatile.loadVolatile()
 	}
 }
 
 func releaseVolatile(vol Volatile) {
-	var pos int
-	for i, v := range all_volatile {
-		if v == vol {
-			pos = i
-			v.unloadVolatile()
+	for group_name, group_items := range all_volatile {
+		for i, v := range group_items {
+			if v == vol {
+				vol.unloadVolatile()
+				all_volatile[group_name] = append(all_volatile[group_name][:i], all_volatile[group_name][i+1:]...)
+			}
 		}
 	}
-
-	all_volatile = all_volatile[:pos+copy(all_volatile[pos:], all_volatile[pos+1:])]
 }
 
 func releaseAllVolatile() {
 	unloadAllVolatile()
-	all_volatile = []Volatile{}
+	all_volatile = make(map[string][]Volatile)
+	CreateGlObjectGroup("amore_default")
 }
 
 func loadAllVolatile() {
-	for _, v := range all_volatile {
-		v.loadVolatile()
+	for _, group := range all_volatile {
+		for _, vol := range group {
+			vol.loadVolatile()
+		}
 	}
 }
 
 func unloadAllVolatile() {
-	for _, v := range all_volatile {
-		v.unloadVolatile()
+	for _, group := range all_volatile {
+		for _, vol := range group {
+			vol.unloadVolatile()
+		}
 	}
 }

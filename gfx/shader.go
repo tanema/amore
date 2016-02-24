@@ -81,6 +81,10 @@ func (shader *Shader) unloadVolatile() {
 	}
 }
 
+func (shader *Shader) Release() {
+	releaseVolatile(shader)
+}
+
 func (shader *Shader) mapUniforms() {
 	// Built-in uniform locations default to -1 (nonexistent.)
 	shader.uniforms = map[string]Uniform{}

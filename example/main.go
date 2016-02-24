@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/tanema/amore"
@@ -116,6 +117,7 @@ func myStencilFunction() {
 }
 
 func draw() {
+
 	gfx.SetLineWidth(10)
 	if use_shader {
 		gfx.SetShader(shader)
@@ -167,17 +169,13 @@ func draw() {
 
 	// image font
 	gfx.SetFont(image_font)
-	gfx.Printf(0, 0, "test one two")
+	gfx.Print("test one two", 0, 0)
 	// ttf font
 	gfx.SetFont(ttf)
-	gfx.Rotate(0.5)
-	gfx.Scale(2)
-	gfx.Printf(200, 100, "test one two")
-	gfx.Origin()
-
+	gfx.Print("test one two", 200, 100, 0.5, 2, 2)
 	//FPS
 	gfx.SetColor(0, 170, 170, 255)
-	gfx.Printf(1200, 10, "fps: %v", timer.GetFPS())
+	gfx.Print(fmt.Sprintf("fps: %v", timer.GetFPS()), 1200, 10)
 
 	gfx.Draw(psystem, 200, 200)
 
@@ -186,4 +184,14 @@ func draw() {
 
 	//mouse position
 	gfx.Circle("fill", mx, my, 20.0)
+
+	gfx.Printc([]string{"a", "m", "o", "r", "e"},
+		[]*gfx.Color{
+			gfx.NewColor(0, 255, 0, 255),
+			gfx.NewColor(255, 0, 255, 255),
+			gfx.NewColor(255, 255, 0, 255),
+			gfx.NewColor(0, 0, 255, 255),
+			gfx.NewColor(255, 255, 255, 255),
+		},
+		500, 300, 0, 3, 3)
 }

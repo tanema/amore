@@ -69,7 +69,11 @@ func (canvas *Canvas) unLoadVolatile() {
 	canvas.depth_stencil = 0
 
 	canvas.attachedCanvases = []*Canvas{}
-	canvas.Texture.unloadVolatile()
+	canvas.Texture.Release()
+}
+
+func (canvas *Canvas) Release() {
+	releaseVolatile(canvas)
 }
 
 func (canvas *Canvas) isMultiCanvasSupported() bool {

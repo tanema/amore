@@ -1,9 +1,8 @@
 package gfx
 
 import (
-	"fmt"
-
-	"github.com/go-gl/gl/v2.1/gl"
+	"math"
+	"strings"
 )
 
 type (
@@ -27,8 +26,8 @@ func NewImageFont(filename, glyph_hints string) *Font {
 	}
 }
 
-func Printf(x, y float32, fs string, argv ...interface{}) {
-	getCheckFont().Printf(x, y, fs, argv...)
+func (font *Font) Release() {
+	font.rasterizers[0].Release() //only release the first because the rest are fallbacks
 }
 
 func (font *Font) setLineHeight(height float32) {
@@ -87,6 +86,28 @@ func (font *Font) HasGlyphs(text string) bool {
 	return true
 }
 
+func (font *Font) findGlyph(g rune) glyphData {
+	for _, rasterizer := range font.rasterizers {
+		if rasterizer.hasGlyph(g) {
+			return rasterizer.getGlyphData(g)
+		}
+	}
+	return font.rasterizers[0].getGlyphData(g)
+}
+
+func (font *Font) getKerning(first, second rune) float32 {
+	k := font.rasterizers[0].getKerning(first, second)
+
+	for _, r := range font.rasterizers {
+		if r.hasGlyph(first) && r.hasGlyph(second) {
+			k = r.getKerning(first, second)
+			break
+		}
+	}
+
+	return k
+}
+
 func (font *Font) SetFallbacks(fallbacks ...*Font) {
 	if fallbacks == nil || len(fallbacks) == 0 {
 		return
@@ -96,27 +117,54 @@ func (font *Font) SetFallbacks(fallbacks ...*Font) {
 	}
 }
 
-func (font *Font) Printf(x, y float32, fs string, argv ...interface{}) {
-	formatted_string := fmt.Sprintf(fs, argv...)
-	if len(formatted_string) == 0 {
-		return
+func (font *Font) GetHeight() float32 {
+	return float32(font.rasterizers[0].getHeight())
+}
+
+func (font *Font) GetWidth(text string) float32 {
+	if len(text) == 0 {
+		return 0
 	}
 
-	rast := font.rasterizers[0]
+	var max_width float32
+	for _, line := range strings.Split(text, "\n") {
+		var width float32
+		var prevChar rune
+		for i, char := range string(line[:]) {
+			g := font.findGlyph(char)
+			width += float32(g.advanceWidth)
+			if i != 0 {
+				width += font.getKerning(char, prevChar)
+			}
+			prevChar = char
+		}
+		max_width = float32(math.Max(float64(max_width), float64(width)))
+	}
 
-	x = x - float32(rast.getOffset())
-	y = y - float32(rast.getOffset())
+	return max_width
+}
 
-	bindTexture(rast.getTexture().GetHandle())
-	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD)
-	for _, ch := range formatted_string {
-		if rast.hasGlyph(ch) {
-			g := rast.getGlyphData(ch)
-			prepareDraw(generateModelMatFromArgs([]float32{x + float32(g.leftSideBearing), y + float32(g.topSideBearing)}))
-			gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 4*4, gl.Ptr(g.rec.vertices))
-			gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 4*4, gl.Ptr(&g.rec.vertices[2]))
-			gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
-			x = x + float32(g.advanceWidth)
+func (font *Font) GetWrap(text string, wrapLimit float32) (float32, []string) {
+	var width, currentWidth float32
+	var lines, currentLine []string
+
+	for _, word := range strings.Split(text, " ") {
+		wordWidth := font.GetWidth(word)
+		if currentWidth+wordWidth > wrapLimit {
+			if len(currentLine) > 0 {
+				lines = append(lines, strings.Join(currentLine, " "))
+				width = float32(math.Max(float64(currentWidth), float64(width)))
+			}
+			currentLine = []string{word}
+			currentWidth = wordWidth
+		} else {
+			currentLine = append(currentLine, word)
+			currentWidth += wordWidth
 		}
 	}
+
+	lines = append(lines, strings.Join(currentLine, " "))
+	width = float32(math.Max(float64(currentWidth), float64(width)))
+
+	return width, lines
 }

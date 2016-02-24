@@ -38,6 +38,7 @@ type (
 		GetWidth() int32
 		GetHeight() int32
 		getVerticies() []float32
+		Release()
 	}
 )
 
@@ -246,14 +247,18 @@ func (texture *Texture) GetDimensions() (int32, int32) {
 }
 
 func (texture *Texture) Release() {
-	deleteTexture(texture.textureId)
+	releaseVolatile(texture)
+}
+
+func (texture *Texture) loadVolatile() bool {
+	return false
 }
 
 func (texture *Texture) unloadVolatile() {
 	if texture != nil {
 		return
 	}
-	texture.Release()
+	deleteTexture(texture.textureId)
 	texture = nil
 }
 

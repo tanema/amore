@@ -41,7 +41,7 @@ func update(deltaTime float32) {
 }
 
 func draw() {
-	gfx.Printf(50, 50, "Hello World")
+	gfx.Print("Hello World",50, 50)
 }`)
 
 var bundleTemplate, _ = template.New("bundle").Parse(`package {{.PackageName}}

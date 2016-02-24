@@ -37,6 +37,12 @@ func NewSpriteBatchExt(texture iTexture, size int, usage Usage) *SpriteBatch {
 	}
 }
 
+func (sprite_batch *SpriteBatch) Release() {
+	releaseVolatile(sprite_batch.array_buf)
+	releaseVolatile(sprite_batch.quad_indices)
+	sprite_batch.texture.Release()
+}
+
 func (sprite_batch *SpriteBatch) Add(args ...float32) error {
 	return sprite_batch.addv(sprite_batch.texture.getVerticies(), generateModelMatFromArgs(args), -1)
 }
@@ -54,7 +60,7 @@ func (sprite_batch *SpriteBatch) Setq(index int, quad *Quad, args ...float32) er
 }
 
 func (sprite_batch *SpriteBatch) Clear() {
-	sprite_batch.array_buf = newVertexBuffer(sprite_batch.size*8, []float32{}, sprite_batch.usage)
+	sprite_batch.array_buf = newVertexBuffer(sprite_batch.size*4*8, []float32{}, sprite_batch.usage)
 	sprite_batch.count = 0
 }
 
@@ -92,7 +98,7 @@ func (sprite_batch *SpriteBatch) SetBufferSize(newsize int) error {
 	} else if newsize == sprite_batch.size {
 		return nil
 	}
-	sprite_batch.array_buf = newVertexBuffer(newsize*8, sprite_batch.array_buf.data, sprite_batch.usage)
+	sprite_batch.array_buf = newVertexBuffer(newsize*4*8, sprite_batch.array_buf.data, sprite_batch.usage)
 	sprite_batch.quad_indices = newQuadIndices(newsize)
 	sprite_batch.size = newsize
 	return nil
