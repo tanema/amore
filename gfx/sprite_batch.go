@@ -60,6 +60,9 @@ func (sprite_batch *SpriteBatch) Setq(index int, quad *Quad, args ...float32) er
 }
 
 func (sprite_batch *SpriteBatch) Clear() {
+	if sprite_batch.array_buf != nil {
+		releaseVolatile(sprite_batch.array_buf)
+	}
 	sprite_batch.array_buf = newVertexBuffer(sprite_batch.size*4*8, []float32{}, sprite_batch.usage)
 	sprite_batch.count = 0
 }
