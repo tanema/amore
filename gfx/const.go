@@ -123,4 +123,5 @@ const (
 	ALIGN_CENTER AlignMode = iota
 	ALIGN_LEFT
 	ALIGN_RIGHT
+	ALIGN_JUSTIFY
 )

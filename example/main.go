@@ -6,6 +6,7 @@ import (
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/audio"
+	"github.com/tanema/amore/file"
 	"github.com/tanema/amore/gfx"
 	_ "github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"
@@ -28,6 +29,8 @@ var (
 	psystem       *gfx.ParticleSystem
 	triangle_mesh *gfx.Mesh
 	batch         *gfx.SpriteBatch
+	text          *gfx.Text
+	amore_text    *gfx.Text
 )
 
 func main() {
@@ -42,6 +45,18 @@ func main() {
 	image_font.SetFallbacks(ttf)
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
 	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
+	text, _ = gfx.NewColorTextExt(ttf,
+		[]string{file.ReadString("text/lorem.txt"), file.ReadString("text/lorem.txt")},
+		[]*gfx.Color{gfx.NewColor(255, 255, 255, 255), gfx.NewColor(255, 0, 255, 255)},
+		500, gfx.ALIGN_CENTER)
+	amore_text, _ = gfx.NewColorText(ttf, []string{"a", "m", "o", "r", "e"},
+		[]*gfx.Color{
+			gfx.NewColor(0, 255, 0, 255),
+			gfx.NewColor(255, 0, 255, 255),
+			gfx.NewColor(255, 255, 0, 255),
+			gfx.NewColor(0, 0, 255, 255),
+			gfx.NewColor(255, 255, 255, 255),
+		})
 
 	particle, _ := gfx.NewImage("images/particle.png")
 	psystem = gfx.NewParticleSystem(particle, 32)
@@ -118,6 +133,12 @@ func myStencilFunction() {
 
 func draw() {
 
+	gfx.SetLineWidth(1)
+	//text
+	gfx.SetColor(255, 255, 255, 255)
+	gfx.Draw(text, 0, 300)
+	gfx.Rect("line", 0, 300, 500, text.GetHeight())
+
 	gfx.SetLineWidth(10)
 	if use_shader {
 		gfx.SetShader(shader)
@@ -169,7 +190,7 @@ func draw() {
 
 	// image font
 	gfx.SetFont(image_font)
-	gfx.Print("test one two", 0, 0)
+	gfx.Printf("test one @ two", 150, gfx.ALIGN_JUSTIFY, 0, 0)
 	// ttf font
 	gfx.SetFont(ttf)
 	gfx.Print("test one two", 200, 100, 0.5, 2, 2)
@@ -185,13 +206,5 @@ func draw() {
 	//mouse position
 	gfx.Circle("fill", mx, my, 20.0)
 
-	gfx.Printc([]string{"a", "m", "o", "r", "e"},
-		[]*gfx.Color{
-			gfx.NewColor(0, 255, 0, 255),
-			gfx.NewColor(255, 0, 255, 255),
-			gfx.NewColor(255, 255, 0, 255),
-			gfx.NewColor(0, 0, 255, 255),
-			gfx.NewColor(255, 255, 255, 255),
-		},
-		500, 300, 0, 3, 3)
+	gfx.Draw(amore_text, 500, 400, 0, 3, 3)
 }

@@ -284,6 +284,14 @@ func SetViewport(x, y, w, h int32) {
 	SetScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
 }
 
+func GetWidth() float32 {
+	return float32(screen_width)
+}
+
+func GetHeight() float32 {
+	return float32(screen_height)
+}
+
 func Clear(r, g, b, a float32) {
 	gl.ClearColor(r/255.0, g/255.0, b/255.0, a/255.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)

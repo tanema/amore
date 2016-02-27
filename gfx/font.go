@@ -13,16 +13,16 @@ type (
 )
 
 func NewFont(filename string, font_size float32) *Font {
+	rast := newTtfRasterizer(filename, font_size)
 	return &Font{
-		rasterizers: []rasterizer{newTtfRasterizer(filename, font_size)},
-		lineHeight:  1,
+		rasterizers: []rasterizer{rast},
 	}
 }
 
 func NewImageFont(filename, glyph_hints string) *Font {
+	rast := newImageRasterizer(filename, glyph_hints)
 	return &Font{
-		rasterizers: []rasterizer{newImageRasterizer(filename, glyph_hints)},
-		lineHeight:  1,
+		rasterizers: []rasterizer{rast},
 	}
 }
 
@@ -35,7 +35,11 @@ func (font *Font) setLineHeight(height float32) {
 }
 
 func (font *Font) GetLineHeight() float32 {
-	return font.lineHeight
+	if font.lineHeight <= 0 {
+		return float32(font.rasterizers[0].getLineHeight())
+	} else {
+		return font.lineHeight
+	}
 }
 
 func (font *Font) SetFilter(min, mag FilterMode) error {

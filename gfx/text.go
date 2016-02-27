@@ -63,7 +63,7 @@ func NewTextExt(font *Font, text string, wrap_limit float32, align AlignMode) (*
 	if text == "" {
 		return nil, fmt.Errorf("Cannot create an text object with blank string")
 	}
-	return NewColorTextExt(font, []string{text}, []*Color{NewColor(255, 255, 255, 255)}, -1, ALIGN_LEFT)
+	return NewColorTextExt(font, []string{text}, []*Color{NewColor(255, 255, 255, 255)}, wrap_limit, align)
 }
 
 func NewColorText(font *Font, strs []string, colors []*Color) (*Text, error) {
@@ -89,16 +89,22 @@ func NewColorTextExt(font *Font, strs []string, colors []*Color, wrap_limit floa
 		batches:   []*SpriteBatch{},
 	}
 
-	new_text.generate()
+	registerVolatile(new_text)
+
 	return new_text, nil
 }
 
-func (text *Text) generate() {
+func (text *Text) loadVolatile() bool {
 	if text.wrapLimit > 0 {
 		text.generateFormatted()
 	} else {
 		text.generateUnformatted()
 	}
+	return true
+}
+
+func (text *Text) unloadVolatile() {
+	text.Release()
 }
 
 func (text *Text) generateUnformatted() {
@@ -109,24 +115,31 @@ func (text *Text) generateUnformatted() {
 
 	var gx, gy float32
 	for i, st := range text.strings {
+		var prevChar rune
 		for _, char := range st {
 			for _, rast := range text.font.rasterizers {
 				if rast.hasGlyph(char) {
 					batches[rast].SetColor(text.colors[i])
 					glyph := rast.getGlyphData(char)
+					if prevChar != 0 {
+						gx += text.font.getKerning(char, prevChar)
+					}
 					batches[rast].Addq(glyph.rec, gx+float32(glyph.leftSideBearing-rast.getOffset()), gy+float32(glyph.topSideBearing-rast.getOffset()))
 					gx = gx + float32(glyph.advanceWidth)
 					break
 				}
 			}
+			prevChar = char
 		}
 	}
 
 	text.batches = []*SpriteBatch{}
-	for _, rast := range text.font.rasterizers {
-		if batches[rast].GetCount() > 0 {
-			batches[rast].SetBufferSize(batches[rast].GetCount())
-			text.batches = append(text.batches, batches[rast])
+	for _, batch := range batches {
+		if batch.GetCount() > 0 {
+			batch.SetBufferSize(batch.GetCount())
+			text.batches = append(text.batches, batch)
+		} else {
+			batch.Release()
 		}
 	}
 
@@ -140,31 +153,106 @@ func (text *Text) generateFormatted() {
 		batches[rast] = NewSpriteBatch(rast.getTexture(), text.length)
 	}
 
-	var gx, gy float32
+	spaceGlyph := text.getSpaceGlyph()
+	spaceSize := float32(spaceGlyph.advanceWidth)
+	drawLine := func(currentLine []*word, lineWidth, gy float32) {
+		if len(currentLine) == 0 {
+			return
+		}
+		var gx float32
+		switch text.align {
+		case ALIGN_LEFT:
+		case ALIGN_RIGHT:
+			gx = text.wrapLimit - lineWidth
+		case ALIGN_CENTER:
+			gx = (text.wrapLimit - lineWidth) / 2.0
+		case ALIGN_JUSTIFY:
+			spaceSize = (text.wrapLimit - lineWidth) / float32(len(currentLine)-1)
+		}
+
+		for _, w := range currentLine {
+			for i := 0; i < w.size; i++ {
+				glyph := w.glyphs[i]
+				rast := w.rasts[i]
+				batches[rast].SetColor(w.colors[i])
+				gx += w.kern[i]
+				batches[rast].Addq(glyph.rec, gx+float32(glyph.leftSideBearing-rast.getOffset()), gy+float32(glyph.topSideBearing-rast.getOffset()))
+				gx += float32(glyph.advanceWidth)
+			}
+			gx += spaceSize
+		}
+	}
+
+	var currentWidth, gy float32
+	var currentLine []*word
+	text.width = 0
+	for _, w := range text.generateWords() {
+		if (currentWidth + spaceSize + w.width) > text.wrapLimit {
+			drawLine(currentLine, currentWidth, gy)
+			currentLine = []*word{w}
+			currentWidth = w.width
+			gy += text.font.GetLineHeight()
+		} else {
+			currentLine = append(currentLine, w)
+			currentWidth += (spaceSize + w.width)
+		}
+	}
+
+	drawLine(currentLine, currentWidth, gy)
+
+	text.batches = []*SpriteBatch{}
+	for _, batch := range batches {
+		if batch.GetCount() > 0 {
+			batch.SetBufferSize(batch.GetCount())
+			text.batches = append(text.batches, batch)
+		} else {
+			batch.Release()
+		}
+	}
+
+	text.width = text.wrapLimit
+	text.height = gy + text.font.GetLineHeight()
+}
+
+func (text *Text) getSpaceGlyph() glyphData {
+	for _, rast := range text.font.rasterizers {
+		if rast.hasGlyph(' ') {
+			return rast.getGlyphData(' ')
+		}
+	}
+	return text.font.rasterizers[0].getGlyphData(' ')
+}
+
+func (text *Text) generateWords() []*word {
+	words := []*word{}
+	currentWord := newWord()
+
 	for i, st := range text.strings {
+		var prevChar rune
 		for _, char := range st {
+			if char == ' ' {
+				words = append(words, currentWord)
+				currentWord = newWord()
+				//prevChar = 0
+				continue
+			}
 			for _, rast := range text.font.rasterizers {
 				if rast.hasGlyph(char) {
-					batches[rast].SetColor(text.colors[i])
-					glyph := rast.getGlyphData(char)
-					batches[rast].Addq(glyph.rec, gx+float32(glyph.leftSideBearing-rast.getOffset()), gy+float32(glyph.topSideBearing-rast.getOffset()))
-					gx = gx + float32(glyph.advanceWidth)
+					var kern float32
+					if prevChar != 0 {
+						kern = text.font.getKerning(char, prevChar)
+					}
+					currentWord.add(rast.getGlyphData(char), text.colors[i], rast, kern)
 					break
 				}
 			}
+			prevChar = char
 		}
 	}
 
-	text.batches = []*SpriteBatch{}
-	for _, rast := range text.font.rasterizers {
-		if batches[rast].GetCount() > 0 {
-			batches[rast].SetBufferSize(batches[rast].GetCount())
-			text.batches = append(text.batches, batches[rast])
-		}
-	}
+	words = append(words, currentWord)
 
-	text.width = text.font.GetWidth(strings.Join(text.strings, ""))
-	text.height = text.font.GetHeight()
+	return words
 }
 
 func (text *Text) GetWidth() float32 {
@@ -185,7 +273,7 @@ func (text *Text) GetFont() *Font {
 
 func (text *Text) SetFont(f *Font) {
 	text.font = f
-	text.generate()
+	text.loadVolatile()
 }
 
 func (text *Text) Set(t string) {
@@ -195,7 +283,7 @@ func (text *Text) Set(t string) {
 func (text *Text) Setc(strs []string, colors []*Color) {
 	text.strings = strs
 	text.colors = colors
-	text.generate()
+	text.loadVolatile()
 }
 
 func (text *Text) Add(t string, args ...float32) {
@@ -222,4 +310,30 @@ func (text *Text) Draw(args ...float32) {
 	for _, batch := range text.batches {
 		batch.Draw(args...)
 	}
+}
+
+type word struct {
+	glyphs []glyphData
+	colors []*Color
+	rasts  []rasterizer
+	kern   []float32
+	size   int
+	width  float32
+}
+
+func newWord() *word {
+	return &word{
+		glyphs: []glyphData{},
+		colors: []*Color{},
+		rasts:  []rasterizer{},
+	}
+}
+
+func (w *word) add(g glyphData, color *Color, rast rasterizer, kern float32) {
+	w.glyphs = append(w.glyphs, g)
+	w.colors = append(w.colors, color)
+	w.rasts = append(w.rasts, rast)
+	w.kern = append(w.kern, kern)
+	w.size++
+	w.width += float32(g.advanceWidth) + kern
 }

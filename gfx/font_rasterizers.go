@@ -47,6 +47,7 @@ type (
 		rasterizerBase
 		font_size float32
 		ttf       *truetype.Font
+		context   *freetype.Context
 	}
 	glyphData struct {
 		rec             *Quad
@@ -139,34 +140,34 @@ func (rast *ttfFontRasterizer) loadVolatile() bool {
 	glyphsPerRow := int32(16)
 	glyphsPerCol := (int32(len(glyphs)) / glyphsPerRow) + 1
 
-	context := freetype.NewContext()
-	context.SetDPI(72)
-	context.SetFont(rast.ttf)
-	context.SetFontSize(float64(rast.font_size))
+	rast.context = freetype.NewContext()
+	rast.context.SetDPI(72)
+	rast.context.SetFont(rast.ttf)
+	rast.context.SetFontSize(float64(rast.font_size))
 
 	font_bounds := rast.ttf.Bounds()
-	rast.advance = context.FUnitToPixelRU(int(font_bounds.XMax - font_bounds.XMin))
-	rast.height = context.FUnitToPixelRU(int(font_bounds.YMax-font_bounds.YMin) + 5)
+	rast.advance = rast.context.FUnitToPixelRU(int(font_bounds.XMax - font_bounds.XMin))
+	rast.height = rast.context.FUnitToPixelRU(int(font_bounds.YMax-font_bounds.YMin) + 5)
 	image_width := pow2(uint32(int32(rast.advance) * glyphsPerRow))
 	image_height := pow2(uint32(int32(rast.height) * glyphsPerCol))
 
 	rgba := image.NewRGBA(image.Rect(0, 0, int(image_width), int(image_height)))
-	context.SetClip(rgba.Bounds())
-	context.SetDst(rgba)
-	context.SetSrc(image.White)
+	rast.context.SetClip(rgba.Bounds())
+	rast.context.SetDst(rgba)
+	rast.context.SetSrc(image.White)
 
 	var gx, gy int
-	rast.offset = context.FUnitToPixelRU(rast.ttf.UnitsPerEm())
+	rast.offset = rast.context.FUnitToPixelRU(rast.ttf.UnitsPerEm())
 	for i, ch := range glyphs {
 		pt := freetype.Pt(gx+rast.offset, gy+rast.offset)
-		context.DrawString(string(ch), pt)
+		rast.context.DrawString(string(ch), pt)
 		metric := rast.ttf.HMetric(rast.ttf.Index(ch))
 		vmetric := rast.ttf.VMetric(rast.ttf.Index(ch))
 
-		lsb := context.FUnitToPixelRU(int(metric.LeftSideBearing))
-		aw := context.FUnitToPixelRU(int(metric.AdvanceWidth))
-		tsb := context.FUnitToPixelRU(int(vmetric.TopSideBearing))
-		ah := context.FUnitToPixelRU(int(vmetric.AdvanceHeight))
+		lsb := rast.context.FUnitToPixelRU(int(metric.LeftSideBearing))
+		aw := rast.context.FUnitToPixelRU(int(metric.AdvanceWidth))
+		tsb := rast.context.FUnitToPixelRU(int(vmetric.TopSideBearing))
+		ah := rast.context.FUnitToPixelRU(int(vmetric.AdvanceHeight))
 		descent := rast.height - ah
 		ascent := rast.height - descent
 
@@ -202,7 +203,7 @@ func (rast *ttfFontRasterizer) getLineHeight() int {
 }
 
 func (rast *ttfFontRasterizer) getKerning(leftglyph, rightglyph rune) float32 {
-	return float32(rast.ttf.Kerning(rast.ttf.Index(leftglyph), rast.ttf.Index(rightglyph)))
+	return float32(rast.context.FUnitToPixelRU(int(rast.ttf.Kerning(rast.ttf.Index(leftglyph), rast.ttf.Index(rightglyph)))))
 }
 
 func (rast *imageFontRasterizer) loadVolatile() bool {
