@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	amoreVersion = "0.0.3"
+	amoreVersion = "0.0.4"
 )
 
 var (

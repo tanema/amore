@@ -115,7 +115,7 @@ func (fs *amoreFS) readFile(path string) ([]byte, error) {
 }
 
 func (fs *amoreFS) mkDir(path string) error {
-	return os.MkdirAll(fs.path(path), os.ModeDir)
+	return os.MkdirAll(fs.path(path), os.ModeDir|os.ModePerm)
 }
 
 func (fs *amoreFS) remove(path string) error {

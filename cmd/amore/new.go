@@ -5,11 +5,11 @@ import (
 	"path"
 )
 
-var assetFolders = []string{"images", "audio", "fonts", "shaders"}
+var assetFolders = []string{"images", "audio", "fonts", "shaders", "data"}
 
 func newProject(project_name string) {
 	for _, folder := range assetFolders {
-		if err := os.MkdirAll(path.Join("assets", folder), os.ModeDir); err != nil {
+		if err := os.MkdirAll(path.Join("assets", folder), os.ModeDir|os.ModePerm); err != nil {
 			exitWithError(err)
 		}
 	}
