@@ -12,7 +12,6 @@ type (
 		colors    []*Color
 		wrapLimit float32
 		align     AlignMode
-		length    int
 		batches   map[rasterizer]*SpriteBatch
 		width     float32
 		height    float32
@@ -86,7 +85,6 @@ func NewColorTextExt(font *Font, strs []string, colors []*Color, wrap_limit floa
 		colors:    colors,
 		wrapLimit: wrap_limit,
 		align:     align,
-		length:    len(strings.Join(strs, "")),
 		batches:   make(map[rasterizer]*SpriteBatch),
 	}
 
@@ -96,8 +94,9 @@ func NewColorTextExt(font *Font, strs []string, colors []*Color, wrap_limit floa
 }
 
 func (text *Text) loadVolatile() bool {
+	length := len(strings.Join(text.strings, ""))
 	for _, rast := range text.font.rasterizers {
-		text.batches[rast] = NewSpriteBatch(rast.getTexture(), text.length)
+		text.batches[rast] = NewSpriteBatch(rast.getTexture(), length)
 	}
 	spaceGlyph := text.getSpaceGlyph()
 	text.spaceSize = float32(spaceGlyph.advanceWidth)
@@ -275,21 +274,6 @@ func (text *Text) Setc(strs []string, colors []*Color) {
 	text.generate()
 }
 
-func (text *Text) Add(t string, args ...float32) {
-	text.Addc([]string{t}, []*Color{NewColor(255, 255, 255, 255)}, args...)
-}
-
-func (text *Text) Addc(strs []string, colors []*Color, args ...float32) {
-	text.Addfc(strs, colors, -1, ALIGN_LEFT, args...)
-}
-
-func (text *Text) Addf(t string, wrapLimit float32, align AlignMode, args ...float32) {
-	text.Addfc([]string{t}, []*Color{NewColor(255, 255, 255, 255)}, wrapLimit, align, args...)
-}
-
-func (text *Text) Addfc(strs []string, colors []*Color, wrapLimit float32, align AlignMode, args ...float32) {
-}
-
 func (text *Text) Release() {
 	for _, batch := range text.batches {
 		batch.Release()
@@ -298,7 +282,9 @@ func (text *Text) Release() {
 
 func (text *Text) Draw(args ...float32) {
 	for _, batch := range text.batches {
-		batch.Draw(args...)
+		if batch.GetCount() > 0 {
+			batch.Draw(args...)
+		}
 	}
 }
 

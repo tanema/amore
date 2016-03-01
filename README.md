@@ -35,7 +35,7 @@ TODO
   - ~~Particle System~~
   - ~~Mesh~~
   - ~~SpriteBatch~~
-  - Text
+  - ~~Text~~
   - Video
 * ~~Physics~~ (just use [github.com/neguse/go-box2d-lite](https://github.com/neguse/go-box2d-lite))
 * ~~Events~~
@@ -48,7 +48,7 @@ TODO
 * ~~Timer~~
 * ~~Asset Bundling~~
 * Wiki
-* Full Platform Support
+* Full Platform Support (refactor to use [goxjs/gl](https://github.com/goxjs/gl) to support mobile and web)
 * Optimize
 
 Notes and ideas
