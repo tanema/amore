@@ -396,8 +396,9 @@ func shaderCodeToGLSL(code ...string) (string, string) {
 
 func compileCode(shader_type uint32, code string) uint32 {
 	id := gl.CreateShader(shader_type)
-	csource := gl.Str(code + "\x00")
-	gl.ShaderSource(id, 1, &csource, nil)
+	csources, free := gl.Strs(code + "\x00")
+	gl.ShaderSource(id, 1, csources, nil)
+	free()
 	gl.CompileShader(id)
 
 	var isCompiled int32

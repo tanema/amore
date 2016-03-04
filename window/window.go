@@ -486,8 +486,7 @@ func (window *Window) ShowMessageBox(title, message string, buttons []string, bo
 		Buttons:    sdl_buttons,
 	}
 
-	var buttonid int32
-	sdl.ShowMessageBox(&messageboxdata, &buttonid)
+	var _, buttonid = sdl.ShowMessageBox(&messageboxdata)
 	return buttons[buttonid]
 }
 
