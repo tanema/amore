@@ -3,8 +3,8 @@ package gfx
 import (
 	"math"
 
-	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/goxjs/gl"
 )
 
 const (
@@ -77,6 +77,10 @@ type (
 	}
 )
 
+func (system *ParticleSystem) Release() {
+	system.quadIndices.Release()
+}
+
 func calculate_variation(inner, outer, v float32) float32 {
 	low := inner - (outer/2.0)*v
 	high := inner + (outer/2.0)*v
@@ -123,6 +127,7 @@ func (system *ParticleSystem) SetBufferSize(size int) {
 		system.particles = system.particles[:int(size)]
 	}
 	system.maxParticles = size
+	system.quadIndices.Release()
 	system.quadIndices = newQuadIndices(size)
 	system.life = system.lifetime
 	system.emitCounter = 0
@@ -656,15 +661,18 @@ func (system *ParticleSystem) Draw(args ...float32) {
 
 	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(system.texture.GetHandle())
-
 	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.Ptr(particleVerts))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[2]))
-	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[4]))
 
-	// We use a client-side index array instead of an Index Buffers, because
-	// at least one graphics driver (the one for Kepler nvidia GPUs in OS X
-	// 10.11) fails to render geometry if an index buffer is used with
-	// client-side vertex arrays.
-	system.quadIndices.drawElementsLocal(gl.TRIANGLES, 0, len(system.particles))
+	vbo := gl.CreateBuffer()
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(particleVerts...), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, 8*4, 0)
+	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_TEXCOORD}, 2, gl.FLOAT, false, 8*4, 2*4)
+	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_COLOR}, 4, gl.FLOAT, false, 8*4, 4*4)
+
+	system.quadIndices.drawElements(gl.TRIANGLES, 0, len(system.particles))
+
+	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
+	gl.DeleteBuffer(vbo)
 }

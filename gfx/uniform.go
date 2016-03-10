@@ -1,7 +1,7 @@
 package gfx
 
 import (
-	"github.com/go-gl/gl/v2.1/gl"
+	"github.com/goxjs/gl"
 )
 
 type Uniform struct {
@@ -22,7 +22,7 @@ func (u *Uniform) CalculateTypeInfo() {
 
 func (u *Uniform) getTypeSize() int32 {
 	switch u.Type {
-	case gl.INT, gl.FLOAT, gl.BOOL, gl.SAMPLER_1D, gl.SAMPLER_2D, gl.SAMPLER_3D:
+	case gl.INT, gl.FLOAT, gl.BOOL, gl.SAMPLER_2D, gl.SAMPLER_CUBE:
 		return 1
 	case gl.INT_VEC2, gl.FLOAT_VEC2, gl.FLOAT_MAT2, gl.BOOL_VEC2:
 		return 2
@@ -43,7 +43,7 @@ func (u *Uniform) getBaseType() UniformType {
 		return UNIFORM_FLOAT
 	case gl.BOOL, gl.BOOL_VEC2, gl.BOOL_VEC3, gl.BOOL_VEC4:
 		return UNIFORM_BOOL
-	case gl.SAMPLER_1D, gl.SAMPLER_2D, gl.SAMPLER_3D:
+	case gl.SAMPLER_2D, gl.SAMPLER_CUBE:
 		return UNIFORM_SAMPLER
 	}
 	return UNIFORM_UNKNOWN

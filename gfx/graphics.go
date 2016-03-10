@@ -4,8 +4,8 @@ import (
 	"image"
 	"math"
 
-	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/goxjs/gl"
 )
 
 type (
@@ -96,8 +96,17 @@ func Point(x, y float32) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
 	useVertexAttribArrays(ATTRIBFLAG_POS)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{x, y}))
+
+	point := []float32{x, y}
+	vbo := gl.CreateBuffer()
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(point...), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, 0, 0)
 	gl.DrawArrays(gl.POINTS, 0, 1)
+
+	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
+	gl.DeleteBuffer(vbo)
 }
 
 func Line(args ...float32) {
@@ -120,8 +129,13 @@ func Polygon(mode string, coords []float32) {
 		prepareDraw(nil)
 		bindTexture(gl_state.defaultTexture)
 		useVertexAttribArrays(ATTRIBFLAG_POS)
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
-		gl.DrawArrays(gl.TRIANGLE_FAN, 0, int32(len(coords))/2-1)
+		vbo := gl.CreateBuffer()
+		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(coords...), gl.STATIC_DRAW)
+		gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, 0, 0)
+		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
+		gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
+		gl.DeleteBuffer(vbo)
 	}
 }
 
@@ -134,7 +148,7 @@ func NewScreenshot() image.Image {
 	screenshot := image.NewRGBA(image.Rect(0, 0, int(w), int(h)))
 	stride := int32(screenshot.Stride)
 	pixels := make([]byte, len(screenshot.Pix))
-	gl.ReadPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pixels))
+	gl.ReadPixels(pixels, 0, 0, int(w), int(h), gl.RGBA, gl.UNSIGNED_BYTE)
 
 	// OpenGL sucks and reads pixels from the lower-left. Let's fix that.
 	for y := int32(0); y < h; y++ {

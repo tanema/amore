@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/goxjs/gl"
 )
 
 type SpriteBatch struct {
@@ -38,9 +38,8 @@ func NewSpriteBatchExt(texture iTexture, size int, usage Usage) *SpriteBatch {
 }
 
 func (sprite_batch *SpriteBatch) Release() {
-	releaseVolatile(sprite_batch.array_buf)
-	releaseVolatile(sprite_batch.quad_indices)
-	sprite_batch.texture.Release()
+	sprite_batch.array_buf.Release()
+	sprite_batch.quad_indices.Release()
 }
 
 func (sprite_batch *SpriteBatch) Add(args ...float32) error {
@@ -101,8 +100,13 @@ func (sprite_batch *SpriteBatch) SetBufferSize(newsize int) error {
 	} else if newsize == sprite_batch.size {
 		return nil
 	}
-	sprite_batch.array_buf = newVertexBuffer(newsize*4*8, sprite_batch.array_buf.data, sprite_batch.usage)
+
+	sprite_batch.array_buf.Release()
+	sprite_batch.array_buf = newVertexBuffer(newsize*4*8, sprite_batch.array_buf.getData(), sprite_batch.usage)
+
+	sprite_batch.quad_indices.Release()
 	sprite_batch.quad_indices = newQuadIndices(newsize)
+
 	sprite_batch.size = newsize
 	return nil
 }
@@ -172,14 +176,14 @@ func (sprite_batch *SpriteBatch) Draw(args ...float32) {
 
 	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(sprite_batch.texture.GetHandle())
+	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
 
 	sprite_batch.array_buf.bind()
 	defer sprite_batch.array_buf.unbind()
 
-	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(2*4))
-	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.PtrOffset(4*4))
+	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, 8*4, 0)
+	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_TEXCOORD}, 2, gl.FLOAT, false, 8*4, 2*4)
+	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_COLOR}, 4, gl.FLOAT, false, 8*4, 4*4)
 
 	min, max := sprite_batch.GetDrawRange()
 	sprite_batch.quad_indices.drawElements(gl.TRIANGLES, min, max-min+1)

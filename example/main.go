@@ -42,7 +42,7 @@ func main() {
 	quad = gfx.NewQuad(0, 0, 200, 200, tree.GetWidth(), tree.GetHeight())
 	ttf = gfx.NewFont("fonts/arialbd.ttf", 20)
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
-	image_font.SetFallbacks(ttf)
+	//image_font.SetFallbacks(ttf)
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
 	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
 	text, _ = gfx.NewColorTextExt(ttf,
@@ -132,6 +132,13 @@ func myStencilFunction() {
 }
 
 func draw() {
+	if use_shader {
+		gfx.SetShader(shader)
+	} else {
+		gfx.SetShader(nil)
+	}
+
+	gfx.Point(200, 20)
 
 	gfx.SetLineWidth(1)
 	//text
@@ -140,11 +147,6 @@ func draw() {
 	gfx.Rect("line", 0, 300, 500, text.GetHeight())
 
 	gfx.SetLineWidth(10)
-	if use_shader {
-		gfx.SetShader(shader)
-	} else {
-		gfx.SetShader(nil)
-	}
 
 	gfx.SetColor(255, 255, 255, 255)
 	gfx.Draw(batch, 50, 150)
@@ -174,7 +176,7 @@ func draw() {
 	gfx.Arc("line", 200.0, 550.0, 50.0, 0, math.Pi)
 	gfx.Ellipse("line", 300.0, 550.0, 50.0, 20.0)
 
-	//// line
+	// line
 	gfx.SetColor(0, 0, 170, 255)
 	gfx.Line(
 		800.0, 100.0, 850.0, 100.0,
@@ -193,7 +195,8 @@ func draw() {
 	gfx.Printf("test one @ two", 150, gfx.ALIGN_JUSTIFY, 0, 0)
 	// ttf font
 	gfx.SetFont(ttf)
-	gfx.Print("test one two", 200, 100, 0.5, 2, 2)
+	gfx.Print("test one two", 200, 100, math.Pi/2, 2, 2)
+
 	//FPS
 	gfx.SetColor(0, 170, 170, 255)
 	gfx.Print(fmt.Sprintf("fps: %v", timer.GetFPS()), 1200, 10)

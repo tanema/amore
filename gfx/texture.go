@@ -7,11 +7,10 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"math"
 	"runtime"
 
-	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/goxjs/gl"
 )
 
 var filters = map[string]int32{"linear": gl.LINEAR, "nearest": gl.NEAREST}
@@ -26,7 +25,7 @@ type (
 		s, t WrapMode
 	}
 	Texture struct {
-		textureId     uint32
+		textureId     gl.Texture
 		Width, Height int32
 		vertices      []float32
 		filter        Filter
@@ -34,7 +33,7 @@ type (
 		mipmaps       bool
 	}
 	iTexture interface {
-		GetHandle() uint32
+		GetHandle() gl.Texture
 		GetWidth() int32
 		GetHeight() int32
 		getVerticies() []float32
@@ -56,11 +55,8 @@ func newWrap() Wrap {
 }
 
 func newTexture(width, height int32, mipmaps bool) *Texture {
-	var texture_id uint32
-	gl.GenTextures(1, &texture_id)
-
 	new_texture := &Texture{
-		textureId: texture_id,
+		textureId: gl.CreateTexture(),
 		Width:     width,
 		Height:    height,
 		wrap:      newWrap(),
@@ -77,9 +73,10 @@ func newTexture(width, height int32, mipmaps bool) *Texture {
 	}
 
 	if new_texture.mipmaps {
+		//TODO transfer to non es build file
 		// Auto-generate mipmaps every time the texture is modified, if
 		// glGenerateMipmap isn't supported.
-		gl.TexParameteri(gl.TEXTURE_2D, gl.GENERATE_MIPMAP, gl.TRUE)
+		//gl.TexParameteri(gl.TEXTURE_2D, gl.GENERATE_MIPMAP, gl.TRUE)
 	}
 
 	new_texture.generateVerticies()
@@ -94,7 +91,7 @@ func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
 	bindTexture(new_texture.GetHandle())
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(bounds.Dx()), int32(bounds.Dy()), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, bounds.Dx(), bounds.Dy(), gl.RGBA, gl.UNSIGNED_BYTE, rgba.Pix)
 
 	if new_texture.mipmaps {
 		new_texture.generateMipmaps()
@@ -102,7 +99,7 @@ func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
 	return new_texture, nil
 }
 
-func (texture *Texture) GetHandle() uint32 {
+func (texture *Texture) GetHandle() gl.Texture {
 	return texture.textureId
 }
 
@@ -135,22 +132,21 @@ func (texture *Texture) generateMipmaps() {
 }
 
 func (texture *Texture) SetMipmapSharpness(sharpness float32) {
-	var maxMipmapSharpness float32
-	gl.GetFloatv(gl.MAX_TEXTURE_LOD_BIAS, &maxMipmapSharpness)
-	mipmapSharpness := math.Min(math.Max(float64(sharpness), -float64(maxMipmapSharpness+0.01)), float64(maxMipmapSharpness-0.01))
-
-	bindTexture(texture.GetHandle())
-
+	//TODO transfer to non es build file
+	//var maxMipmapSharpness float32
+	//gl.GetFloatv(gl.MAX_TEXTURE_LOD_BIAS, &maxMipmapSharpness)
+	//mipmapSharpness := math.Min(math.Max(float64(sharpness), -float64(maxMipmapSharpness+0.01)), float64(maxMipmapSharpness-0.01))
+	//bindTexture(texture.GetHandle())
 	// negative bias is sharper
-	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_LOD_BIAS, -float32(mipmapSharpness))
+	//gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_LOD_BIAS, -float32(mipmapSharpness))
 }
 
 func (texture *Texture) SetWrap(wrap_s, wrap_t WrapMode) {
 	texture.wrap.s = wrap_s
 	texture.wrap.t = wrap_t
 	bindTexture(texture.GetHandle())
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, int32(wrap_s))
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int32(wrap_t))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, int(wrap_s))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int(wrap_t))
 }
 
 func (texture *Texture) GetWrap() Wrap {
@@ -205,9 +201,9 @@ func (texture *Texture) setTextureFilter() {
 		gmag = gl.LINEAR
 	}
 
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, int32(gmin))
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, int32(gmag))
-	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAX_ANISOTROPY_EXT, texture.filter.anisotropy)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, int(gmin))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, int(gmag))
+	//gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAX_ANISOTROPY_EXT, texture.filter.anisotropy)
 }
 
 func (texture *Texture) GetFilter() Filter {
@@ -266,11 +262,14 @@ func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	prepareDraw(model)
 	bindTexture(texture.GetHandle())
 	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD)
-
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 4*4, gl.Ptr(vertices))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 4*4, gl.Ptr(&vertices[2]))
-
+	vbo := gl.CreateBuffer()
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(vertices...), gl.STATIC_DRAW)
+	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, 4*4, 0)
+	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_TEXCOORD}, 2, gl.FLOAT, false, 4*4, 2*4)
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
+	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
+	gl.DeleteBuffer(vbo)
 }
 
 func (texture *Texture) Draw(args ...float32) {

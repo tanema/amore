@@ -105,7 +105,13 @@ func (text *Text) loadVolatile() bool {
 }
 
 func (text *Text) unloadVolatile() {
-	text.Release()
+	for _, batch := range text.batches {
+		batch.Release()
+	}
+}
+
+func (text *Text) Release() {
+	releaseVolatile(text)
 }
 
 func (text *Text) generate() {
@@ -272,12 +278,6 @@ func (text *Text) Setc(strs []string, colors []*Color) {
 	text.strings = strs
 	text.colors = colors
 	text.generate()
-}
-
-func (text *Text) Release() {
-	for _, batch := range text.batches {
-		batch.Release()
-	}
 }
 
 func (text *Text) Draw(args ...float32) {

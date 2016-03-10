@@ -39,11 +39,12 @@ func registerVolatile(new_volatile Volatile) {
 }
 
 func releaseVolatile(vol Volatile) {
+	vol.unloadVolatile()
 	for group_name, group_items := range all_volatile {
 		for i, v := range group_items {
 			if v == vol {
-				vol.unloadVolatile()
 				all_volatile[group_name] = append(all_volatile[group_name][:i], all_volatile[group_name][i+1:]...)
+				return
 			}
 		}
 	}

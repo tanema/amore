@@ -2,6 +2,7 @@ package gfx
 
 import (
 	"github.com/go-gl/mathgl/mgl32/matstack"
+	"github.com/goxjs/gl"
 )
 
 type displayState struct {
@@ -13,7 +14,7 @@ type displayState struct {
 	line_join              LineJoin
 	pointSize              float32
 	scissor                bool
-	scissorBox             Viewport
+	scissorBox             []int32
 	stencilCompare         CompareMode
 	stencilTestValue       int32
 	font                   *Font
@@ -30,12 +31,12 @@ type displayState struct {
 type glState struct {
 	initialized            bool
 	active                 bool
-	boundTextures          []uint32
+	boundTextures          []gl.Texture
 	curTextureUnit         int32
-	viewport               Viewport
+	viewport               []int32
 	framebufferSRGBEnabled bool
-	defaultTexture         uint32
-	defaultFBO             uint32
+	defaultTexture         gl.Texture
+	defaultFBO             gl.Framebuffer
 	projectionStack        *matstack.MatStack
 	viewStack              *matstack.MatStack
 	currentCanvas          *Canvas
@@ -59,6 +60,7 @@ func newDisplayState() displayState {
 		defaultMipmapFilter:    FILTER_NEAREST,
 		defaultMipmapSharpness: 0.0,
 		colorMask:              ColorMask{r: true, g: true, b: true, a: true},
+		scissorBox:             make([]int32, 4),
 	}
 }
 

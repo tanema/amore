@@ -344,60 +344,94 @@ func (polyline *polyLine) draw(is_looping bool) {
 }
 
 func (polyline *polyLine) drawTriangles(is_looping bool) {
-	numindices := (len(polyline.vertices) / 4) * 6
-
-	var overdraw_verts []mgl32.Vec2
+	var overdraw []mgl32.Vec2
 	if polyline.overdraw {
-		overdraw_verts = polyline.renderOverdraw(is_looping)
-		numindices = int(math.Max(float64(numindices), float64((len(overdraw_verts)/4)*6)))
+		overdraw = polyline.renderOverdraw(is_looping)
 	}
 
-	indices := make([]uint16, numindices)
-
-	// Fill the index array to make 2 triangles from each quad.
-	// NOTE: The triangle vertex ordering here is important!
-	for i := 0; i < numindices/6; i++ {
-		// First triangle.
-		indices[i*6+0] = uint16(i*4 + 0)
-		indices[i*6+1] = uint16(i*4 + 1)
-		indices[i*6+2] = uint16(i*4 + 2)
-
-		// Second triangle.
-		indices[i*6+3] = uint16(i*4 + 0)
-		indices[i*6+4] = uint16(i*4 + 2)
-		indices[i*6+5] = uint16(i*4 + 3)
-	}
+	numindices := int(math.Max(float64(len(polyline.vertices)/4), float64(len(overdraw)/4)))
+	indices := newAltQuadIndices(numindices)
 
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
 	useVertexAttribArrays(ATTRIBFLAG_POS)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
-	gl.DrawElements(gl.TRIANGLES, int32((len(polyline.vertices)/4)*6), gl.UNSIGNED_SHORT, gl.Ptr(indices))
+
+	var vbo uint32
+	gl.GenBuffers(1, &vbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(polyline.vertices)*2*4, gl.Ptr(v2Bytes(polyline.vertices...)), gl.STATIC_DRAW)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.PtrOffset(0))
+	indices.drawElements(gl.TRIANGLES, 0, len(polyline.vertices)/4)
+
 	if polyline.overdraw {
 		c := GetColor()
-		colors := polyline.generateColorArray(len(overdraw_verts), c)
+		colors := polyline.generateColorArray(len(overdraw), c)
 		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw_verts))
-		gl.DrawElements(gl.TRIANGLES, int32((len(overdraw_verts)/4)*6), gl.UNSIGNED_SHORT, gl.Ptr(indices))
+
+		var color_vbo uint32
+		gl.GenBuffers(1, &color_vbo)
+		gl.BindBuffer(gl.ARRAY_BUFFER, color_vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(colors)*4*4, gl.Ptr(colorBytes(colors...)), gl.STATIC_DRAW)
+		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, true, 0, gl.PtrOffset(0))
+
+		var overdraw_vbo uint32
+		gl.GenBuffers(1, &overdraw_vbo)
+		gl.BindBuffer(gl.ARRAY_BUFFER, overdraw_vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(overdraw)*2*4, gl.Ptr(v2Bytes(overdraw...)), gl.STATIC_DRAW)
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.PtrOffset(0))
+
+		indices.drawElements(gl.TRIANGLES, 0, len(overdraw)/4)
+
 		SetColorC(c)
+
+		gl.DeleteBuffers(1, &color_vbo)
+		gl.DeleteBuffers(1, &overdraw_vbo)
 	}
+
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.DeleteBuffers(1, &vbo)
+	indices.Release()
 }
 
 func (polyline *polyLine) drawTriangleStrip(is_looping bool) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
 	useVertexAttribArrays(ATTRIBFLAG_POS)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
+
+	var vbo uint32
+	gl.GenBuffers(1, &vbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(polyline.vertices)*2*4, gl.Ptr(v2Bytes(polyline.vertices...)), gl.STATIC_DRAW)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.PtrOffset(0))
+
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(polyline.vertices)))
-	if polyline.overdraw { // prepare colors:
+
+	if polyline.overdraw {
 		c := GetColor()
 		overdraw := polyline.renderOverdraw(is_looping)
 		colors := polyline.generateColorArray(len(overdraw), c)
 		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
+
+		var color_vbo uint32
+		gl.GenBuffers(1, &color_vbo)
+		gl.BindBuffer(gl.ARRAY_BUFFER, color_vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(colors)*4*4, gl.Ptr(colorBytes(colors...)), gl.STATIC_DRAW)
+		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, true, 0, gl.PtrOffset(0))
+
+		var overdraw_vbo uint32
+		gl.GenBuffers(1, &overdraw_vbo)
+		gl.BindBuffer(gl.ARRAY_BUFFER, overdraw_vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(overdraw)*2*4, gl.Ptr(v2Bytes(overdraw...)), gl.STATIC_DRAW)
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.PtrOffset(0))
+
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, int32(len(overdraw)))
+
 		SetColorC(c)
+
+		gl.DeleteBuffers(1, &color_vbo)
+		gl.DeleteBuffers(1, &overdraw_vbo)
 	}
+
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.DeleteBuffers(1, &vbo)
 }

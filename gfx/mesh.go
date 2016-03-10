@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/go-gl/gl/v2.1/gl"
+	"github.com/goxjs/gl"
 )
 
 type (
@@ -137,7 +137,8 @@ func (mesh *Mesh) GetVertex(vertindex int) ([]float32, error) {
 	if vertindex >= mesh.vertexCount {
 		return []float32{}, fmt.Errorf("Invalid vertex index: %v", vertindex+1)
 	}
-	return mesh.vbo.data[vertindex*mesh.vertexStride : mesh.vertexStride], nil
+	data := mesh.vbo.getData()
+	return data[vertindex*mesh.vertexStride : mesh.vertexStride], nil
 }
 
 func (mesh *Mesh) GetVertexCount() int {
@@ -168,7 +169,7 @@ func (mesh *Mesh) GetVertexMap() []uint32 {
 	if mesh.ibo == nil {
 		return []uint32{}
 	}
-	return mesh.ibo.data
+	return mesh.ibo.getData()
 }
 
 func (mesh *Mesh) Flush() {
@@ -186,15 +187,15 @@ func (mesh *Mesh) bindEnabledAttributes() {
 
 	offset := 0
 	if (mesh.enabledattribs & ATTRIBFLAG_POS) > 0 {
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, int32(mesh.vertexStride*4), gl.PtrOffset(offset))
+		gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
 		offset += 2 * 4
 	}
 	if (mesh.enabledattribs & ATTRIBFLAG_TEXCOORD) > 0 {
-		gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, int32(mesh.vertexStride*4), gl.PtrOffset(offset))
+		gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_TEXCOORD}, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
 		offset += 2 * 4
 	}
 	if (mesh.enabledattribs & ATTRIBFLAG_COLOR) > 0 {
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, int32(mesh.vertexStride*4), gl.PtrOffset(offset))
+		gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_COLOR}, 4, gl.FLOAT, false, mesh.vertexStride*4, offset)
 	}
 }
 
@@ -214,6 +215,6 @@ func (mesh *Mesh) Draw(args ...float32) {
 	if mesh.ibo != nil && mesh.elementCount > 0 {
 		mesh.ibo.drawElements(uint32(mesh.mode), min, max-min+1)
 	} else {
-		gl.DrawArrays(uint32(mesh.mode), int32(min), int32(max-min+1))
+		gl.DrawArrays(gl.Enum(mesh.mode), min, max-min+1)
 	}
 }

@@ -1,7 +1,7 @@
 package gfx
 
 import (
-	"github.com/go-gl/gl/v2.1/gl"
+	"github.com/goxjs/gl"
 )
 
 /**
@@ -49,4 +49,25 @@ func newQuadIndices(size int) *quadIndices {
 	return &quadIndices{
 		indexBuffer: newIndexBuffer(len(indices), indices, gl.STATIC_DRAW),
 	}
+}
+
+func newAltQuadIndices(size int) *quadIndices {
+	indices := make([]uint32, size*6)
+	for i := 0; i < size; i++ {
+		indices[i*6+0] = uint32(i*4 + 0)
+		indices[i*6+1] = uint32(i*4 + 1)
+		indices[i*6+2] = uint32(i*4 + 2)
+
+		indices[i*6+3] = uint32(i*4 + 0)
+		indices[i*6+4] = uint32(i*4 + 2)
+		indices[i*6+5] = uint32(i*4 + 3)
+	}
+
+	return &quadIndices{
+		indexBuffer: newIndexBuffer(len(indices), indices, gl.STATIC_DRAW),
+	}
+}
+
+func (qi *quadIndices) drawElements(mode uint32, offset, size int) {
+	qi.indexBuffer.drawElements(mode, offset*6, size*6)
 }

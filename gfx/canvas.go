@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/goxjs/gl"
 )
 
 type Canvas struct {
 	*Texture
-	fbo              uint32
-	depth_stencil    uint32
+	fbo              gl.Framebuffer
+	depth_stencil    gl.Renderbuffer
 	status           uint32
 	attachedCanvases []*Canvas
 	width, height    int32
-	systemViewport   Viewport
+	systemViewport   []int32
 }
 
 func NewCanvas(width, height int32) *Canvas {
@@ -38,7 +38,7 @@ func (canvas *Canvas) loadVolatile() bool {
 
 	canvas.Texture = newTexture(canvas.width, canvas.height, false)
 	//NULL means reserve texture memory, but texels are undefined
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, canvas.width, canvas.height, 0, gl.BGRA, gl.UNSIGNED_BYTE, gl.Ptr(nil))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, int(canvas.width), int(canvas.height), gl.RGBA, gl.UNSIGNED_BYTE, nil)
 	if gl.GetError() != gl.NO_ERROR {
 		canvas.Texture.Release()
 		canvas.status = gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT
@@ -48,9 +48,9 @@ func (canvas *Canvas) loadVolatile() bool {
 	canvas.fbo, canvas.status = newFBO(canvas.GetHandle())
 
 	if canvas.status != gl.FRAMEBUFFER_COMPLETE {
-		if canvas.fbo != 0 {
-			gl.DeleteFramebuffers(1, &canvas.fbo)
-			canvas.fbo = 0
+		if canvas.fbo.Valid() {
+			gl.DeleteFramebuffer(canvas.fbo)
+			canvas.fbo = gl.Framebuffer{}
 		}
 		return false
 	}
@@ -62,11 +62,11 @@ func (canvas *Canvas) unLoadVolatile() {
 	if gl_state.currentCanvas == canvas {
 		canvas.stopGrab(false)
 	}
-	gl.DeleteFramebuffers(1, &canvas.fbo)
-	gl.DeleteRenderbuffers(1, &canvas.depth_stencil)
+	gl.DeleteFramebuffer(canvas.fbo)
+	gl.DeleteRenderbuffer(canvas.depth_stencil)
 
-	canvas.fbo = 0
-	canvas.depth_stencil = 0
+	canvas.fbo = gl.Framebuffer{}
+	canvas.depth_stencil = gl.Renderbuffer{}
 
 	canvas.attachedCanvases = []*Canvas{}
 	canvas.Texture.Release()
@@ -121,21 +121,23 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 	gl_state.projectionStack.Push()
 	gl_state.projectionStack.Load(mgl32.Ortho(0.0, float32(screen_width), 0.0, float32(screen_height), -1, 1))
 
-	if canvases != nil && len(canvases) > 0 {
-		// Attach the canvas textures to the active FBO and set up MRTs.
-		drawbuffers := []uint32{gl.COLOR_ATTACHMENT0}
-		// Attach the canvas textures to the currently bound framebuffer.
-		for i := 0; i < len(canvases); i++ {
-			buf := gl.COLOR_ATTACHMENT1 + uint32(i)
-			gl.FramebufferTexture2D(gl.FRAMEBUFFER, buf, gl.TEXTURE_2D, canvases[i].GetHandle(), 0)
-			drawbuffers = append(drawbuffers, buf)
-		}
-		// set up multiple render targets
-		gl.DrawBuffers(int32(len(drawbuffers)), &drawbuffers[0])
-	} else {
-		// Make sure the FBO is only using a single draw buffer.
-		gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
-	}
+	//NO ES SUPPORT
+	//TODO transfer multiple canvas support to non es build file
+	//if canvases != nil && len(canvases) > 0 {
+	//// Attach the canvas textures to the active FBO and set up MRTs.
+	//drawbuffers := []uint32{gl.COLOR_ATTACHMENT0}
+	//// Attach the canvas textures to the currently bound framebuffer.
+	//for i := 0; i < len(canvases); i++ {
+	//buf := gl.COLOR_ATTACHMENT1 + uint32(i)
+	//gl.FramebufferTexture2D(gl.FRAMEBUFFER, buf, gl.TEXTURE_2D, canvases[i].GetHandle(), 0)
+	//drawbuffers = append(drawbuffers, buf)
+	//}
+	//// set up multiple render targets
+	//gl.DrawBuffers(int32(len(drawbuffers)), &drawbuffers[0])
+	//} else {
+	//// Make sure the FBO is only using a single draw buffer.
+	//gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
+	//}
 
 	canvas.attachedCanvases = canvases
 	return nil
@@ -167,7 +169,7 @@ func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
 	screenshot := image.NewRGBA(image.Rect(int(x), int(y), int(w), int(h)))
 	stride := int32(screenshot.Stride)
 	pixels := make([]byte, len(screenshot.Pix))
-	gl.ReadPixels(x, y, w, h, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+	gl.ReadPixels(pixels, int(x), int(y), int(w), int(h), gl.RGBA, gl.UNSIGNED_BYTE)
 
 	for y := int32(0); y < h; y++ {
 		i := (h - 1 - y) * stride
@@ -182,7 +184,7 @@ func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
 
 func (canvas *Canvas) checkCreateStencil() bool {
 	// Do nothing if we've already created the stencil buffer.
-	if canvas.depth_stencil != 0 {
+	if canvas.depth_stencil.Valid() {
 		return true
 	}
 
@@ -193,13 +195,13 @@ func (canvas *Canvas) checkCreateStencil() bool {
 	format := gl.STENCIL_INDEX8
 	attachment := gl.STENCIL_ATTACHMENT
 
-	gl.GenRenderbuffers(1, &canvas.depth_stencil)
+	canvas.depth_stencil = gl.CreateRenderbuffer()
 	gl.BindRenderbuffer(gl.RENDERBUFFER, canvas.depth_stencil)
-	gl.RenderbufferStorage(gl.RENDERBUFFER, uint32(format), canvas.width, canvas.height)
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.Enum(format), int(canvas.width), int(canvas.height))
 
 	// Attach the stencil buffer to the framebuffer object.
-	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, uint32(attachment), gl.RENDERBUFFER, canvas.depth_stencil)
-	gl.BindRenderbuffer(gl.RENDERBUFFER, 0)
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.Enum(attachment), gl.RENDERBUFFER, canvas.depth_stencil)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, gl.Renderbuffer{})
 
 	success := (gl.CheckFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE)
 
@@ -207,8 +209,8 @@ func (canvas *Canvas) checkCreateStencil() bool {
 	if success {
 		gl.Clear(gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	} else {
-		gl.DeleteRenderbuffers(1, &canvas.depth_stencil)
-		canvas.depth_stencil = 0
+		gl.DeleteRenderbuffer(canvas.depth_stencil)
+		canvas.depth_stencil = gl.Renderbuffer{}
 	}
 
 	if gl_state.currentCanvas != nil && gl_state.currentCanvas != canvas {
@@ -224,14 +226,13 @@ func (canvas *Canvas) GetStatus() uint32 {
 	return canvas.status
 }
 
-func newFBO(texture uint32) (uint32, uint32) {
+func newFBO(texture gl.Texture) (gl.Framebuffer, uint32) {
 	// get currently bound fbo to reset to it later
 	current_fbo := getCurrentFBO()
 
-	var framebuffer uint32
-	gl.GenFramebuffers(1, &framebuffer)
+	framebuffer := gl.CreateFramebuffer()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-	if texture != 0 {
+	if texture.Valid() {
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 		// Initialize the texture to transparent black.
 		gl.ClearColor(0.0, 0.0, 0.0, 0.0)
@@ -240,7 +241,7 @@ func newFBO(texture uint32) (uint32, uint32) {
 	status := gl.CheckFramebufferStatus(gl.FRAMEBUFFER)
 
 	// unbind framebuffer
-	gl.BindFramebuffer(gl.FRAMEBUFFER, uint32(current_fbo))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, current_fbo)
 
-	return framebuffer, status
+	return framebuffer, uint32(status)
 }

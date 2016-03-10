@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
+	"github.com/goxjs/gl"
 
 	"github.com/tanema/amore/window"
 )
-
-type Viewport [4]int32 //The Viewport Values (X, Y, Width, Height)
 
 var (
 	opengl_version         string
@@ -26,8 +24,10 @@ var (
 	modelIdent             = mgl32.Ident4()
 	defaultShader          *Shader
 
-	gl_state = glState{}
-	states   = displayStateStack{newDisplayState()}
+	gl_state = glState{
+		viewport: make([]int32, 4),
+	}
+	states = displayStateStack{newDisplayState()}
 )
 
 func InitContext(w, h int32) {
@@ -36,35 +36,23 @@ func InitContext(w, h int32) {
 	}
 
 	// Okay, setup OpenGL.
-	gl.Init()
+	gl.ContextWatcher.OnMakeCurrent(nil)
 
 	//Get system info
-	opengl_version = gl.GoStr(gl.GetString(gl.VERSION))
-	opengl_vendor = gl.GoStr(gl.GetString(gl.VENDOR))
-	gl_state.framebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
+	opengl_version = gl.GetString(gl.VERSION)
+	opengl_vendor = gl.GetString(gl.VENDOR)
 	gl_state.defaultFBO = getCurrentFBO()
-	gl.GetIntegerv(gl.VIEWPORT, &gl_state.viewport[0])
+	gl.GetIntegerv(gl.VIEWPORT, gl_state.viewport)
 	// And the current scissor - but we need to compensate for GL scissors
 	// starting at the bottom left instead of top left.
-	gl.GetIntegerv(gl.SCISSOR_BOX, &states.back().scissorBox[0])
+	gl.GetIntegerv(gl.SCISSOR_BOX, states.back().scissorBox)
 	states.back().scissorBox[1] = gl_state.viewport[3] - (states.back().scissorBox[1] + states.back().scissorBox[3])
 
-	gl.GetFloatv(gl.POINT_SIZE, &states.back().pointSize)
-	gl.GetFloatv(gl.MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy)
-	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
-	gl.GetIntegerv(gl.MAX_SAMPLES, &maxRenderbufferSamples)
-	gl.GetIntegerv(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits)
-	gl_state.textureCounters = make([]int, maxTextureUnits)
-	gl.GetIntegerv(gl.MAX_DRAW_BUFFERS, &maxRenderTargets)
-	var maxattachments int32
-	gl.GetIntegerv(gl.MAX_COLOR_ATTACHMENTS, &maxattachments)
-	if maxattachments < maxRenderTargets {
-		maxRenderTargets = maxattachments
-	}
+	initMaxValues()
 
-	glcolor := [4]float32{1.0, 1.0, 1.0, 1.0}
-	gl.VertexAttrib4fv(ATTRIB_COLOR, &glcolor[0])
-	gl.VertexAttrib4fv(ATTRIB_CONSTANTCOLOR, &glcolor[0])
+	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
+	gl.VertexAttrib4fv(gl.Attrib{Value: ATTRIB_COLOR}, glcolor)
+	gl.VertexAttrib4fv(gl.Attrib{Value: ATTRIB_CONSTANTCOLOR}, glcolor)
 	useVertexAttribArrays(0)
 
 	// Enable blending
@@ -73,7 +61,8 @@ func InitContext(w, h int32) {
 	// Auto-generated mipmaps should be the best quality possible
 	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
 	// Make sure antialiasing works when set elsewhere
-	gl.Enable(gl.MULTISAMPLE)
+	//TODO non-ES support
+	//gl.Enable(gl.MULTISAMPLE)
 	// Set pixel row alignment
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
@@ -84,18 +73,15 @@ func InitContext(w, h int32) {
 	SetViewportSize(w, h)
 	SetBackgroundColor(0, 0, 0, 1)
 
-	gl_state.boundTextures = make([]uint32, maxTextureUnits)
-	var curgltextureunit int32
-	gl.GetIntegerv(gl.ACTIVE_TEXTURE, &curgltextureunit)
-	gl_state.curTextureUnit = curgltextureunit - gl.TEXTURE0
+	gl_state.boundTextures = make([]gl.Texture, maxTextureUnits)
+	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
+	gl_state.curTextureUnit = int32(curgltextureunit - gl.TEXTURE0)
 	// Retrieve currently bound textures for each texture unit.
 	for i := 0; i < len(gl_state.boundTextures); i++ {
-		gl.ActiveTexture(gl.TEXTURE0 + uint32(i))
-		var boundTex int32
-		gl.GetIntegerv(gl.TEXTURE_BINDING_2D, &boundTex)
-		gl_state.boundTextures[i] = uint32(boundTex)
+		gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(i)))
+		gl_state.boundTextures[i] = gl.Texture{Value: uint32(gl.GetInteger(gl.TEXTURE_BINDING_2D))}
 	}
-	gl.ActiveTexture(uint32(curgltextureunit))
+	gl.ActiveTexture(gl.Enum(curgltextureunit))
 	createDefaultTexture()
 	setTextureUnit(0)
 
@@ -110,12 +96,27 @@ func InitContext(w, h int32) {
 	SetShader(nil)
 }
 
+func initMaxValues() {
+	//gl_state.framebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
+	//gl.GetFloatv(gl.POINT_SIZE, &states.back().pointSize)
+	//gl.GetFloatv(gl.MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy)
+	maxTextureSize = int32(gl.GetInteger(gl.MAX_TEXTURE_SIZE))
+	//gl.GetIntegerv(gl.MAX_SAMPLES, &maxRenderbufferSamples)
+	maxTextureUnits = int32(gl.GetInteger(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
+	gl_state.textureCounters = make([]int, maxTextureUnits)
+	//gl.GetIntegerv(gl.MAX_DRAW_BUFFERS, &maxRenderTargets)
+	//maxattachments := int32(gl.GetInteger(gl.MAX_COLOR_ATTACHMENTS))
+	//if maxattachments < maxRenderTargets {
+	//maxRenderTargets = maxattachments
+	//}
+}
+
 // Set the 'default' texture (id 0) as a repeating white pixel. Otherwise,
 // texture2D calls inside a shader would return black when drawing graphics
 // primitives, which would create the need to use different "passthrough"
 // shaders for untextured primitives vs images.
 func createDefaultTexture() {
-	gl.GenTextures(1, &gl_state.defaultTexture)
+	gl_state.defaultTexture = gl.CreateTexture()
 	bindTexture(gl_state.defaultTexture)
 
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
@@ -123,8 +124,7 @@ func createDefaultTexture() {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 
-	pix := []uint8{255, 255, 255, 255}
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pix))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, []byte{255, 255, 255, 255})
 }
 
 func prepareDraw(model *mgl32.Mat4) {
@@ -152,9 +152,9 @@ func useVertexAttribArrays(arraybits uint32) {
 		bit := uint32(1 << i)
 		if (diff & bit) > 0 {
 			if (arraybits & bit) > 0 {
-				gl.EnableVertexAttribArray(i)
+				gl.EnableVertexAttribArray(gl.Attrib{Value: uint(i)})
 			} else {
-				gl.DisableVertexAttribArray(i)
+				gl.DisableVertexAttribArray(gl.Attrib{Value: uint(i)})
 			}
 		}
 	}
@@ -166,7 +166,7 @@ func useVertexAttribArrays(arraybits uint32) {
 	// white when no per-vertex color is used, so we set it here.
 	// FIXME: Is there a better place to do this?
 	if (diff&ATTRIBFLAG_COLOR) > 0 && (arraybits&ATTRIBFLAG_COLOR) == 0 {
-		gl.VertexAttrib4f(ATTRIB_COLOR, 1.0, 1.0, 1.0, 1.0)
+		gl.VertexAttrib4f(gl.Attrib{Value: ATTRIB_COLOR}, 1.0, 1.0, 1.0, 1.0)
 	}
 }
 
@@ -176,28 +176,28 @@ func setTextureUnit(textureunit int32) error {
 	}
 
 	if textureunit != gl_state.curTextureUnit {
-		gl.ActiveTexture(gl.TEXTURE0 + uint32(textureunit))
+		gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(textureunit)))
 	}
 
 	gl_state.curTextureUnit = textureunit
 	return nil
 }
 
-func bindTexture(texture uint32) {
+func bindTexture(texture gl.Texture) {
 	if texture != gl_state.boundTextures[gl_state.curTextureUnit] {
 		gl_state.boundTextures[gl_state.curTextureUnit] = texture
 		gl.BindTexture(gl.TEXTURE_2D, texture)
 	}
 }
 
-func bindTextureToUnit(texture uint32, textureunit int32, restoreprev bool) error {
+func bindTextureToUnit(texture gl.Texture, textureunit int32, restoreprev bool) error {
 	if texture != gl_state.boundTextures[textureunit] {
 		oldtextureunit := gl_state.curTextureUnit
 		if err := setTextureUnit(textureunit); err != nil {
 			return err
 		}
 		gl_state.boundTextures[textureunit] = texture
-		gl.BindTexture(gl.TEXTURE_2D, texture)
+		gl.BindTexture(gl.TEXTURE_2D, gl_state.boundTextures[textureunit])
 		if restoreprev {
 			return setTextureUnit(oldtextureunit)
 		}
@@ -209,18 +209,13 @@ func HasFramebufferSRGB() bool {
 	return gl_state.framebufferSRGBEnabled
 }
 
-func bindFramebuffer(target, framebuffer uint32) {
-	gl.BindFramebuffer(target, framebuffer)
-}
-
-func getDefaultFBO() uint32 {
+func getDefaultFBO() gl.Framebuffer {
 	return gl_state.defaultFBO
 }
 
-func getCurrentFBO() uint32 {
-	var current_fbo int32
-	gl.GetIntegerv(gl.DRAW_FRAMEBUFFER_BINDING, &current_fbo)
-	return uint32(current_fbo)
+func getCurrentFBO() gl.Framebuffer {
+	current_fbo := gl.GetInteger(gl.FRAMEBUFFER_BINDING)
+	return gl.Framebuffer{Value: uint32(current_fbo)}
 }
 
 func GetMaxTextureSize() int32 {
@@ -247,26 +242,27 @@ func hasFramebufferSRGB() bool {
 	return gl_state.framebufferSRGBEnabled
 }
 
-func deleteTexture(texture uint32) {
+func deleteTexture(texture gl.Texture) {
 	// glDeleteTextures binds texture 0 to all texture units the deleted texture
 	// was bound to before deletion.
 	for i, texid := range gl_state.boundTextures {
 		if texid == texture {
-			gl_state.boundTextures[i] = 0
+			gl_state.boundTextures[i] = gl.Texture{Value: 0}
 		}
 	}
 
-	gl.DeleteTextures(1, &texture)
+	gl.DeleteTexture(texture)
 }
 
 func DeInit() {
 	unloadAllVolatile()
-	gl.DeleteTextures(1, &gl_state.defaultTexture)
-	gl_state.defaultTexture = 0
+	gl.DeleteTexture(gl_state.defaultTexture)
+	gl_state.defaultTexture = gl.Texture{}
 	gl_state.initialized = false
+	gl.ContextWatcher.OnDetach()
 }
 
-func GetViewport() Viewport {
+func GetViewport() []int32 {
 	return gl_state.viewport
 }
 
@@ -278,8 +274,8 @@ func SetViewport(x, y, w, h int32) {
 	screen_width = w
 	screen_height = h
 	// Set the viewport to top-left corner.
-	gl.Viewport(y, x, screen_width, screen_height)
-	gl_state.viewport = Viewport{y, x, screen_width, screen_height}
+	gl.Viewport(int(y), int(x), int(screen_width), int(screen_height))
+	gl_state.viewport = []int32{y, x, screen_width, screen_height}
 	gl_state.projectionStack.Load(mgl32.Ortho(float32(x), float32(screen_width), float32(screen_height), float32(y), -1, 1))
 	SetScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
 }
@@ -403,7 +399,7 @@ func SetScissor(args ...int32) {
 			// from the lower left of the viewport instead of the top left.
 			gl.Scissor(x, gl_state.viewport[3]-(y+height), width, height)
 		}
-		states.back().scissorBox = Viewport{x, y, width, height}
+		states.back().scissorBox = []int32{x, y, width, height}
 		states.back().scissor = true
 	} else {
 		panic("incorrect number of arguments to setscissor")
@@ -447,8 +443,8 @@ func StencilExt(stencil_func func(), action StencilAction, value int32, keepvalu
 	}
 	gl.Enable(gl.STENCIL_TEST)
 	gl.ColorMask(false, false, false, false)
-	gl.StencilFunc(gl.ALWAYS, value, 0xFF)
-	gl.StencilOp(gl.KEEP, gl.KEEP, uint32(action))
+	gl.StencilFunc(gl.ALWAYS, int(value), 0xFF)
+	gl.StencilOp(gl.KEEP, gl.KEEP, gl.Enum(action))
 
 	stencil_func()
 
@@ -474,7 +470,7 @@ func SetStencilTest(compare CompareMode, value int32) {
 	}
 
 	gl.Enable(gl.STENCIL_TEST)
-	gl.StencilFunc(uint32(compare), value, 0xFF)
+	gl.StencilFunc(gl.Enum(compare), int(value), 0xFF)
 	gl.StencilOp(gl.KEEP, gl.KEEP, gl.REPLACE)
 }
 
@@ -536,11 +532,12 @@ func GetPointSize() float32 {
 }
 
 func SetWireframe(enable bool) {
-	if enable {
-		gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
-	} else {
-		gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
-	}
+	//TODO non-es support
+	//if enable {
+	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+	//} else {
+	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
+	//}
 	states.back().wireframe = enable
 }
 
@@ -587,7 +584,7 @@ func SetColor(r, g, b, a float32) {
 func SetColorC(c Color) {
 	states.back().color = c
 
-	gl.VertexAttrib4f(ATTRIB_CONSTANTCOLOR, c[0], c[1], c[2], c[3])
+	gl.VertexAttrib4f(gl.Attrib{Value: ATTRIB_CONSTANTCOLOR}, c[0], c[1], c[2], c[3])
 }
 
 func GetColor() Color {
@@ -667,8 +664,8 @@ func SetBlendMode(mode BlendMode) {
 		dstA = gl.ZERO
 	}
 
-	gl.BlendEquation(uint32(fn))
-	gl.BlendFuncSeparate(uint32(srcRGB), uint32(dstRGB), uint32(srcA), uint32(dstA))
+	gl.BlendEquation(gl.Enum(fn))
+	gl.BlendFuncSeparate(gl.Enum(srcRGB), gl.Enum(dstRGB), gl.Enum(srcA), gl.Enum(dstA))
 	states.back().blend_mode = mode
 }
 

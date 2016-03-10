@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	gg "github.com/goxjs/gl"
 
 	"github.com/tanema/amore/file"
 )
@@ -125,7 +126,7 @@ func (shader *Shader) attach(temporary bool) {
 		// note: list potentially contains texture ids of deleted/invalid textures!
 		for i := 0; i < len(shader.activeTexUnits); i++ {
 			if shader.activeTexUnits[i] > 0 {
-				bindTextureToUnit(shader.activeTexUnits[i], int32(i+1), false)
+				bindTextureToUnit(gg.Texture{Value: shader.activeTexUnits[i]}, int32(i+1), false)
 			}
 		}
 
@@ -258,7 +259,7 @@ func (shader *Shader) SendTexture(name string, texture iTexture) error {
 	}
 
 	// store texture id so it can be re-bound to the proper texture unit later
-	shader.activeTexUnits[texunit-1] = gltex
+	shader.activeTexUnits[texunit-1] = gltex.Value
 
 	return nil
 }
