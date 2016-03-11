@@ -51,8 +51,8 @@ func InitContext(w, h int32) {
 	initMaxValues()
 
 	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
-	gl.VertexAttrib4fv(gl.Attrib{Value: ATTRIB_COLOR}, glcolor)
-	gl.VertexAttrib4fv(gl.Attrib{Value: ATTRIB_CONSTANTCOLOR}, glcolor)
+	gl.VertexAttrib4fv(ATTRIB_COLOR, glcolor)
+	gl.VertexAttrib4fv(ATTRIB_CONSTANTCOLOR, glcolor)
 	useVertexAttribArrays(0)
 
 	// Enable blending
@@ -75,7 +75,7 @@ func InitContext(w, h int32) {
 
 	gl_state.boundTextures = make([]gl.Texture, maxTextureUnits)
 	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
-	gl_state.curTextureUnit = int32(curgltextureunit - gl.TEXTURE0)
+	gl_state.curTextureUnit = int(curgltextureunit - gl.TEXTURE0)
 	// Retrieve currently bound textures for each texture unit.
 	for i := 0; i < len(gl_state.boundTextures); i++ {
 		gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(i)))
@@ -166,12 +166,12 @@ func useVertexAttribArrays(arraybits uint32) {
 	// white when no per-vertex color is used, so we set it here.
 	// FIXME: Is there a better place to do this?
 	if (diff&ATTRIBFLAG_COLOR) > 0 && (arraybits&ATTRIBFLAG_COLOR) == 0 {
-		gl.VertexAttrib4f(gl.Attrib{Value: ATTRIB_COLOR}, 1.0, 1.0, 1.0, 1.0)
+		gl.VertexAttrib4f(ATTRIB_COLOR, 1.0, 1.0, 1.0, 1.0)
 	}
 }
 
-func setTextureUnit(textureunit int32) error {
-	if textureunit < 0 || int(textureunit) >= len(gl_state.boundTextures) {
+func setTextureUnit(textureunit int) error {
+	if textureunit < 0 || textureunit >= len(gl_state.boundTextures) {
 		return fmt.Errorf("Invalid texture unit index (%v).", textureunit)
 	}
 
@@ -190,7 +190,7 @@ func bindTexture(texture gl.Texture) {
 	}
 }
 
-func bindTextureToUnit(texture gl.Texture, textureunit int32, restoreprev bool) error {
+func bindTextureToUnit(texture gl.Texture, textureunit int, restoreprev bool) error {
 	if texture != gl_state.boundTextures[textureunit] {
 		oldtextureunit := gl_state.curTextureUnit
 		if err := setTextureUnit(textureunit); err != nil {
@@ -584,7 +584,7 @@ func SetColor(r, g, b, a float32) {
 func SetColorC(c Color) {
 	states.back().color = c
 
-	gl.VertexAttrib4f(gl.Attrib{Value: ATTRIB_CONSTANTCOLOR}, c[0], c[1], c[2], c[3])
+	gl.VertexAttrib4f(ATTRIB_CONSTANTCOLOR, c[0], c[1], c[2], c[3])
 }
 
 func GetColor() Color {

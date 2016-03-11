@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"image/png"
 	"math"
+	"os"
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/audio"
@@ -23,7 +25,6 @@ var (
 	shader        *gfx.Shader
 	bomb          *audio.Source
 	use_shader    = false
-	vibrating     = false
 	canvas        *gfx.Canvas
 	quad          *gfx.Quad
 	psystem       *gfx.ParticleSystem
@@ -42,7 +43,7 @@ func main() {
 	quad = gfx.NewQuad(0, 0, 200, 200, tree.GetWidth(), tree.GetHeight())
 	ttf = gfx.NewFont("fonts/arialbd.ttf", 20)
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
-	//image_font.SetFallbacks(ttf)
+	image_font.SetFallbacks(ttf)
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
 	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
 	text, _ = gfx.NewColorTextExt(ttf,
@@ -59,7 +60,8 @@ func main() {
 		})
 
 	particle, _ := gfx.NewImage("images/particle.png")
-	psystem = gfx.NewParticleSystem(particle, 32)
+	psystem = gfx.NewParticleSystem(particle, 10)
+	//psystem.SetColor(gfx.NewColor(0, 0, 255, 255), gfx.NewColor(255, 0, 0, 255), gfx.NewColor(0, 255, 0, 255))
 	psystem.SetParticleLifetime(2, 5) // Particles live at least 2s and at most 5s.
 	psystem.SetEmissionRate(5)
 	psystem.SetSizeVariation(1)
@@ -88,11 +90,12 @@ func main() {
 	triangle_mesh.SetTexture(tree)
 
 	q := gfx.NewQuad(50, 50, 50, 50, tree.GetWidth(), tree.GetHeight())
+	q2 := gfx.NewQuad(100, 50, 50, 50, tree.GetWidth(), tree.GetHeight())
 	batch = gfx.NewSpriteBatch(tree, 4)
 	batch.Addq(q, 0, 0)
-	batch.Addq(q, 50, 0)
+	batch.Addq(q2, 50, 0)
 	batch.Addq(q, 50, 50)
-	batch.Addq(q, 0, 50)
+	batch.Addq(q2, 0, 50)
 	batch.Addq(q, 100, 50)
 
 	amore.Start(update, draw)
@@ -107,9 +110,9 @@ func keyUp(key keyboard.Key) {
 	case keyboard.Key2:
 		bomb.Play()
 	case keyboard.Key3:
-		//img := gfx.NewScreenshot()
-		//out, _ := os.Create("./output.png")
-		//png.Encode(out, img)
+		img := gfx.NewScreenshot()
+		out, _ := os.Create("./output.png")
+		png.Encode(out, img)
 	case keyboard.Key4:
 		triangle_mesh.SetVertexMap([]uint32{0, 1, 2})
 	case keyboard.Key5:

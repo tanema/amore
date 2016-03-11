@@ -5,12 +5,12 @@ import (
 )
 
 type Uniform struct {
-	Location   int32
-	Count      int32
-	Type       uint32
+	Location   gl.Uniform
+	Type       gl.Enum
 	BaseType   UniformType
 	SecondType UniformType
-	TypeSize   int32
+	Count      int
+	TypeSize   int
 	Name       string
 }
 
@@ -20,7 +20,7 @@ func (u *Uniform) CalculateTypeInfo() {
 	u.TypeSize = u.getTypeSize()
 }
 
-func (u *Uniform) getTypeSize() int32 {
+func (u *Uniform) getTypeSize() int {
 	switch u.Type {
 	case gl.INT, gl.FLOAT, gl.BOOL, gl.SAMPLER_2D, gl.SAMPLER_CUBE:
 		return 1

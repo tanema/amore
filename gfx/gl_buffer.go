@@ -23,7 +23,7 @@ func newGlBuffer(target gl.Enum, size int, data []byte, usage Usage) *glBuffer {
 		data:   make([]byte, size),
 	}
 	if len(data) > 0 {
-		copy(new_buffer.data, data[:size])
+		copy(new_buffer.data, data)
 	}
 	registerVolatile(new_buffer)
 	return new_buffer

@@ -32,7 +32,7 @@ type glState struct {
 	initialized            bool
 	active                 bool
 	boundTextures          []gl.Texture
-	curTextureUnit         int32
+	curTextureUnit         int
 	viewport               []int32
 	framebufferSRGBEnabled bool
 	defaultTexture         gl.Texture

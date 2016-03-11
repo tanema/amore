@@ -7,9 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	gg "github.com/goxjs/gl"
+	"github.com/goxjs/gl"
 
 	"github.com/tanema/amore/file"
 )
@@ -19,10 +18,10 @@ type BuiltinUniform int
 type Shader struct {
 	vertex_code    string
 	pixel_code     string
-	program        uint32
+	program        gl.Program
 	uniforms       map[string]Uniform // Uniform location buffer map
-	texUnitPool    map[string]int32
-	activeTexUnits []uint32
+	texUnitPool    map[string]int
+	activeTexUnits []gl.Texture
 }
 
 func NewShader(paths ...string) *Shader {
@@ -37,32 +36,24 @@ func (shader *Shader) loadVolatile() bool {
 	vert := compileCode(gl.VERTEX_SHADER, shader.vertex_code)
 	frag := compileCode(gl.FRAGMENT_SHADER, shader.pixel_code)
 	shader.program = gl.CreateProgram()
-	shader.texUnitPool = make(map[string]int32)
-	shader.activeTexUnits = make([]uint32, GetMaxTextureUnits())
+	shader.texUnitPool = make(map[string]int)
+	shader.activeTexUnits = make([]gl.Texture, GetMaxTextureUnits())
 
 	gl.AttachShader(shader.program, vert)
 	gl.AttachShader(shader.program, frag)
 
-	gl.BindAttribLocation(shader.program, ATTRIB_POS, gl.Str("VertexPosition\x00"))
-	gl.BindAttribLocation(shader.program, ATTRIB_TEXCOORD, gl.Str("VertexTexCoord\x00"))
-	gl.BindAttribLocation(shader.program, ATTRIB_COLOR, gl.Str("VertexColor\x00"))
-	gl.BindAttribLocation(shader.program, ATTRIB_CONSTANTCOLOR, gl.Str("ConstantColor\x00"))
+	gl.BindAttribLocation(shader.program, ATTRIB_POS, "VertexPosition")
+	gl.BindAttribLocation(shader.program, ATTRIB_TEXCOORD, "VertexTexCoord")
+	gl.BindAttribLocation(shader.program, ATTRIB_COLOR, "VertexColor")
+	gl.BindAttribLocation(shader.program, ATTRIB_CONSTANTCOLOR, "ConstantColor")
 
 	gl.LinkProgram(shader.program)
 	gl.DeleteShader(vert)
 	gl.DeleteShader(frag)
 
-	var isLinked int32
-	gl.GetProgramiv(shader.program, gl.LINK_STATUS, &isLinked)
-	if isLinked == gl.FALSE {
-		var maxLength int32
-		gl.GetProgramiv(shader.program, gl.INFO_LOG_LENGTH, &maxLength)
-
-		log := make([]uint8, maxLength)
-		gl.GetProgramInfoLog(shader.program, maxLength, nil, &log[0])
-
+	if gl.GetProgrami(shader.program, gl.LINK_STATUS) == 0 {
 		gl.DeleteProgram(shader.program)
-		panic(fmt.Sprintf("Cannot link program: %v", gl.GoStr(&log[0])))
+		panic(fmt.Errorf("shader link error: %s", gl.GetProgramInfoLog(shader.program)))
 	}
 
 	shader.mapUniforms()
@@ -76,7 +67,7 @@ func (shader *Shader) unloadVolatile() {
 
 	// decrement global texture id counters for texture units which had textures bound from this shader
 	for i := 0; i < len(shader.activeTexUnits); i++ {
-		if shader.activeTexUnits[i] > 0 {
+		if shader.activeTexUnits[i].Valid() {
 			gl_state.textureCounters[i] = gl_state.textureCounters[i] - 1
 		}
 	}
@@ -90,17 +81,11 @@ func (shader *Shader) mapUniforms() {
 	// Built-in uniform locations default to -1 (nonexistent.)
 	shader.uniforms = map[string]Uniform{}
 
-	var numuniforms int32
-	gl.GetProgramiv(shader.program, gl.ACTIVE_UNIFORMS, &numuniforms)
-
-	nameBuf := make([]uint8, 256)
-
-	for i := 0; i < int(numuniforms); i++ {
+	for i := 0; i < gl.GetProgrami(shader.program, gl.ACTIVE_UNIFORMS); i++ {
 		u := Uniform{}
 
-		gl.GetActiveUniform(shader.program, (uint32)(i), 256, nil, &u.Count, &u.Type, &nameBuf[0])
-		u.Name = gl.GoStr(&nameBuf[0])
-		u.Location = gl.GetUniformLocation(shader.program, gl.Str(u.Name+"\x00"))
+		u.Name, u.Count, u.Type = gl.GetActiveUniform(shader.program, uint32(i))
+		u.Location = gl.GetUniformLocation(shader.program, u.Name)
 		u.CalculateTypeInfo()
 
 		// glGetActiveUniform appends "[0]" to the end of array uniform names...
@@ -110,7 +95,7 @@ func (shader *Shader) mapUniforms() {
 			}
 		}
 
-		if u.Location != -1 {
+		if u.Location.Value != -1 {
 			shader.uniforms[u.Name] = u
 		}
 	}
@@ -125,8 +110,8 @@ func (shader *Shader) attach(temporary bool) {
 		// make sure all sent textures are properly bound to their respective texture units
 		// note: list potentially contains texture ids of deleted/invalid textures!
 		for i := 0; i < len(shader.activeTexUnits); i++ {
-			if shader.activeTexUnits[i] > 0 {
-				bindTextureToUnit(gg.Texture{Value: shader.activeTexUnits[i]}, int32(i+1), false)
+			if shader.activeTexUnits[i].Valid() {
+				bindTextureToUnit(shader.activeTexUnits[i], i+1, false)
 			}
 		}
 
@@ -143,7 +128,7 @@ func (shader *Shader) getUniformAndCheck(name string, expected_type UniformType,
 	if uniform.BaseType != expected_type {
 		return uniform, errors.New("Invalid type for uniform " + name + ". expected " + translateUniformBaseType(uniform.BaseType) + " and got " + translateUniformBaseType(expected_type))
 	}
-	if value_count != (int)(uniform.Count*uniform.TypeSize) {
+	if value_count != uniform.Count*uniform.TypeSize {
 		return uniform, errors.New(fmt.Sprintf("Invalid number of arguments for uniform  %v expected %v and got %v", name, (uniform.Count * uniform.TypeSize), value_count))
 	}
 	return uniform, nil
@@ -160,16 +145,16 @@ func (shader *Shader) SendInt(name string, values ...int32) error {
 
 	switch uniform.TypeSize {
 	case 4:
-		gl.Uniform4iv(uniform.Location, uniform.Count, &values[0])
+		gl.Uniform4iv(uniform.Location, values)
 		return nil
 	case 3:
-		gl.Uniform3iv(uniform.Location, uniform.Count, &values[0])
+		gl.Uniform3iv(uniform.Location, values)
 		return nil
 	case 2:
-		gl.Uniform2iv(uniform.Location, uniform.Count, &values[0])
+		gl.Uniform2iv(uniform.Location, values)
 		return nil
 	case 1:
-		gl.Uniform1iv(uniform.Location, uniform.Count, &values[0])
+		gl.Uniform1iv(uniform.Location, values)
 		return nil
 	}
 	return errors.New("Invalid type size for uniform: " + name)
@@ -186,16 +171,16 @@ func (shader *Shader) SendFloat(name string, values ...float32) error {
 
 	switch uniform.TypeSize {
 	case 4:
-		gl.Uniform4fv(uniform.Location, uniform.Count, &values[0])
+		gl.Uniform4fv(uniform.Location, values)
 		return nil
 	case 3:
-		gl.Uniform3fv(uniform.Location, uniform.Count, &values[0])
+		gl.Uniform3fv(uniform.Location, values)
 		return nil
 	case 2:
-		gl.Uniform2fv(uniform.Location, uniform.Count, &values[0])
+		gl.Uniform2fv(uniform.Location, values)
 		return nil
 	case 1:
-		gl.Uniform1fv(uniform.Location, uniform.Count, &values[0])
+		gl.Uniform1fv(uniform.Location, values)
 		return nil
 	}
 	return errors.New("Invalid type size for uniform: " + name)
@@ -209,7 +194,12 @@ func (shader *Shader) SendMat4(name string, mat mgl32.Mat4) error {
 	if err != nil {
 		return err
 	}
-	gl.UniformMatrix4fv(uniform.Location, uniform.Count, false, &mat[0])
+	gl.UniformMatrix4fv(uniform.Location, []float32{
+		mat[0], mat[1], mat[2], mat[3],
+		mat[4], mat[5], mat[6], mat[7],
+		mat[8], mat[9], mat[10], mat[11],
+		mat[12], mat[13], mat[14], mat[15],
+	})
 	return nil
 }
 
@@ -221,7 +211,11 @@ func (shader *Shader) SendMat3(name string, mat mgl32.Mat3) error {
 	if err != nil {
 		return err
 	}
-	gl.UniformMatrix3fv(uniform.Location, uniform.Count, false, &mat[0])
+	gl.UniformMatrix3fv(uniform.Location, []float32{
+		mat[0], mat[1], mat[2],
+		mat[3], mat[4], mat[5],
+		mat[6], mat[7], mat[8],
+	})
 	return nil
 }
 
@@ -233,7 +227,10 @@ func (shader *Shader) SendMat2(name string, mat mgl32.Mat2) error {
 	if err != nil {
 		return err
 	}
-	gl.UniformMatrix2fv(uniform.Location, uniform.Count, false, &mat[0])
+	gl.UniformMatrix2fv(uniform.Location, []float32{
+		mat[0], mat[1],
+		mat[2], mat[3],
+	})
 	return nil
 }
 
@@ -251,20 +248,20 @@ func (shader *Shader) SendTexture(name string, texture iTexture) error {
 
 	bindTextureToUnit(gltex, texunit, true)
 
-	gl.Uniform1i(uniform.Location, texunit)
+	gl.Uniform1i(uniform.Location, int(texunit))
 
 	// increment global shader texture id counter for this texture unit, if we haven't already
-	if shader.activeTexUnits[texunit-1] == 0 {
+	if !shader.activeTexUnits[texunit-1].Valid() {
 		gl_state.textureCounters[texunit-1]++
 	}
 
 	// store texture id so it can be re-bound to the proper texture unit later
-	shader.activeTexUnits[texunit-1] = gltex.Value
+	shader.activeTexUnits[texunit-1] = gltex
 
 	return nil
 }
 
-func (shader *Shader) getTextureUnit(name string) int32 {
+func (shader *Shader) getTextureUnit(name string) int {
 	unit, found := shader.texUnitPool[name]
 	if found {
 		return unit
@@ -282,7 +279,7 @@ func (shader *Shader) getTextureUnit(name string) int32 {
 	if texunit == -1 {
 		// no completely unused texture units exist, try to use next free slot in our own list
 		for i := 0; i < len(shader.activeTexUnits); i++ {
-			if shader.activeTexUnits[i] == 0 {
+			if !shader.activeTexUnits[i].Valid() {
 				texunit = i + 1
 				break
 			}
@@ -293,7 +290,7 @@ func (shader *Shader) getTextureUnit(name string) int32 {
 		}
 	}
 
-	shader.texUnitPool[name] = int32(texunit)
+	shader.texUnitPool[name] = texunit
 	return shader.texUnitPool[name]
 }
 
@@ -395,23 +392,16 @@ func shaderCodeToGLSL(code ...string) (string, string) {
 	return createVertexCode(vertexcode), createPixelCode(pixelcode, is_multicanvas)
 }
 
-func compileCode(shader_type uint32, code string) uint32 {
-	id := gl.CreateShader(shader_type)
-	csources, free := gl.Strs(code + "\x00")
-	gl.ShaderSource(id, 1, csources, nil)
-	free()
-	gl.CompileShader(id)
-
-	var isCompiled int32
-	gl.GetShaderiv(id, gl.COMPILE_STATUS, &isCompiled)
-	if isCompiled == gl.FALSE {
-		var logLength int32
-		gl.GetShaderiv(id, gl.INFO_LOG_LENGTH, &logLength)
-
-		logBuffer := make([]uint8, logLength)
-		gl.GetShaderInfoLog(id, logLength, nil, &logBuffer[0])
-		panic(fmt.Sprintf("Cannot compile shader code: %v", gl.GoStr(&logBuffer[0])))
+func compileCode(shaderType gl.Enum, src string) gl.Shader {
+	shader := gl.CreateShader(shaderType)
+	if !shader.Valid() {
+		panic(fmt.Errorf("could not create shader (type %v)", shaderType))
 	}
-
-	return id
+	gl.ShaderSource(shader, src)
+	gl.CompileShader(shader)
+	if gl.GetShaderi(shader, gl.COMPILE_STATUS) == 0 {
+		defer gl.DeleteShader(shader)
+		panic(fmt.Errorf("shader compile: %s", gl.GetShaderInfoLog(shader)))
+	}
+	return shader
 }

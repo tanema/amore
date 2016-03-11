@@ -187,15 +187,15 @@ func (mesh *Mesh) bindEnabledAttributes() {
 
 	offset := 0
 	if (mesh.enabledattribs & ATTRIBFLAG_POS) > 0 {
-		gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
 		offset += 2 * 4
 	}
 	if (mesh.enabledattribs & ATTRIBFLAG_TEXCOORD) > 0 {
-		gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_TEXCOORD}, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
+		gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
 		offset += 2 * 4
 	}
 	if (mesh.enabledattribs & ATTRIBFLAG_COLOR) > 0 {
-		gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_COLOR}, 4, gl.FLOAT, false, mesh.vertexStride*4, offset)
+		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, mesh.vertexStride*4, offset)
 	}
 }
 

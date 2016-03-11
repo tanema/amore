@@ -1,19 +1,85 @@
 # amore
 
 An experimental/WIP game framework based on the API and workflow of Love 2D with
-usage of sdl2 and opengl 2.1. It is by no means stable.
+usage of sdl2 and opengl 2.1. It is by no means stable and can still be quite leaky
+
+ 
+It supports:
+
+- **OS X**, **Linux** and Windows via OpenGL 2.1 backend,
+
+- **iOS** and **Android** via OpenGL ES 2.0 backend,
+
+Future Support:
+
+- **Modern Browsers** (desktop and mobile) via WebGL 1.0 backend.
 
 Objectives
 ==========
-* Enable making games easy, fast and fun with access still available to underlying mechanics.
-* Making games portable, cross platform and with a single executable deployment strategy.
+* Enable making games easy, fast and fun
+* Making games portable
+* single executable deployment strategy.
+ 
+Installation
+============
+
+```bash
+go get -u github.com/tanema/amore/...
+go install github.com/tanema/amore/cmd
+```
+
+Command
+=======
+
+* `amore new` will generate initial files for a game in the current folder
+* `amore bundle` will generate a file called `asset_bundle.go` with all the assets and config in ziped byte array to be included in the binary
  
 Requirements
 ============
-* [OpenGL 2.1+ / OpenGL ES 2+](https://www.opengl.org/wiki/Getting_Started)
 * [SDL2](http://libsdl.org/download-2.0.php)
 * [SDL2_image](http://www.libsdl.org/projects/SDL_image/)
-* libopenal-dev
+
+Below is some commands that can be used to install the required packages in
+some Linux distributions. Some older versions of the distributions such as
+
+On __Ubuntu 14.04 and above__, type:  
+`apt-get install libsdl2{-image}-dev`  
+_Note: Ubuntu 14.04 currently has broken header file in the SDL2 package that disables people from compiling against it. It will be needed to either patch the header file or install SDL2 from source._
+
+On __Fedora 20 and above__, type:  
+`yum install SDL2{,_image}-devel`
+
+On __Arch Linux__, type:  
+`pacman -S sdl2{,_image}`
+
+On __Mac OS X__, install SDL2 via [Homebrew](http://brew.sh) like so:
+`brew install sdl2{,_image}`
+
+On __Windows__, install SDL2 via [Msys2](https://msys2.github.io) like so:
+`pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2{,_image}`
+
+Example
+=======
+
+```golang
+package main
+
+import (
+	"github.com/tanema/amore"
+	"github.com/tanema/amore/gfx"
+)
+
+func main() {
+	amore.Start(update, draw)
+}
+
+func update(deltaTime float32) {
+}
+
+func draw() {
+	gfx.Print("Hello World",50, 50)
+}
+```
 
 TODO
 =====
@@ -48,12 +114,6 @@ TODO
 * ~~Timer~~
 * ~~Asset Bundling~~
 * Wiki
-* Full Platform Support (refactor to use [goxjs/gl](https://github.com/goxjs/gl) to support mobile and web)
+* Full Platform Support (web support)
 * Optimize
-
-Notes and ideas
-====
-
-* Simplify Cross-Compilation possibly with [shared libraries already linked to c libs](http://blog.ralch.com/tutorial/golang-sharing-libraries/)
-  - it would be nice to be able to provide amore as a library for each platform and not have the user install libs
 

@@ -1,7 +1,7 @@
 package gfx
 
 import (
-	"github.com/go-gl/gl/v2.1/gl"
+	"github.com/goxjs/gl"
 )
 
 type (
@@ -20,20 +20,22 @@ type (
 	AlignMode            int
 )
 
-const (
+var (
 	//opengl attribute variables
-	ATTRIB_POS = iota
-	ATTRIB_TEXCOORD
-	ATTRIB_COLOR
-	ATTRIB_CONSTANTCOLOR
+	ATTRIB_POS           = gl.Attrib{Value: 0}
+	ATTRIB_TEXCOORD      = gl.Attrib{Value: 1}
+	ATTRIB_COLOR         = gl.Attrib{Value: 2}
+	ATTRIB_CONSTANTCOLOR = gl.Attrib{Value: 3}
 
-	ATTRIBFLAG_POS           = 1 << ATTRIB_POS
-	ATTRIBFLAG_TEXCOORD      = 1 << ATTRIB_TEXCOORD
-	ATTRIBFLAG_COLOR         = 1 << ATTRIB_COLOR
-	ATTRIBFLAG_CONSTANTCOLOR = 1 << ATTRIB_CONSTANTCOLOR
+	ATTRIBFLAG_POS           = uint32(1 << ATTRIB_POS.Value)
+	ATTRIBFLAG_TEXCOORD      = uint32(1 << ATTRIB_TEXCOORD.Value)
+	ATTRIBFLAG_COLOR         = uint32(1 << ATTRIB_COLOR.Value)
+	ATTRIBFLAG_CONSTANTCOLOR = uint32(1 << ATTRIB_CONSTANTCOLOR.Value)
+)
 
+const (
 	//texture wrap
-	WRAP_CLAMP           WrapMode = WrapMode(gl.CLAMP)
+	WRAP_CLAMP           WrapMode = WrapMode(gl.CLAMP_TO_EDGE)
 	WRAP_REPEAT          WrapMode = WrapMode(gl.REPEAT)
 	WRAP_MIRRORED_REPEAT WrapMode = WrapMode(gl.MIRRORED_REPEAT)
 

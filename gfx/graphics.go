@@ -102,7 +102,7 @@ func Point(x, y float32) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(point...), gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, 0, 0)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, 0)
 	gl.DrawArrays(gl.POINTS, 0, 1)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
@@ -132,7 +132,7 @@ func Polygon(mode string, coords []float32) {
 		vbo := gl.CreateBuffer()
 		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 		gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(coords...), gl.STATIC_DRAW)
-		gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, 0, 0)
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, 0)
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 		gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
 		gl.DeleteBuffer(vbo)
@@ -144,7 +144,7 @@ func NewScreenshot() image.Image {
 	canvases := GetCanvas()
 	SetCanvas()
 
-	w, h := int32(1), int32(1)
+	w, h := int32(screen_width), int32(screen_height)
 	screenshot := image.NewRGBA(image.Rect(0, 0, int(w), int(h)))
 	stride := int32(screenshot.Stride)
 	pixels := make([]byte, len(screenshot.Pix))

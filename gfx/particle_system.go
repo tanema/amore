@@ -30,7 +30,7 @@ type (
 		angle                  float32
 		spinStart              float32
 		spinEnd                float32
-		color                  Color
+		color                  *Color
 		quadIndex              int
 	}
 	ParticleSystem struct {
@@ -70,7 +70,7 @@ type (
 		spinVariation             float32
 		offset                    mgl32.Vec2
 		defaultOffset             bool
-		colors                    []Color
+		colors                    []*Color
 		quads                     []Quad
 		relativeRotation          bool
 		quadIndices               *quadIndices
@@ -100,7 +100,7 @@ func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
 		lifetime:               -1,
 		offset:                 mgl32.Vec2{float32(texture.GetWidth()) * 0.5, float32(texture.GetHeight()) * 0.5},
 		defaultOffset:          true,
-		colors:                 []Color{Color{1.0, 1.0, 1.0, 1.0}},
+		colors:                 []*Color{&Color{1.0, 1.0, 1.0, 1.0}},
 		sizes:                  []float32{1.0},
 		particles:              []*Particle{},
 		maxParticles:           size,
@@ -209,19 +209,7 @@ func (system *ParticleSystem) initParticle(t float32) *Particle {
 	return p
 }
 
-func (system *ParticleSystem) removeParticle(p *Particle) {
-	found := -1
-	for i, particle := range system.particles {
-		if particle == p {
-			found = i
-			break
-		}
-	}
-	if found == len(system.particles)-1 {
-		system.particles = system.particles[:found]
-	} else if found > -1 {
-		system.particles = append(system.particles[:found], system.particles[found+1:]...)
-	}
+func (system *ParticleSystem) removeParticle(i int) {
 }
 
 func (system *ParticleSystem) SetTexture(tex iTexture) {
@@ -418,11 +406,15 @@ func (system *ParticleSystem) GetOffset() (x, y float32) {
 	return system.offset[0], system.offset[1]
 }
 
-func (system *ParticleSystem) SetColor(newColors []Color) {
-	system.colors = newColors
+func (system *ParticleSystem) SetColor(newColors ...*Color) {
+	if newColors == nil {
+		system.colors = []*Color{&Color{1.0, 1.0, 1.0, 1.0}}
+	} else {
+		system.colors = newColors
+	}
 }
 
-func (system *ParticleSystem) GetColor() []Color {
+func (system *ParticleSystem) GetColor() []*Color {
 	return system.colors
 }
 
@@ -505,102 +497,102 @@ func (system *ParticleSystem) Update(dt float32) {
 	}
 
 	// Traverse all particles and update.
-	for _, p := range system.particles {
+	for i := len(system.particles) - 1; i >= 0; i-- {
+		p := system.particles[i]
 		// Decrease lifespan.
 		p.life -= dt
 
 		if p.life <= 0 {
-			system.removeParticle(p)
-		} else {
-			ppos := p.position
-			// Get vector from particle center to particle.
-			radial := ppos.Sub(p.origin)
-			if radial.Len() > 0 {
-				radial = radial.Normalize()
+			//remove particle
+			if i == len(system.particles)-1 {
+				system.particles = system.particles[:i]
+			} else if i > -1 {
+				system.particles = append(system.particles[:i], system.particles[i+1:]...)
 			}
-			tangential := radial
+			continue
+		}
 
-			// Resize radial acceleration.
-			radial = radial.Mul(p.radialAcceleration)
+		ppos := p.position
+		// Get vector from particle center to particle.
+		radial := ppos.Sub(p.origin)
+		if radial.Len() > 0 {
+			radial = radial.Normalize()
+		}
+		tangential := radial
 
-			// Calculate tangential acceleration.
-			a := tangential[0]
-			tangential[0] = -tangential[1]
-			tangential[1] = a
+		// Resize radial acceleration.
+		radial = radial.Mul(p.radialAcceleration)
 
-			// Resize tangential.
-			tangential = tangential.Mul(p.tangentialAcceleration)
+		// Calculate tangential acceleration.
+		a := tangential[0]
+		tangential[0] = -tangential[1]
+		tangential[1] = a
 
-			// Update velocity.
-			p.velocity = p.velocity.Add(radial.Add(tangential).Add(p.linearAcceleration).Mul(dt))
+		// Resize tangential.
+		tangential = tangential.Mul(p.tangentialAcceleration)
 
-			// Apply damping.
-			p.velocity = p.velocity.Mul(1.0 / (1.0 + p.linearDamping*dt))
+		// Update velocity.
+		p.velocity = p.velocity.Add(radial.Add(tangential).Add(p.linearAcceleration).Mul(dt))
 
-			// Modify position.
-			ppos = ppos.Add(p.velocity.Mul(dt))
+		// Apply damping.
+		p.velocity = p.velocity.Mul(1.0 / (1.0 + p.linearDamping*dt))
 
-			p.position = ppos
+		// Modify position.
+		ppos = ppos.Add(p.velocity.Mul(dt))
 
-			t := 1.0 - p.life/p.lifetime
+		p.position = ppos
 
-			// Rotate.
-			p.rotation += (p.spinStart*(1.0-t) + p.spinEnd*t) * dt
+		t := 1.0 - p.life/p.lifetime
 
-			p.angle = p.rotation
-			if system.relativeRotation {
-				p.angle += float32(math.Atan2(float64(p.velocity[1]), float64(p.velocity[0])))
+		// Rotate.
+		p.rotation += (p.spinStart*(1.0-t) + p.spinEnd*t) * dt
+
+		p.angle = p.rotation
+		if system.relativeRotation {
+			p.angle += float32(math.Atan2(float64(p.velocity[1]), float64(p.velocity[0])))
+		}
+
+		// Change size according to given intervals:
+		// i = 0       1       2      3          n-1
+		//     |-------|-------|------|--- ... ---|
+		// t = 0    1/(n-1)        3/(n-1)        1
+		//
+		// `s' is the interpolation variable scaled to the current
+		// interval width, e.g. if n = 5 and t = 0.3, then the current
+		// indices are 1,2 and s = 0.3 - 0.25 = 0.05
+		s := p.sizeOffset + t*p.sizeIntervalSize // size variation
+		s *= float32(len(system.sizes) - 1)      // 0 <= s < sizes.size()
+		i := int(s)
+		k := i
+		if i != len(system.sizes)-1 {
+			k += 1 // boundary check (prevents failing on t = 1.0f)
+		}
+		s -= float32(i) // transpose s to be in interval [0:1]: i <= s < i + 1 ~> 0 <= s < 1
+		p.size = system.sizes[i]*(1.0-s) + system.sizes[k]*s
+
+		// Update color according to given intervals (as above)
+		s = t * float32(len(system.colors)-1)
+		i = int(s)
+		k = i
+		if i != len(system.colors)-1 {
+			k += 1 // boundary check (prevents failing on t = 1.0f)
+		}
+		s -= float32(i) // 0 <= s <= 1
+		p.color = system.colors[i].Mul(1.0 - s).Add(system.colors[k])
+
+		// Update the quad index.
+		k = len(system.quads)
+		if k > 0 {
+			s = t * float32(k) // [0:numquads-1] (clamped below)
+			if s > 0.0 {
+				i = int(s)
+			} else {
+				i = 0
 			}
-
-			// Change size according to given intervals:
-			// i = 0       1       2      3          n-1
-			//     |-------|-------|------|--- ... ---|
-			// t = 0    1/(n-1)        3/(n-1)        1
-			//
-			// `s' is the interpolation variable scaled to the current
-			// interval width, e.g. if n = 5 and t = 0.3, then the current
-			// indices are 1,2 and s = 0.3 - 0.25 = 0.05
-			s := p.sizeOffset + t*p.sizeIntervalSize // size variation
-			s *= float32(len(system.sizes) - 1)      // 0 <= s < sizes.size()
-			i := int(s)
-			k := i
-			if i != len(system.sizes)-1 {
-				k += 1 // boundary check (prevents failing on t = 1.0f)
-			}
-			s -= float32(i) // transpose s to be in interval [0:1]: i <= s < i + 1 ~> 0 <= s < 1
-			p.size = system.sizes[i]*(1.0-s) + system.sizes[k]*s
-
-			// Update color according to given intervals (as above)
-			s = t * float32(len(system.colors)-1)
-			i = int(s)
-			k = i
-			if i != len(system.colors)-1 {
-				k += 1 // boundary check (prevents failing on t = 1.0f)
-			}
-			s -= float32(i) // 0 <= s <= 1
-			//p.color = *system.colors[i].Mul(1.0 - s).Add(system.colors[k].Mul(s))
-
-			// Update color according to given intervals (as above)
-			//s = t * (float)(colors.size() - 1);
-			//i = (size_t)s;
-			//k = (i == colors.size() - 1) ? i : i + 1;
-			//s -= (float)i;                            // 0 <= s <= 1
-			//p->color = colors[i] * (1.0f - s) + colors[k] * s;
-
-			// Update the quad index.
-			k = len(system.quads)
-			if k > 0 {
-				s = t * float32(k) // [0:numquads-1] (clamped below)
-				if s > 0.0 {
-					i = int(s)
-				} else {
-					i = 0
-				}
-				if i < k {
-					p.quadIndex = i
-				} else {
-					p.quadIndex = k - 1
-				}
+			if i < k {
+				p.quadIndex = i
+			} else {
+				p.quadIndex = k - 1
 			}
 		}
 	}
@@ -667,9 +659,9 @@ func (system *ParticleSystem) Draw(args ...float32) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(particleVerts...), gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_POS}, 2, gl.FLOAT, false, 8*4, 0)
-	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_TEXCOORD}, 2, gl.FLOAT, false, 8*4, 2*4)
-	gl.VertexAttribPointer(gl.Attrib{Value: ATTRIB_COLOR}, 4, gl.FLOAT, false, 8*4, 4*4)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, 0)
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, 2*4)
+	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, 4*4)
 
 	system.quadIndices.drawElements(gl.TRIANGLES, 0, len(system.particles))
 
