@@ -61,7 +61,6 @@ func main() {
 
 	particle, _ := gfx.NewImage("images/particle.png")
 	psystem = gfx.NewParticleSystem(particle, 10)
-	//psystem.SetColor(gfx.NewColor(0, 0, 255, 255), gfx.NewColor(255, 0, 0, 255), gfx.NewColor(0, 255, 0, 255))
 	psystem.SetParticleLifetime(2, 5) // Particles live at least 2s and at most 5s.
 	psystem.SetEmissionRate(5)
 	psystem.SetSizeVariation(1)
@@ -130,10 +129,6 @@ func update(deltaTime float32) {
 	psystem.Update(deltaTime)
 }
 
-func myStencilFunction() {
-	gfx.Rect("fill", 426, 240, 426, 240)
-}
-
 func draw() {
 	if use_shader {
 		gfx.SetShader(shader)
@@ -155,7 +150,7 @@ func draw() {
 	gfx.Draw(batch, 50, 150)
 
 	//stencil
-	gfx.Stencil(myStencilFunction)
+	gfx.Stencil(func() { gfx.Rect("fill", 426, 240, 426, 240) })
 	gfx.SetStencilTest(gfx.COMPARE_EQUAL, 0)
 	gfx.SetColor(239, 96, 17, 255)
 	gfx.Rect("fill", 400, 200, 826, 440)

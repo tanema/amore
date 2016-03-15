@@ -1,16 +1,14 @@
 # amore
 
-An experimental/WIP game framework based on the API and workflow of Love 2D with
-usage of sdl2 and opengl 2.1. It is by no means stable and can still be quite leaky
-
+An WIP game framework based on the API and workflow of Love 2D with usage of sdl2 and opengl
  
-It supports:
+This project uses [goxjs/gl](https://github.com/goxjs/gl) so that it supports:
 
-- **OS X**, **Linux** and Windows via OpenGL 2.1 backend,
+- **OS X**, **Linux** and **Windows** via OpenGL 2.1 backend,
 
 - **iOS** and **Android** via OpenGL ES 2.0 backend,
 
-Future Support:
+and pending a UI wrapper around SDL there will be future support for:
 
 - **Modern Browsers** (desktop and mobile) via WebGL 1.0 backend.
 
