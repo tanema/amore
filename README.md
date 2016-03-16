@@ -1,11 +1,10 @@
-# amore
+# Amore
 
 An WIP game framework based on the API and workflow of Love 2D with usage of sdl2 and opengl
  
 This project uses [goxjs/gl](https://github.com/goxjs/gl) so that it supports:
 
 - **OS X**, **Linux** and **Windows** via OpenGL 2.1 backend,
-
 - **iOS** and **Android** via OpenGL ES 2.0 backend,
 
 Pending a Web wrapper around SDL and Openal functionality, there will be future support for:
@@ -34,21 +33,15 @@ Command
  
 Requirements
 ============
-* [SDL2](http://libsdl.org/download-2.0.php)
-
-Below is some commands that can be used to install the required packages in
-some Linux distributions. Some older versions of the distributions such as
+Amore requires [SDL2](http://libsdl.org/download-2.0.php) to operate on PC. You can install it by doing the following.
 
 __Ubuntu 14.04 and above__, type: `apt-get install libsdl2-dev`  
-_Note: Ubuntu 14.04 currently has broken header file in the SDL2 package that disables people from compiling against it. It will be needed to either patch the header file or install SDL2 from source._
-
 __Fedora 20 and above__, type: `yum install SDL2-devel`
-
 __Arch Linux__, type: `pacman -S sdl2`
-
 __Mac OS X__, via [Homebrew](http://brew.sh): `brew install sdl2`
-
 __Windows__, via [Msys2](https://msys2.github.io): `pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2`
+
+_Note: Ubuntu 14.04 currently has broken header file in the SDL2 package that disables people from compiling against it. It will be needed to either patch the header file or install SDL2 from source._
 
 Example
 =======
@@ -76,7 +69,6 @@ func draw() {
 TODO
 =====
 * ~~Audio (wav, ogg, flac)~~
-  - mp3 funcionality not included to avoid another dependancy to install
 * GFX [ref](https://love2d.org/wiki/love.graphics)
   - ~~primitives (polygons, lines, color, stencil, scissor)~~
   - ~~Transforms (rotate, scale, shear, offset)~~
@@ -101,7 +93,6 @@ TODO
 * ~~File~~ [ref](https://love2d.org/wiki/love.filesystem)
 * ~~Timer~~
 * ~~Asset Bundling~~
-* Wiki
 * Full Platform Support (web support)
-* Optimize
+* Wiki
 
