@@ -159,7 +159,7 @@ func (buffer *indexBuffer) fill(offset int, data []uint32) {
 func (buffer *indexBuffer) drawElements(mode uint32, offset, size int) {
 	buffer.bind()
 	defer buffer.unbind()
-	gl.DrawElements(gl.Enum(mode), size, gl.UNSIGNED_INT, offset)
+	gl.DrawElements(gl.Enum(mode), size, gl.UNSIGNED_INT, offset*4)
 }
 
 func (buffer *indexBuffer) getData() []uint32 {
