@@ -45,7 +45,11 @@ func main() {
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 	image_font.SetFallbacks(ttf)
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
-	bomb, _ = audio.NewStreamSource("audio/bomb.wav")
+	var er error
+	bomb, er = audio.NewSource("audio/bomb.wav")
+	if er != nil {
+		panic(er)
+	}
 	text, _ = gfx.NewColorTextExt(ttf,
 		[]string{file.ReadString("text/lorem.txt"), file.ReadString("text/lorem.txt")},
 		[]*gfx.Color{gfx.NewColor(255, 255, 255, 255), gfx.NewColor(255, 0, 255, 255)},

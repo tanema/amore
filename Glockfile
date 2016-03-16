@@ -4,5 +4,3 @@ github.com/skratchdot/open-golang 75fb7ed4208cf72d323d7d02fd1a5964a7a9073c
 github.com/veandco/go-sdl2 a8fc14d68096cfbb00cfe247cf947ef4ea4407d0
 github.com/BurntSushi/toml bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 github.com/go-gl/mathgl 667e7964455c5d0db23927d59cfd72852686e419
-github.com/tcolgate/mp3 77b1e88f4c81c59354903d8612c64c2317835c45
-github.com/eaburns/flac c03c2470b98a1ad3d8d07c31e8e4529de3561c8e

@@ -44,9 +44,10 @@ type Source struct {
 }
 
 //	Creates a new Source from a file, SoundData, or Decoder
-func NewStaticSource(filepath string) (*Source, error) { return NewSource(filepath, STATIC_SOURCE) }
-func NewStreamSource(filepath string) (*Source, error) { return NewSource(filepath, STREAM_SOURCE) }
-func NewSource(filepath string, source_type SourceType) (*Source, error) {
+func NewStaticSource(filepath string) (*Source, error) { return NewSourceType(filepath, STATIC_SOURCE) }
+func NewStreamSource(filepath string) (*Source, error) { return NewSourceType(filepath, STREAM_SOURCE) }
+func NewSource(filepath string) (*Source, error)       { return NewSourceType(filepath, STREAM_SOURCE) }
+func NewSourceType(filepath string, source_type SourceType) (*Source, error) {
 	if pool == nil {
 		createPool()
 	}
@@ -398,7 +399,7 @@ func (s *Source) stream(buffer al.Buffer) int {
 		buffer.BufferData(s.decoder.GetFormat(), s.decoder.GetBuffer(), s.decoder.GetSampleRate())
 	}
 	if s.decoder.IsFinished() && s.IsLooping() {
-		s.decoder.Rewind()
+		s.decoder.Seek(0)
 	}
 	return decoded
 }
@@ -431,11 +432,11 @@ func (s *Source) Seek(offset time.Duration) {
 	if s.isValid() {
 		size := s.decoder.DurToByteOffset(offset)
 		if s.src_type == STREAM_SOURCE {
-			s.decoder.Seek(int64(size))
 			waspaused := s.paused
 			// Because we still have old data from before the seek in the buffers let's empty them.
 			s.Stop()
 			s.Play()
+			s.decoder.Seek(int64(size))
 			if waspaused {
 				s.Pause()
 			}
@@ -449,20 +450,23 @@ func (s *Source) Seek(offset time.Duration) {
 
 //Stops a source.
 func (s *Source) Stop() {
-	pool.mutex.Lock()
-	defer pool.mutex.Unlock()
 	if !s.IsStopped() && s.isValid() {
+		pool.mutex.Lock()
+		queued := s.source.BuffersQueued()
 		al.StopSources(s.source)
-		if s.src_type == STATIC_SOURCE {
-			s.source.ClearBuffers()
-		} else if s.src_type == STREAM_SOURCE && len(s.streamBuffers) > 0 {
-			s.source.UnqueueBuffers(s.streamBuffers...)
-			al.DeleteBuffers(s.streamBuffers...)
+		if s.src_type == STREAM_SOURCE {
+			for i := queued; i > 0; i-- {
+				var buffer al.Buffer
+				s.source.UnqueueBuffers(buffer)
+				al.DeleteBuffers(buffer)
+			}
 			s.streamBuffers = []al.Buffer{}
 		}
+		s.source.ClearBuffers()
+		pool.release(s)
+		pool.mutex.Unlock()
 	}
-	s.decoder.Rewind()
-	pool.release(s)
+	s.decoder.Seek(0)
 }
 
 //Gets the currently playing position of the Source.

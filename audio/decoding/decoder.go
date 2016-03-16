@@ -16,27 +16,40 @@ import (
 	"github.com/tanema/amore/file"
 )
 
-// ReadSeekCloser is an io.ReadSeeker and io.Closer.
-type ReadSeekCloser interface {
-	io.ReadSeeker
-	io.Closer
-}
+type (
+	Decoder interface {
+		read() error
+		GetBuffer() []byte
+		Seek(int64) bool
+		IsFinished() bool
+		GetFormat() uint32
+		GetChannels() int16
+		GetBitDepth() int16
+		GetSampleRate() int32
+		GetData() []byte
+		Decode() int
+		GetDuration() time.Duration
+		ByteOffsetToDur(offset int32) time.Duration
+		DurToByteOffset(dur time.Duration) int32
+	}
+	decoderBase struct {
+		src        io.ReadSeeker
+		channels   int16
+		sampleRate int32
+		bitDepth   int16
+		duration   time.Duration
+		eof        bool
+		buffer     []byte
+		data       []byte
+		format     uint32
+	}
+)
 
-type Decoder interface {
-	read() error
-	GetBuffer() []byte
-	Seek(int64) bool
-	Rewind() bool
-	IsFinished() bool
-	GetFormat() uint32
-	GetChannels() int16
-	GetBitDepth() int16
-	GetSampleRate() int32
-	GetData() []byte
-	Decode() int
-	GetDuration() time.Duration
-	ByteOffsetToDur(offset int32) time.Duration
-	DurToByteOffset(dur time.Duration) int32
+var formatBytes = map[uint32]int32{
+	al.FormatMono8:    1,
+	al.FormatMono16:   2,
+	al.FormatStereo8:  2,
+	al.FormatStereo16: 4,
 }
 
 func Decode(filepath string) (Decoder, error) {
@@ -69,13 +82,6 @@ func Decode(filepath string) (Decoder, error) {
 	return decoder, nil
 }
 
-var formatBytes = map[uint32]int32{
-	al.FormatMono8:    1,
-	al.FormatMono16:   2,
-	al.FormatStereo8:  2,
-	al.FormatStereo16: 4,
-}
-
 func getFormat(channels, depth int16) uint32 {
 	switch channels, depth := channels, depth; {
 	case channels == 1 && depth == 8:
@@ -91,38 +97,14 @@ func getFormat(channels, depth int16) uint32 {
 	}
 }
 
-type decoderBase struct {
-	src        ReadSeekCloser
-	channels   int16
-	sampleRate int32
-	bitDepth   int16
-	duration   time.Duration
-	eof        bool
-	buffer     []byte
-}
-
-func (decoder *decoderBase) GetBuffer() []byte {
-	return decoder.buffer
-}
-
 //Stubs for methods so functionality can be DRY
-func (decoder *decoderBase) Seek(s int64) bool { return false }
-func (decoder *decoderBase) Rewind() bool {
-	return decoder.Seek(0)
-}
-
-func (decoder *decoderBase) IsFinished() bool {
-	return decoder.eof
-}
-
-func (decoder *decoderBase) GetFormat() uint32 {
-	return getFormat(decoder.GetChannels(), decoder.GetBitDepth())
-}
-
+func (decoder *decoderBase) GetBuffer() []byte          { return decoder.buffer }
+func (decoder *decoderBase) IsFinished() bool           { return decoder.eof }
 func (decoder *decoderBase) GetSampleRate() int32       { return decoder.sampleRate }
 func (decoder *decoderBase) GetChannels() int16         { return decoder.channels }
 func (decoder *decoderBase) GetBitDepth() int16         { return decoder.bitDepth }
 func (decoder *decoderBase) GetDuration() time.Duration { return decoder.duration }
+func (decoder *decoderBase) GetFormat() uint32          { return decoder.format }
 
 func (decoder *decoderBase) ByteOffsetToDur(offset int32) time.Duration {
 	return time.Duration(offset * formatBytes[decoder.GetFormat()] * int32(time.Second) / decoder.GetSampleRate())
@@ -130,4 +112,22 @@ func (decoder *decoderBase) ByteOffsetToDur(offset int32) time.Duration {
 
 func (decoder *decoderBase) DurToByteOffset(dur time.Duration) int32 {
 	return int32(dur) * int32(decoder.GetSampleRate()) / (formatBytes[decoder.GetFormat()] * int32(time.Second))
+}
+
+func (decoder *decoderBase) Decode() int {
+	buffer := make([]byte, 128*1024)
+	n, err := decoder.src.Read(buffer)
+	decoder.eof = (err == io.EOF)
+	decoder.buffer = buffer[:n]
+	return n
+}
+
+func (decoder *decoderBase) GetData() []byte {
+	return decoder.data
+}
+
+func (decoder *decoderBase) Seek(s int64) bool {
+	_, err := decoder.src.Seek(s, 0)
+	decoder.eof = (err == io.EOF)
+	return err == nil || decoder.eof
 }

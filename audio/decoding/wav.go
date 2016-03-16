@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"io"
 	"time"
 )
 
@@ -38,6 +37,8 @@ func (decoder *waveDecoder) read() error {
 	binary.Read(decoder.src, binary.LittleEndian, &blockAlign)
 	binary.Read(decoder.src, binary.LittleEndian, &decoder.bitDepth)
 
+	decoder.format = getFormat(decoder.channels, decoder.bitDepth)
+
 	//data chunk
 	binary.Read(decoder.src, binary.BigEndian, &dataMarker)
 	//verify we have correct header data if we have the data marker we
@@ -62,23 +63,9 @@ func (decoder *waveDecoder) read() error {
 	return nil
 }
 
-func (decoder *waveDecoder) Decode() int {
-	buffer := make([]byte, 128*1024)
-	n, err := decoder.src.Read(buffer)
-	decoder.eof = (err == io.EOF)
-	decoder.buffer = buffer[:n]
-	return n
-}
-
 func (decoder *waveDecoder) GetData() []byte {
 	data := make([]byte, decoder.dataSize)
-	decoder.Rewind()
+	decoder.Seek(0)
 	decoder.src.Read(data)
 	return data
-}
-
-func (decoder *waveDecoder) Seek(s int64) bool {
-	_, err := decoder.src.Seek(int64(WAV_HEADER_SIZE)+s, 0)
-	decoder.eof = (err == io.EOF)
-	return err == nil || decoder.eof
 }

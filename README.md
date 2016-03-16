@@ -81,12 +81,12 @@ func draw() {
 
 TODO
 =====
-* Audio [ref](https://love2d.org/wiki/love.audio)
+* Audio
   - formats:
     * ~~WAV~~
     * MP3
-    * Ogg Vorbis
-    * MOD
+    * ~~Ogg Vorbis~~
+    * ~~FLAC~~
 * GFX [ref](https://love2d.org/wiki/love.graphics)
   - ~~primitives (polygons, lines, color, stencil, scissor)~~
   - ~~Transforms (rotate, scale, shear, offset)~~

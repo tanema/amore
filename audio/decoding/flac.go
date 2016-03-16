@@ -1,6 +1,7 @@
 package decoding
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/eaburns/flac"
@@ -8,41 +9,35 @@ import (
 
 type flacDecoder struct {
 	decoderBase
-	handle   *flac.Decoder
-	dataSize int32
+	data []byte
 }
 
 func (decoder *flacDecoder) read() error {
-	var err error
-	decoder.handle, err = flac.NewDecoder(decoder.src)
-	decoder.channels = int16(decoder.handle.NChannels)
-	decoder.sampleRate = int32(decoder.handle.SampleRate)
-	decoder.bitDepth = int16(decoder.handle.BitsPerSample)
-	decoder.dataSize = int32(decoder.handle.TotalSamples) * int32(decoder.channels) * int32(decoder.bitDepth/8)
-	return err
-}
+	d, err := flac.NewDecoder(decoder.src)
+	if err != nil {
+		return err
+	}
 
-func (decoder *flacDecoder) Decode() int {
-	buffer, err := decoder.handle.Next()
-	decoder.eof = (err == io.EOF)
-	decoder.buffer = buffer
-	return len(decoder.buffer)
-}
+	decoder.channels = int16(d.NChannels)
+	decoder.sampleRate = int32(d.SampleRate)
+	decoder.bitDepth = int16(d.BitsPerSample)
+	decoder.format = getFormat(decoder.channels, decoder.bitDepth)
 
-func (decoder *flacDecoder) GetData() []byte {
-	data := make([]byte, decoder.dataSize)
+	dataSize := d.TotalSamples * int64(d.NChannels) * int64(d.BitsPerSample/8)
+
+	decoder.data = make([]byte, 0, dataSize)
 	for {
-		buffer, err := decoder.handle.Next()
+		frame, err := d.Next()
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return []byte{}
+			return err
 		}
-		data = append(data, buffer...)
+		decoder.data = append(decoder.data, frame...)
 	}
-	return data
-}
 
-func (decoder *flacDecoder) Seek(s int64) bool {
-	return false
+	decoder.src = bytes.NewReader(decoder.data)
+	decoder.duration = decoder.ByteOffsetToDur(int32(len(decoder.data)) / formatBytes[decoder.GetFormat()])
+
+	return err
 }

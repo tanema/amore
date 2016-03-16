@@ -8,11 +8,11 @@ import (
 type State int
 
 const (
-	Unknown State = iota
-	Initial
-	Playing
-	Paused
-	Stopped
+	Unknown = State(0)
+	Initial = State(al.Initial)
+	Playing = State(al.Playing)
+	Paused  = State(al.Paused)
+	Stopped = State(al.Stopped)
 )
 
 func (s State) String() string { return stateStrings[s] }
