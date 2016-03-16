@@ -9,7 +9,6 @@ import (
 
 type flacDecoder struct {
 	decoderBase
-	data []byte
 }
 
 func (decoder *flacDecoder) read() error {

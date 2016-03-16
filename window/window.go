@@ -1,11 +1,19 @@
 package window
 
 import (
+	"image"
+	"image/draw"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"math"
 	"os"
+	"runtime"
+	"unsafe"
 
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/veandco/go-sdl2/sdl_image"
+
+	"github.com/tanema/amore/file"
 )
 
 var (
@@ -327,12 +335,45 @@ func (window *Window) GetHeight() int32 {
 }
 
 func (window *Window) SetIcon(path string) error {
-	surface, err := img.Load(path)
-	if err != nil {
-		return err
-	}
 	window.config.Icon = path
+
+	imgFile, new_err := file.NewFile(path)
+	defer imgFile.Close()
+	if new_err != nil {
+		return new_err
+	}
+
+	decoded_img, _, img_err := image.Decode(imgFile)
+	if img_err != nil {
+		return img_err
+	}
+
+	bounds := decoded_img.Bounds()
+	rgba := image.NewRGBA(decoded_img.Bounds())
+	draw.Draw(rgba, bounds, decoded_img, image.Point{0, 0}, draw.Src)
+
+	var rmask, gmask, bmask, amask uint32
+	switch runtime.GOARCH {
+	case "mips64", "ppc64":
+		rmask = 0xFF000000
+		gmask = 0x00FF0000
+		bmask = 0x0000FF00
+		amask = 0x000000FF
+	default:
+		rmask = 0x000000FF
+		gmask = 0x0000FF00
+		bmask = 0x00FF0000
+		amask = 0xFF000000
+	}
+
+	surface, ic_err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&rgba.Pix[0]), bounds.Dx(), bounds.Dy(), 32, bounds.Dx()*4, rmask, gmask, bmask, amask)
+	if ic_err != nil {
+		return ic_err
+	}
+
 	window.sdl_window.SetIcon(surface)
+	surface.Free()
+
 	return nil
 }
 

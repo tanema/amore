@@ -50,6 +50,7 @@ func main() {
 	if er != nil {
 		panic(er)
 	}
+	bomb.SetLooping(true)
 	text, _ = gfx.NewColorTextExt(ttf,
 		[]string{file.ReadString("text/lorem.txt"), file.ReadString("text/lorem.txt")},
 		[]*gfx.Color{gfx.NewColor(255, 255, 255, 255), gfx.NewColor(255, 0, 255, 255)},

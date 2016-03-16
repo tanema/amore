@@ -52,6 +52,8 @@ var formatBytes = map[uint32]int32{
 	al.FormatStereo16: 4,
 }
 
+const BUFFER_SIZE = 128 * 1024
+
 func Decode(filepath string) (Decoder, error) {
 	src, err := file.NewFile(filepath)
 	if err != nil {
@@ -59,23 +61,22 @@ func Decode(filepath string) (Decoder, error) {
 	}
 
 	var decoder Decoder
-	base := decoderBase{src: src}
-
 	switch file.Ext(filepath) {
 	case ".wav":
-		decoder = &waveDecoder{decoderBase: base}
-	case ".ogg", ".oga":
-		decoder = &vorbisDecoder{decoderBase: base}
+		decoder = &waveDecoder{decoderBase: decoderBase{src: src}}
+	case ".ogg":
+		decoder = &vorbisDecoder{decoderBase: decoderBase{src: src}}
 	case ".mp3":
-		decoder = &mp3Decoder{decoderBase: base}
+		decoder = &mp3Decoder{decoderBase: decoderBase{src: src}}
 	case ".flac":
-		decoder = &flacDecoder{decoderBase: base}
+		decoder = &flacDecoder{decoderBase: decoderBase{src: src}}
 	default:
+		src.Close()
 		return nil, errors.New("unsupported audio file extention")
 	}
 
-	err = decoder.read()
-	if err != nil {
+	if err = decoder.read(); err != nil {
+		src.Close()
 		return nil, err
 	}
 
@@ -105,6 +106,7 @@ func (decoder *decoderBase) GetChannels() int16         { return decoder.channel
 func (decoder *decoderBase) GetBitDepth() int16         { return decoder.bitDepth }
 func (decoder *decoderBase) GetDuration() time.Duration { return decoder.duration }
 func (decoder *decoderBase) GetFormat() uint32          { return decoder.format }
+func (decoder *decoderBase) GetData() []byte            { return decoder.data }
 
 func (decoder *decoderBase) ByteOffsetToDur(offset int32) time.Duration {
 	return time.Duration(offset * formatBytes[decoder.GetFormat()] * int32(time.Second) / decoder.GetSampleRate())
@@ -115,15 +117,11 @@ func (decoder *decoderBase) DurToByteOffset(dur time.Duration) int32 {
 }
 
 func (decoder *decoderBase) Decode() int {
-	buffer := make([]byte, 128*1024)
+	buffer := make([]byte, BUFFER_SIZE)
 	n, err := decoder.src.Read(buffer)
 	decoder.eof = (err == io.EOF)
 	decoder.buffer = buffer[:n]
 	return n
-}
-
-func (decoder *decoderBase) GetData() []byte {
-	return decoder.data
 }
 
 func (decoder *decoderBase) Seek(s int64) bool {
