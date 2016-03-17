@@ -426,8 +426,10 @@ func (s Source) QueueBuffers(buffer ...Buffer) {
 }
 
 // UnqueueBuffers removes the specified buffers from the buffer queue.
-func (s Source) UnqueueBuffers(buffer ...Buffer) {
-	alSourceUnqueueBuffers(s, buffer)
+func (s Source) UnqueueBuffer() Buffer {
+	buffers := make([]Buffer, 1)
+	alSourceUnqueueBuffers(s, buffers)
+	return buffers[0]
 }
 
 // ListenerGain returns the total gain applied to the final mix.

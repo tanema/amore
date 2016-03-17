@@ -112,7 +112,11 @@ func keyUp(key keyboard.Key) {
 	case keyboard.Key1:
 		use_shader = !use_shader
 	case keyboard.Key2:
-		bomb.Play()
+		if bomb.IsPlaying() {
+			bomb.Stop()
+		} else {
+			bomb.Play()
+		}
 	case keyboard.Key3:
 		img := gfx.NewScreenshot()
 		out, _ := os.Create("./output.png")

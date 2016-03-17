@@ -104,8 +104,7 @@ func (s *Source) update() bool {
 		pool.mutex.Lock()
 		defer pool.mutex.Unlock()
 		for i := s.source.BuffersProcessed(); i > 0; i-- {
-			var buffer al.Buffer
-			s.source.UnqueueBuffers(buffer)
+			buffer := s.source.UnqueueBuffer()
 			s.stream(buffer)
 			s.source.QueueBuffers(buffer)
 		}
@@ -365,16 +364,18 @@ func (s *Source) Play() bool {
 	if s.src_type == STATIC_SOURCE {
 		s.source.SetBuffer(s.staticBuffer)
 	} else if s.src_type == STREAM_SOURCE {
+		buffers := []al.Buffer{}
 		for i := 0; i < MAX_BUFFERS; i++ {
 			buffer := al.GenBuffers(1)[0]
-			s.stream(buffer)
-			s.streamBuffers = append(s.streamBuffers, buffer)
+			if s.stream(buffer) > 0 {
+				buffers = append(buffers, buffer)
+			}
 			if s.decoder.IsFinished() {
 				break
 			}
 		}
-		if len(s.streamBuffers) > 0 {
-			s.source.QueueBuffers(s.streamBuffers...)
+		if len(buffers) > 0 {
+			s.source.QueueBuffers(buffers...)
 		}
 	}
 
@@ -456,11 +457,9 @@ func (s *Source) Stop() {
 		al.StopSources(s.source)
 		if s.src_type == STREAM_SOURCE {
 			for i := queued; i > 0; i-- {
-				var buffer al.Buffer
-				s.source.UnqueueBuffers(buffer)
+				buffer := s.source.UnqueueBuffer()
 				al.DeleteBuffers(buffer)
 			}
-			s.streamBuffers = []al.Buffer{}
 		}
 		s.source.ClearBuffers()
 		pool.release(s)

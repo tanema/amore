@@ -135,7 +135,7 @@ func alSourceQueueBuffers(s Source, b []Buffer) {
 }
 
 func alSourceUnqueueBuffers(s Source, b []Buffer) {
-	C.alSourceUnqueueBuffers(C.ALuint(s), C.ALsizei(len(b)), (*C.ALuint)(unsafe.Pointer(&b[0])))
+	C.alSourceUnqueueBuffers(C.ALuint(s), C.ALsizei(1), (*C.ALuint)(unsafe.Pointer(&b[0])))
 }
 
 func alGetListenerf(k int) float32 {

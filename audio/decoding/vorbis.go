@@ -16,7 +16,6 @@ import (
 
 type vorbisDecoder struct {
 	decoderBase
-	data []byte
 }
 
 func (decoder *vorbisDecoder) read() error {
