@@ -1,7 +1,6 @@
 package audio
 
 import (
-	"fmt"
 	"github.com/tanema/amore/audio/al"
 )
 
@@ -101,30 +100,4 @@ func SetVelocity(x, y, z float32) {
 //	Sets the master volume
 func SetVolume(gain float32) {
 	al.SetListenerGain(gain)
-}
-
-func checkError(addon string) {
-	printError(al.Error(), "[ERROR] "+addon)
-	printError(al.DeviceError(), "[DEVICE] "+addon)
-}
-
-func printError(e int32, addon string) {
-	err := ""
-	switch e {
-	case al.NoError:
-		err = ""
-	case al.InvalidName:
-		err = "invalid name"
-	case al.InvalidEnum:
-		err = "invalid enum"
-	case al.InvalidValue:
-		err = "invalid value"
-	case al.InvalidOperation:
-		err = "invalid operation"
-	case al.OutOfMemory:
-		err = "out of memory"
-	}
-	if err != "" {
-		fmt.Println(addon + ": " + err)
-	}
 }

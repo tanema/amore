@@ -121,25 +121,9 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 	gl_state.projectionStack.Push()
 	gl_state.projectionStack.Load(mgl32.Ortho(0.0, float32(screen_width), 0.0, float32(screen_height), -1, 1))
 
-	//NO ES SUPPORT
-	//TODO transfer multiple canvas support to non es build file
-	//if canvases != nil && len(canvases) > 0 {
-	//// Attach the canvas textures to the active FBO and set up MRTs.
-	//drawbuffers := []uint32{gl.COLOR_ATTACHMENT0}
-	//// Attach the canvas textures to the currently bound framebuffer.
-	//for i := 0; i < len(canvases); i++ {
-	//buf := gl.COLOR_ATTACHMENT1 + uint32(i)
-	//gl.FramebufferTexture2D(gl.FRAMEBUFFER, buf, gl.TEXTURE_2D, canvases[i].GetHandle(), 0)
-	//drawbuffers = append(drawbuffers, buf)
-	//}
-	//// set up multiple render targets
-	//gl.DrawBuffers(int32(len(drawbuffers)), &drawbuffers[0])
-	//} else {
-	//// Make sure the FBO is only using a single draw buffer.
-	//gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
-	//}
-
+	canvas.attacheExtra(canvases)
 	canvas.attachedCanvases = canvases
+
 	return nil
 }
 

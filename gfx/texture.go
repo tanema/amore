@@ -73,10 +73,8 @@ func newTexture(width, height int32, mipmaps bool) *Texture {
 	}
 
 	if new_texture.mipmaps {
-		//TODO transfer to non es build file
-		// Auto-generate mipmaps every time the texture is modified, if
-		// glGenerateMipmap isn't supported.
-		//gl.TexParameteri(gl.TEXTURE_2D, gl.GENERATE_MIPMAP, gl.TRUE)
+		// Auto-generate mipmaps every time the texture is modified, if glGenerateMipmap isn't supported.
+		setTexMipMap()
 	}
 
 	new_texture.generateVerticies()
@@ -129,16 +127,6 @@ func (texture *Texture) generateMipmaps() {
 
 		gl.GenerateMipmap(gl.TEXTURE_2D)
 	}
-}
-
-func (texture *Texture) SetMipmapSharpness(sharpness float32) {
-	//TODO transfer to non es build file
-	//var maxMipmapSharpness float32
-	//gl.GetFloatv(gl.MAX_TEXTURE_LOD_BIAS, &maxMipmapSharpness)
-	//mipmapSharpness := math.Min(math.Max(float64(sharpness), -float64(maxMipmapSharpness+0.01)), float64(maxMipmapSharpness-0.01))
-	//bindTexture(texture.GetHandle())
-	// negative bias is sharper
-	//gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_LOD_BIAS, -float32(mipmapSharpness))
 }
 
 func (texture *Texture) SetWrap(wrap_s, wrap_t WrapMode) {

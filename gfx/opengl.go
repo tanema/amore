@@ -48,7 +48,7 @@ func InitContext(w, h int32) {
 	gl.GetIntegerv(gl.SCISSOR_BOX, states.back().scissorBox)
 	states.back().scissorBox[1] = gl_state.viewport[3] - (states.back().scissorBox[1] + states.back().scissorBox[3])
 
-	initMaxValues()
+	initMaxValues() //check shim code
 
 	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
 	gl.VertexAttrib4fv(ATTRIB_COLOR, glcolor)
@@ -61,8 +61,7 @@ func InitContext(w, h int32) {
 	// Auto-generated mipmaps should be the best quality possible
 	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
 	// Make sure antialiasing works when set elsewhere
-	//TODO non-ES support
-	//gl.Enable(gl.MULTISAMPLE)
+	enableMultisample() //check shim code
 	// Set pixel row alignment
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
@@ -94,21 +93,6 @@ func InitContext(w, h int32) {
 
 	//have to set this after loadallvolatile() so we are sure the  default shader is loaded
 	SetShader(nil)
-}
-
-func initMaxValues() {
-	//gl_state.framebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
-	//gl.GetFloatv(gl.POINT_SIZE, &states.back().pointSize)
-	//gl.GetFloatv(gl.MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy)
-	maxTextureSize = int32(gl.GetInteger(gl.MAX_TEXTURE_SIZE))
-	//gl.GetIntegerv(gl.MAX_SAMPLES, &maxRenderbufferSamples)
-	maxTextureUnits = int32(gl.GetInteger(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
-	gl_state.textureCounters = make([]int, maxTextureUnits)
-	//gl.GetIntegerv(gl.MAX_DRAW_BUFFERS, &maxRenderTargets)
-	//maxattachments := int32(gl.GetInteger(gl.MAX_COLOR_ATTACHMENTS))
-	//if maxattachments < maxRenderTargets {
-	//maxRenderTargets = maxattachments
-	//}
 }
 
 // Set the 'default' texture (id 0) as a repeating white pixel. Otherwise,
@@ -529,16 +513,6 @@ func SetPointSize(size float32) {
 
 func GetPointSize() float32 {
 	return states.back().pointSize
-}
-
-func SetWireframe(enable bool) {
-	//TODO non-es support
-	//if enable {
-	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
-	//} else {
-	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
-	//}
-	states.back().wireframe = enable
 }
 
 func IsWireframe() bool {
