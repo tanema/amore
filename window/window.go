@@ -1,3 +1,4 @@
+// The window Pacakge creates and manages the window and gl context.
 package window
 
 import (

@@ -1,3 +1,5 @@
+// The event pacakge manages and delegates all the events in the gl context to
+// thier respective handlers.
 package event
 
 import (

@@ -1,3 +1,7 @@
+/*
+The audio package is use for creating audio sources, managing/pooling resources,
+and playback of those audio sources.
+*/
 package audio
 
 import (

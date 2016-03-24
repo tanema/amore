@@ -1,10 +1,5 @@
-/*
- * flac: 	 github.com/eaburns/flac
- * vorbis: github.com/runningwild/gorbis || github.com/mccoyst/vorbis
- * wav: 	 github.com/youpy/go-wav
- * mp3: 	 github.com/tcolgate/mp3
- */
-
+// Package decoding is used for converting familiar file types to data usable by
+// OpenAL.
 package decoding
 
 import (

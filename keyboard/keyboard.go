@@ -1,3 +1,4 @@
+// The keyboard Pacakge handles the keyboard events on the gl context
 package keyboard
 
 import (
@@ -11,8 +12,12 @@ var (
 
 //Checks whether a certain key is down.
 func IsDown(key Key) bool {
+	return IsScancodeDown(GetScancodeFromKey(key))
+}
+
+//Checks whether a certain scancode is down.
+func IsScancodeDown(scancode Scancode) bool {
 	state := sdl.GetKeyboardState()
-	scancode := GetScancodeFromKey(key)
 	for _, code := range state {
 		if code == uint8(scancode) {
 			return true
@@ -29,22 +34,22 @@ func GetScancodeFromKey(key Key) Scancode {
 	return Scancode(sdl.GetScancodeFromKey(sdl.Keycode(key)))
 }
 
-////Enables or disables key repeat for love.keypressed.
+//Enables or disables key repeat for love.keypressed.
 func SetKeyRepeat(enabled bool) {
 	key_repeat = enabled
 }
 
-////Gets whether key repeat is enabled.
+//Gets whether key repeat is enabled.
 func HasKeyRepeat() bool {
 	return key_repeat
 }
 
-////Gets whether text input events are enabled.
+//Gets whether text input events are enabled.
 func HasTextInput() bool {
 	return sdl.IsTextInputActive() != false
 }
 
-////Enables or disables text input events.
+//Enables or disables text input events.
 func SetTextInput(enabled bool) {
 	if enabled {
 		sdl.StartTextInput()

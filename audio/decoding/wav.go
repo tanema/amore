@@ -1,4 +1,3 @@
-// See http://www.topherlee.com/software/pcm-tut-wavformat.html.
 package decoding
 
 import (

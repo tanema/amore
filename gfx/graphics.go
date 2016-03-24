@@ -1,3 +1,6 @@
+// The gfx Pacakge is used largly to simplify OpenGL calls and to manage state
+// of transformations. Anything meant to be drawn to screen will come from this
+// pacakge.
 package gfx
 
 import (

@@ -1,6 +1,4 @@
-// The bundle code is
-// Licensed under the Apache License, Version 2.0 (the "License");
-// as it came from github.com/rakyll/statik
+// The amore command for bunsling assets and helpers for quick project creation.
 package main
 
 import (

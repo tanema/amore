@@ -1,8 +1,7 @@
 /*
- * This package is meant to take care of all asset file opening
- * In the future this will be made to use a pre configured directory
- * also when put onto mobile it will be made to access thos appropriately as well
- */
+The file Package is meant to take care of all asset file opening so that file
+access is safe if trying to access a bundled file or a file from the disk
+*/
 package file
 
 import (

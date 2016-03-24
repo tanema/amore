@@ -1,3 +1,5 @@
+// The timer Package manages game timing by calling step so that the user can get
+// FPS, and delta time from this pacakge
 package timer
 
 import (

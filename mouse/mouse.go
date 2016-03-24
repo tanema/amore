@@ -1,3 +1,4 @@
+// The mouse Package handles the mouse events from the gl context
 package mouse
 
 import (

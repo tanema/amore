@@ -1,3 +1,4 @@
+// The joystick Package handles joystick, and gamepad events on the gl context
 package joystick
 
 import (

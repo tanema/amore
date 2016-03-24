@@ -43,6 +43,18 @@ type Source struct {
 	streamBuffers     []al.Buffer
 }
 
+// State indicates the current playing state of the player.
+type State int
+
+//go:generate stringer -type=State
+const (
+	Unknown = State(0)
+	Initial = State(al.Initial)
+	Playing = State(al.Playing)
+	Paused  = State(al.Paused)
+	Stopped = State(al.Stopped)
+)
+
 //	Creates a new Source from a file, SoundData, or Decoder
 func NewStaticSource(filepath string) (*Source, error) { return NewSourceType(filepath, STATIC_SOURCE) }
 func NewStreamSource(filepath string) (*Source, error) { return NewSourceType(filepath, STREAM_SOURCE) }

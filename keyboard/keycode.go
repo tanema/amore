@@ -4,7 +4,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-//// Key corresponds to a keyboard key.
+// Key corresponds to a keyboard key.
 type Key sdl.Keycode
 
 const (

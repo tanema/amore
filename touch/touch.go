@@ -1,3 +1,4 @@
+// The touch Pacakge handles touch events in the gl context
 package touch
 
 import (

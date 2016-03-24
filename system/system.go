@@ -1,3 +1,5 @@
+// The system Pacakge is a utility pacakge meant to interface with system operations
+// like opening an application or setting the clipboard text
 package system
 
 import (
