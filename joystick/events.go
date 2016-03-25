@@ -1,33 +1,33 @@
 package joystick
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/tanema/amore/window/ui"
 )
 
-func Delegate(event sdl.Event) {
+func Delegate(event ui.Event) {
 	switch e := event.(type) {
-	case *sdl.JoyAxisEvent:
-	case *sdl.JoyHatEvent:
-	case *sdl.ControllerAxisEvent:
-	case *sdl.ControllerButtonEvent:
+	case *ui.JoyAxisEvent:
+	case *ui.JoyHatEvent:
+	case *ui.ControllerAxisEvent:
+	case *ui.ControllerButtonEvent:
 		switch e.Type {
-		case sdl.CONTROLLERBUTTONDOWN:
-		case sdl.CONTROLLERBUTTONUP:
+		case ui.CONTROLLERBUTTONDOWN:
+		case ui.CONTROLLERBUTTONUP:
 		}
-	case *sdl.JoyDeviceEvent:
+	case *ui.JoyDeviceEvent:
 		switch e.Type {
-		case sdl.JOYDEVICEADDED:
+		case ui.JOYDEVICEADDED:
 			addJoystick(int(e.Which))
-		case sdl.JOYDEVICEREMOVED:
+		case ui.JOYDEVICEREMOVED:
 			removeJoystick(getJoystickFromID(int(e.Which)))
 		}
-	case *sdl.ControllerDeviceEvent:
+	case *ui.ControllerDeviceEvent:
 		switch e.Type {
-		case sdl.CONTROLLERDEVICEADDED:
+		case ui.CONTROLLERDEVICEADDED:
 			addJoystick(int(e.Which))
-		case sdl.CONTROLLERDEVICEREMOVED:
+		case ui.CONTROLLERDEVICEREMOVED:
 			removeJoystick(getJoystickFromID(int(e.Which)))
-		case sdl.CONTROLLERDEVICEREMAPPED:
+		case ui.CONTROLLERDEVICEREMAPPED:
 			println("joystick event: controller device remapped")
 		}
 	}

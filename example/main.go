@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"image/png"
 	"math"
-	"os"
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/audio"
@@ -35,7 +33,7 @@ var (
 )
 
 func main() {
-	window.GetCurrent().SetMouseVisible(false)
+	window.SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
 
 	canvas = gfx.NewCanvas(800, 600)
@@ -44,12 +42,8 @@ func main() {
 	ttf = gfx.NewFont("fonts/arialbd.ttf", 20)
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 	image_font.SetFallbacks(ttf)
-	shader = gfx.NewShader("shaders/blackandwhite.glsl")
-	var er error
-	bomb, er = audio.NewSource("audio/bomb.wav")
-	if er != nil {
-		panic(er)
-	}
+	shader, _ = gfx.NewShader("shaders/blackandwhite.glsl")
+	bomb, _ = audio.NewSource("audio/bomb.wav")
 	bomb.SetLooping(true)
 	text, _ = gfx.NewColorTextExt(ttf,
 		[]string{file.ReadString("text/lorem.txt"), file.ReadString("text/lorem.txt")},
@@ -65,7 +59,7 @@ func main() {
 		})
 
 	particle, _ := gfx.NewImage("images/particle.png")
-	psystem = gfx.NewParticleSystem(particle, 10)
+	psystem, _ = gfx.NewParticleSystem(particle, 10)
 	psystem.SetParticleLifetime(2, 5) // Particles live at least 2s and at most 5s.
 	psystem.SetEmissionRate(5)
 	psystem.SetSizeVariation(1)
@@ -118,9 +112,7 @@ func keyUp(key keyboard.Key) {
 			bomb.Play()
 		}
 	case keyboard.Key3:
-		img := gfx.NewScreenshot()
-		out, _ := os.Create("./output.png")
-		png.Encode(out, img)
+		println(window.Confirm("test", "alert"))
 	case keyboard.Key4:
 		triangle_mesh.SetVertexMap([]uint32{0, 1, 2})
 	case keyboard.Key5:
@@ -134,7 +126,7 @@ func keyUp(key keyboard.Key) {
 
 func update(deltaTime float32) {
 	mx, my = mouse.GetPosition()
-	mx, my = window.GetCurrent().PixelToWindowCoords(mx, my)
+	mx, my = window.PixelToWindowCoords(mx, my)
 	psystem.Update(deltaTime)
 }
 

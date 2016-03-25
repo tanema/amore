@@ -24,12 +24,16 @@ type Shader struct {
 	activeTexUnits []gl.Texture
 }
 
-func NewShader(paths ...string) *Shader {
+func NewShader(paths ...string) (*Shader, error) {
 	new_shader := &Shader{}
 	code := pathsToCode(paths...)
-	new_shader.vertex_code, new_shader.pixel_code = shaderCodeToGLSL(code...)
+	var err error
+	new_shader.vertex_code, new_shader.pixel_code, err = shaderCodeToGLSL(code...)
+	if err != nil {
+		return nil, err
+	}
 	registerVolatile(new_shader)
-	return new_shader
+	return new_shader, nil
 }
 
 func (shader *Shader) loadVolatile() bool {
@@ -239,7 +243,10 @@ func (shader *Shader) SendTexture(name string, texture iTexture) error {
 	defer states.back().shader.attach(false)
 
 	gltex := texture.GetHandle()
-	texunit := shader.getTextureUnit(name)
+	texunit, e := shader.getTextureUnit(name)
+	if e != nil {
+		return e
+	}
 
 	uniform, err := shader.getUniformAndCheck(name, UNIFORM_SAMPLER, 1)
 	if err != nil {
@@ -261,10 +268,10 @@ func (shader *Shader) SendTexture(name string, texture iTexture) error {
 	return nil
 }
 
-func (shader *Shader) getTextureUnit(name string) int {
+func (shader *Shader) getTextureUnit(name string) (int, error) {
 	unit, found := shader.texUnitPool[name]
 	if found {
-		return unit
+		return unit, nil
 	}
 
 	texunit := -1
@@ -286,15 +293,15 @@ func (shader *Shader) getTextureUnit(name string) int {
 		}
 
 		if texunit == -1 {
-			panic("No more texture units available for shader.")
+			return 0, fmt.Errorf("No more texture units available for shader.")
 		}
 	}
 
 	shader.texUnitPool[name] = texunit
-	return shader.texUnitPool[name]
+	return shader.texUnitPool[name], nil
 }
 
-func createVertexCode(code string) string {
+func createVertexCode(code string) (string, error) {
 	codes := struct {
 		Syntax, Header, Uniforms, Code, Footer string
 	}{
@@ -308,13 +315,13 @@ func createVertexCode(code string) string {
 	var template_writer bytes.Buffer
 	err := SHADER_TEMPLATE.Execute(&template_writer, codes)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return template_writer.String()
+	return template_writer.String(), nil
 }
 
-func createPixelCode(code string, is_multicanvas bool) string {
+func createPixelCode(code string, is_multicanvas bool) (string, error) {
 	codes := struct {
 		Syntax, Header, Uniforms, Line, Footer, Code string
 	}{
@@ -333,10 +340,10 @@ func createPixelCode(code string, is_multicanvas bool) string {
 	var template_writer bytes.Buffer
 	err := SHADER_TEMPLATE.Execute(&template_writer, codes)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return template_writer.String()
+	return template_writer.String(), nil
 }
 
 func isVertexCode(code string) bool {
@@ -372,7 +379,7 @@ func pathsToCode(paths ...string) []string {
 	return code
 }
 
-func shaderCodeToGLSL(code ...string) (string, string) {
+func shaderCodeToGLSL(code ...string) (string, string, error) {
 	vertexcode := DEFAULT_VERTEX_SHADER_CODE
 	pixelcode := DEFAULT_PIXEL_SHADER_CODE
 	is_multicanvas := false // whether pixel code has "effects" function instead of "effect"
@@ -389,7 +396,17 @@ func shaderCodeToGLSL(code ...string) (string, string) {
 		}
 	}
 
-	return createVertexCode(vertexcode), createPixelCode(pixelcode, is_multicanvas)
+	vc, verr := createVertexCode(vertexcode)
+	if verr != nil {
+		return "", "", verr
+	}
+
+	pc, perr := createPixelCode(pixelcode, is_multicanvas)
+	if perr != nil {
+		return "", "", perr
+	}
+
+	return vc, pc, nil
 }
 
 func compileCode(shaderType gl.Enum, src string) gl.Shader {

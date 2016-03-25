@@ -1,6 +1,6 @@
 // +build darwin, !js
 
-package window
+package ui
 
 /*
 #cgo CFLAGS: -x objective-c -fobjc-arc

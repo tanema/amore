@@ -8,7 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32/matstack"
 	"github.com/goxjs/gl"
 
-	"github.com/tanema/amore/window"
+	"github.com/tanema/amore/window/ui"
 )
 
 var (
@@ -30,13 +30,13 @@ var (
 	states = displayStateStack{newDisplayState()}
 )
 
-func InitContext(w, h int32) {
+func InitContext(w, h int32, ctx ui.Context) {
 	if gl_state.initialized {
 		return
 	}
 
 	// Okay, setup OpenGL.
-	gl.ContextWatcher.OnMakeCurrent(nil)
+	gl.ContextWatcher.OnMakeCurrent(ctx)
 
 	//Get system info
 	opengl_version = gl.GetString(gl.VERSION)
@@ -85,7 +85,7 @@ func InitContext(w, h int32) {
 	setTextureUnit(0)
 
 	// We always need a default shader.
-	defaultShader = NewShader()
+	defaultShader, _ = NewShader()
 
 	gl_state.initialized = true
 
@@ -289,7 +289,7 @@ func Present() {
 	// Make sure we don't have a canvas active.
 	canvases := states.back().canvases
 	SetCanvas()
-	window.GetCurrent().SwapBuffers()
+	ui.CurrentWindow.SwapBuffers()
 	// Restore the currently active canvas, if there is one.
 	SetCanvas(canvases...)
 }
@@ -297,7 +297,7 @@ func Present() {
 func IsActive() bool {
 	// The graphics module is only completely 'active' if there's a window, a
 	// context, and the active variable is set.
-	return gl_state.active && isCreated() && window.GetCurrent().IsOpen()
+	return gl_state.active && isCreated() && ui.CurrentWindow != nil
 }
 
 func SetActive(enable bool) {
@@ -327,9 +327,9 @@ func Rotate(angle float32) {
 	gl_state.viewStack.LeftMul(mgl32.HomogRotate3D(angle, mgl32.Vec3{0, 0, 1}))
 }
 
-func Scale(args ...float32) {
+func Scale(args ...float32) error {
 	if args == nil || len(args) == 0 {
-		panic("not enough params passed to scale call")
+		return fmt.Errorf("not enough params passed to scale call")
 	}
 	var sx, sy float32
 	sx = args[0]
@@ -342,11 +342,12 @@ func Scale(args ...float32) {
 	gl_state.viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
 
 	states.back().pixelSize *= (2.0 / (mgl32.Abs(sx) + mgl32.Abs(sy)))
+	return nil
 }
 
-func Shear(args ...float32) {
+func Shear(args ...float32) error {
 	if args == nil || len(args) == 0 {
-		panic("not enough params passed to scale call")
+		return fmt.Errorf("not enough params passed to scale call")
 	}
 	var kx, ky float32
 	kx = args[0]
@@ -357,6 +358,7 @@ func Shear(args ...float32) {
 	}
 
 	gl_state.viewStack.LeftMul(mgl32.ShearX3D(kx, ky))
+	return nil
 }
 
 func Push() {
@@ -369,7 +371,7 @@ func Pop() {
 	states.pop()
 }
 
-func SetScissor(args ...int32) {
+func SetScissor(args ...int32) error {
 	if args == nil {
 		gl.Disable(gl.SCISSOR_TEST)
 		states.back().scissor = false
@@ -386,8 +388,9 @@ func SetScissor(args ...int32) {
 		states.back().scissorBox = []int32{x, y, width, height}
 		states.back().scissor = true
 	} else {
-		panic("incorrect number of arguments to setscissor")
+		return fmt.Errorf("incorrect number of arguments to setscissor")
 	}
+	return nil
 }
 
 func IntersectScissor(x, y, width, height int32) {

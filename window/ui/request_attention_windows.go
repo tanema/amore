@@ -1,6 +1,6 @@
 // +build windows, !js
 
-package window
+package ui
 
 /*
 #cgo CFLAGS: -std=c99

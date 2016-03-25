@@ -1,6 +1,7 @@
 package gfx
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -88,9 +89,9 @@ func calculate_variation(inner, outer, v float32) float32 {
 	return low*(1-r) + high*r
 }
 
-func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
+func NewParticleSystem(texture iTexture, size int) (*ParticleSystem, error) {
 	if size == 0 || size > MAX_PARTICLES {
-		panic("Invalid ParticleSystem size.")
+		return nil, fmt.Errorf("Invalid ParticleSystem size.")
 	}
 	new_ps := &ParticleSystem{
 		texture:                texture,
@@ -107,7 +108,7 @@ func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
 		quadIndices:            newQuadIndices(size),
 	}
 
-	return new_ps
+	return new_ps, nil
 }
 
 func (system *ParticleSystem) resetOffset() {
@@ -119,9 +120,9 @@ func (system *ParticleSystem) resetOffset() {
 	}
 }
 
-func (system *ParticleSystem) SetBufferSize(size int) {
+func (system *ParticleSystem) SetBufferSize(size int) error {
 	if size == 0 || size > MAX_PARTICLES {
-		panic("Invalid buffer size")
+		return fmt.Errorf("Invalid buffer size")
 	}
 	if len(system.particles) > int(size) {
 		system.particles = system.particles[:int(size)]
@@ -131,6 +132,7 @@ func (system *ParticleSystem) SetBufferSize(size int) {
 	system.quadIndices = newQuadIndices(size)
 	system.life = system.lifetime
 	system.emitCounter = 0
+	return nil
 }
 
 func (system *ParticleSystem) GetBufferSize() int {
@@ -231,11 +233,12 @@ func (system *ParticleSystem) GetInsertMode() ParticleInsertion {
 	return system.insertMode
 }
 
-func (system *ParticleSystem) SetEmissionRate(rate float32) {
+func (system *ParticleSystem) SetEmissionRate(rate float32) error {
 	if rate < 0.0 {
-		panic("Invalid emission rate")
+		return fmt.Errorf("Invalid emission rate")
 	}
 	system.emissionRate = rate
+	return nil
 }
 
 func (system *ParticleSystem) GetEmissionRate() float32 {

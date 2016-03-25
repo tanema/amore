@@ -16,10 +16,12 @@ import (
 	"github.com/tanema/amore/gfx"
 	"github.com/tanema/amore/timer"
 	"github.com/tanema/amore/window"
+	"github.com/tanema/amore/window/ui"
 )
 
 var (
-	current_window *window.Window
+	currentWindow  *ui.Window
+	currentContext ui.Context
 )
 
 func init() {
@@ -31,12 +33,15 @@ func init() {
 // loop. As such this function should be put as the last call in your main function.
 // update and draw will be called synchronously because calls to OpenGL that are
 // not on the main thread will crash your program.
-func Start(update func(float32), draw func()) {
-	current_window = window.GetCurrent()
-	defer current_window.Destroy()
-	gfx.InitContext(current_window.GetWidth(), current_window.GetHeight())
-	defer gfx.DeInit()
-	for !current_window.ShouldClose() {
+func Start(update func(float32), draw func()) error {
+	var err error
+	currentWindow, currentContext, err = window.Init()
+	defer currentWindow.Destroy()
+	if err != nil {
+		return err
+	}
+
+	for !window.ShouldClose() {
 		timer.Step()
 		update(timer.GetDelta())
 		gfx.ClearC(gfx.GetBackgroundColorC())
@@ -45,11 +50,13 @@ func Start(update func(float32), draw func()) {
 		gfx.Present()
 		event.Poll()
 	}
+
+	return nil
 }
 
 // Quit will prepare the window to close at the end of the next game loop. This
 // will allow a nice clean destruction of all object that are allocated in OpenGL,
 // SDL, and OpenAl
 func Quit() {
-	current_window.SetShouldClose(true)
+	window.SetShouldClose(true)
 }

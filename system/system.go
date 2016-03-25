@@ -6,24 +6,24 @@ import (
 	"runtime"
 
 	"github.com/skratchdot/open-golang/open"
-	"github.com/veandco/go-sdl2/sdl"
+
+	"github.com/tanema/amore/window/ui"
 )
 
 func GetClipboardText() (string, error) {
-	return sdl.GetClipboardText()
+	return ui.GetClipboardText()
 }
 
 func SetClipboardText(str string) error {
-	return sdl.SetClipboardText(str)
+	return ui.SetClipboardText(str)
 }
 
 func GetOS() string {
 	return runtime.GOOS
 }
 
-func GetPowerInfo() (PowerState, int, int) {
-	state, seconds, percent := sdl.GetPowerInfo()
-	return PowerState(state), seconds, percent
+func GetPowerInfo() (string, int, int) {
+	return ui.GetPowerInfo()
 }
 
 func GetProcessorCount() int {

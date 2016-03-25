@@ -1,7 +1,7 @@
 package keyboard
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/tanema/amore/window/ui"
 )
 
 type KeyPressCB func(key Key, is_repeat bool)
@@ -21,9 +21,9 @@ var (
 	text_edit_cb   = text_edit_default
 )
 
-func Delegate(event sdl.Event) {
+func Delegate(event ui.Event) {
 	switch e := event.(type) {
-	case *sdl.KeyDownEvent:
+	case *ui.KeyDownEvent:
 		is_repeat := (e.Repeat == 1)
 
 		if is_repeat && !key_repeat {
@@ -32,12 +32,12 @@ func Delegate(event sdl.Event) {
 
 		key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))
 		key_press_cb(key, is_repeat)
-	case *sdl.KeyUpEvent:
+	case *ui.KeyUpEvent:
 		key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))
 		key_release_cb(key)
-	case *sdl.TextEditingEvent:
+	case *ui.TextEditingEvent:
 		text_edit_cb(string(e.Text[:]), e.Start, e.Length)
-	case *sdl.TextInputEvent:
+	case *ui.TextInputEvent:
 		text_input_cb(string(e.Text[:]))
 	}
 }

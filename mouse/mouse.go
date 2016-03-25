@@ -2,20 +2,13 @@
 package mouse
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
-
 	"github.com/tanema/amore/window"
+	"github.com/tanema/amore/window/ui"
 )
 
 //Checks whether a certain button is down.
-func IsDown(button Button) bool {
-	_, _, state := sdl.GetMouseState()
-
-	if (uint32(button) & state) == 1 {
-		return true
-	}
-
-	return false
+func IsDown(button MouseButton) bool {
+	return ui.IsMouseDown(ui.MouseButton(button))
 }
 
 //Returns the current x-position of the mouse.
@@ -44,44 +37,60 @@ func SetY(y float32) {
 
 //Returns the current position of the mouse.
 func GetPosition() (float32, float32) {
-	return window.GetCurrent().GetMousePosition()
+	return window.GetMousePosition()
 }
 
 //Sets the current position of the mouse.
 func SetPosition(x, y float32) {
-	window.GetCurrent().SetMousePosition(x, y)
+	window.SetMousePosition(x, y)
 }
 
 //Gets whether relative mode is enabled for the mouse.
 func GetRelativeMode() bool {
-	return sdl.GetRelativeMouseMode() != false
+	return ui.GetRelativeMouseMode()
 }
 
 //	Sets whether relative mode is enabled for the mouse.
 func SetRelativeMode(isvisible bool) {
-	sdl.SetRelativeMouseMode(isvisible)
+	ui.SetRelativeMouseMode(isvisible)
 }
 
 //Checks if the mouse is grabbed.
 func IsGrabbed() bool {
-	return window.GetCurrent().IsMouseGrabbed()
+	return window.IsMouseGrabbed()
 }
 
 //Grabs the mouse and confines it to the window.
 func SetGrabbed(enabled bool) {
-	window.GetCurrent().SetMouseGrab(enabled)
+	window.SetMouseGrab(enabled)
 }
 
 //Checks if the cursor is visible.
 func IsVisible() bool {
-	return sdl.ShowCursor(sdl.QUERY) == sdl.ENABLE
+	return ui.GetMouseVisible()
 }
 
 //Sets the current visibility of the cursor.
 func SetVisible(isvisible bool) {
-	state := sdl.ENABLE
-	if isvisible == false {
-		state = sdl.DISABLE
-	}
-	sdl.ShowCursor(state)
+	ui.SetMouseVisible(isvisible)
+}
+
+//Creates a new hardware Cursor object from an image.
+func NewCursor(filename string, hx, hy int) (ui.Cursor, error) {
+	return ui.NewCursor(filename, hx, hy)
+}
+
+//Sets the current mouse cursor.
+func SetCursor(cursor ui.Cursor) {
+	ui.SetCursor(cursor)
+}
+
+//Gets the current Cursor.
+func GetCursor() ui.Cursor {
+	return ui.GetCursor()
+}
+
+//Gets a Cursor object representing a system-native hardware cursor.
+func GetSystemCursor(name string) ui.Cursor {
+	return ui.GetSystemCursor(name)
 }

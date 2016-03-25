@@ -2,7 +2,7 @@
 package keyboard
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/tanema/amore/window/ui"
 )
 
 var (
@@ -12,26 +12,20 @@ var (
 
 //Checks whether a certain key is down.
 func IsDown(key Key) bool {
-	return IsScancodeDown(GetScancodeFromKey(key))
+	return ui.IsKeyDown(ui.Keycode(key))
 }
 
 //Checks whether a certain scancode is down.
 func IsScancodeDown(scancode Scancode) bool {
-	state := sdl.GetKeyboardState()
-	for _, code := range state {
-		if code == uint8(scancode) {
-			return true
-		}
-	}
-	return false
+	return ui.IsScancodeDown(ui.Scancode(scancode))
 }
 
 func GetKeyFromScancode(code Scancode) Key {
-	return Key(sdl.GetKeyFromScancode(sdl.Scancode(code)))
+	return Key(ui.GetKeyFromScancode(ui.Scancode(code)))
 }
 
 func GetScancodeFromKey(key Key) Scancode {
-	return Scancode(sdl.GetScancodeFromKey(sdl.Keycode(key)))
+	return Scancode(ui.GetScancodeFromKey(ui.Keycode(key)))
 }
 
 //Enables or disables key repeat for love.keypressed.
@@ -46,14 +40,10 @@ func HasKeyRepeat() bool {
 
 //Gets whether text input events are enabled.
 func HasTextInput() bool {
-	return sdl.IsTextInputActive() != false
+	return ui.HasTextInput()
 }
 
 //Enables or disables text input events.
 func SetTextInput(enabled bool) {
-	if enabled {
-		sdl.StartTextInput()
-	} else {
-		sdl.StopTextInput()
-	}
+	ui.SetTextInput(enabled)
 }

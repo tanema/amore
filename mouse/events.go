@@ -1,17 +1,17 @@
 package mouse
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/tanema/amore/window/ui"
 )
 
-type ButtonPressCB func(x, y float32, button Button)
-type ButtonReleaseCB func(x, y float32, button Button)
+type ButtonPressCB func(x, y float32, button MouseButton)
+type ButtonReleaseCB func(x, y float32, button MouseButton)
 type MoveCB func(x, y, dx, dy float32)
 type FocusCb func(has_focus bool)
 
 var (
-	button_press_default   ButtonPressCB   = func(x, y float32, button Button) {}
-	button_release_default ButtonReleaseCB = func(x, y float32, button Button) {}
+	button_press_default   ButtonPressCB   = func(x, y float32, button MouseButton) {}
+	button_release_default ButtonReleaseCB = func(x, y float32, button MouseButton) {}
 	move_default           MoveCB          = func(x, y, dx, dy float32) {}
 	focus_default          FocusCb         = func(has_focus bool) {}
 
@@ -21,20 +21,20 @@ var (
 	focus_cb          = focus_default
 )
 
-func Delegate(event sdl.Event) {
+func Delegate(event ui.Event) {
 	switch e := event.(type) {
-	case *sdl.MouseMotionEvent:
+	case *ui.MouseMotionEvent:
 		move_cb(float32(e.X), float32(e.Y), float32(e.XRel), float32(e.YRel))
-	case *sdl.MouseButtonEvent:
+	case *ui.MouseButtonEvent:
 		switch e.Type {
-		case sdl.MOUSEBUTTONDOWN:
-			button_press_cb(float32(e.X), float32(e.Y), Button(e.Button))
-		case sdl.MOUSEBUTTONUP:
-			button_release_cb(float32(e.X), float32(e.Y), Button(e.Button))
+		case ui.MOUSEBUTTONDOWN:
+			button_press_cb(float32(e.X), float32(e.Y), MouseButton(e.Button))
+		case ui.MOUSEBUTTONUP:
+			button_release_cb(float32(e.X), float32(e.Y), MouseButton(e.Button))
 		}
-	case *sdl.WindowEvent:
-		focus_cb(e.Type == sdl.WINDOWEVENT_ENTER)
-	case *sdl.MouseWheelEvent:
+	case *ui.WindowEvent:
+		focus_cb(e.Type == ui.WINDOWEVENT_ENTER)
+	case *ui.MouseWheelEvent:
 	}
 }
 

@@ -1,64 +1,63 @@
-// The event pacakge manages and delegates all the events in the gl context to
-// thier respective handlers.
 package event
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
-
 	"github.com/tanema/amore/gfx"
 	"github.com/tanema/amore/joystick"
 	"github.com/tanema/amore/keyboard"
 	"github.com/tanema/amore/mouse"
 	"github.com/tanema/amore/touch"
 	"github.com/tanema/amore/window"
+	"github.com/tanema/amore/window/ui"
 )
 
 func Poll() {
-	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+	for event := ui.PollEvent(); event != nil; event = ui.PollEvent() {
 		switch e := event.(type) {
-		case *sdl.WindowEvent:
+		case *ui.WindowEvent:
 			delegateWindowEvent(event, e)
-		case *sdl.KeyDownEvent, *sdl.KeyUpEvent, *sdl.TextEditingEvent, *sdl.TextInputEvent:
+		case *ui.KeyDownEvent, *ui.KeyUpEvent, *ui.TextEditingEvent, *ui.TextInputEvent:
 			keyboard.Delegate(e)
-		case *sdl.MouseMotionEvent, *sdl.MouseButtonEvent, *sdl.MouseWheelEvent:
+		case *ui.MouseMotionEvent, *ui.MouseButtonEvent, *ui.MouseWheelEvent:
 			mouse.Delegate(e)
-		case *sdl.JoyAxisEvent, *sdl.JoyBallEvent, *sdl.JoyHatEvent,
-			*sdl.JoyButtonEvent, *sdl.JoyDeviceEvent, *sdl.ControllerAxisEvent,
-			*sdl.ControllerButtonEvent, *sdl.ControllerDeviceEvent:
+		case *ui.JoyAxisEvent, *ui.JoyBallEvent, *ui.JoyHatEvent,
+			*ui.JoyButtonEvent, *ui.JoyDeviceEvent, *ui.ControllerAxisEvent,
+			*ui.ControllerButtonEvent, *ui.ControllerDeviceEvent:
 			joystick.Delegate(e)
-		case *sdl.TouchFingerEvent:
+		case *ui.TouchFingerEvent:
 			touch.Delegate(e)
-		case *sdl.QuitEvent:
-			window.GetCurrent().SetShouldClose(true)
-		case *sdl.DropEvent, *sdl.RenderEvent, *sdl.UserEvent,
-			*sdl.ClipboardEvent, *sdl.OSEvent, *sdl.CommonEvent:
+		case *ui.QuitEvent:
+			window.SetShouldClose(true)
+		case *ui.DropEvent, *ui.RenderEvent, *ui.UserEvent,
+			*ui.ClipboardEvent, *ui.OSEvent, *ui.CommonEvent:
 			//discard not used in amore yet
 		}
 	}
 }
 
-func delegateWindowEvent(event sdl.Event, e *sdl.WindowEvent) {
+func delegateWindowEvent(event ui.Event, e *ui.WindowEvent) {
 	switch e.Type {
-	case sdl.WINDOWEVENT_NONE:
+	case ui.WINDOWEVENT_NONE:
 		return
-	case sdl.WINDOWEVENT_ENTER, sdl.WINDOWEVENT_LEAVE:
+	case ui.WINDOWEVENT_ENTER, ui.WINDOWEVENT_LEAVE:
 		mouse.Delegate(event)
 	default:
 		switch e.Event {
-		case sdl.WINDOWEVENT_NONE:
+		case ui.WINDOWEVENT_NONE:
 			return
-		case sdl.WINDOWEVENT_ENTER, sdl.WINDOWEVENT_LEAVE:
+		case ui.WINDOWEVENT_ENTER, ui.WINDOWEVENT_LEAVE:
 			mouse.Delegate(event)
-		case sdl.WINDOWEVENT_SHOWN, sdl.WINDOWEVENT_FOCUS_GAINED:
+		case ui.WINDOWEVENT_SHOWN, ui.WINDOWEVENT_FOCUS_GAINED:
 			gfx.SetActive(true)
-		case sdl.WINDOWEVENT_HIDDEN, sdl.WINDOWEVENT_FOCUS_LOST:
+			ui.DisableScreenSaver()
+		case ui.WINDOWEVENT_HIDDEN, ui.WINDOWEVENT_FOCUS_LOST:
 			gfx.SetActive(false)
-		case sdl.WINDOWEVENT_RESIZED, sdl.WINDOWEVENT_SIZE_CHANGED:
-			w, h := window.GetCurrent().GetDrawableSize()
-			gfx.SetViewportSize(w, h)
-		case sdl.WINDOWEVENT_CLOSE:
-			window.GetCurrent().SetShouldClose(true)
+			ui.EnableScreenSaver()
+		case ui.WINDOWEVENT_RESIZED, ui.WINDOWEVENT_SIZE_CHANGED:
+			w, h := window.GetDrawableSize()
+			gfx.SetViewportSize(int32(w), int32(h))
+			window.OnSizeChanged(e.Data1, e.Data2)
+		case ui.WINDOWEVENT_CLOSE:
+			window.SetShouldClose(true)
 		}
-		window.GetCurrent().Delegate(e)
 	}
 }

@@ -1,15 +1,15 @@
 package mouse
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
+	"github.com/tanema/amore/window/ui"
 )
 
-type Button uint32
+type MouseButton ui.MouseButton
 
 const (
-	LeftButton   Button = sdl.BUTTON_LEFT
-	MiddleButton Button = sdl.BUTTON_MIDDLE
-	RightButton  Button = sdl.BUTTON_RIGHT
-	X1Button     Button = sdl.BUTTON_X1
-	X2Button     Button = sdl.BUTTON_X2
+	LeftButton   MouseButton = MouseButton(ui.BUTTON_LEFT)
+	MiddleButton MouseButton = MouseButton(ui.BUTTON_MIDDLE)
+	RightButton  MouseButton = MouseButton(ui.BUTTON_RIGHT)
+	X1Button     MouseButton = MouseButton(ui.BUTTON_X1)
+	X2Button     MouseButton = MouseButton(ui.BUTTON_X2)
 )

@@ -1,6 +1,7 @@
 package audio
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -296,13 +297,14 @@ func (s *Source) SetCone(innerAngle, outerAngle, outerVolume float32) {
 }
 
 //Sets the direction of the Source.
-func (s *Source) SetDirection(x, y, z float32) {
+func (s *Source) SetDirection(x, y, z float32) error {
 	if s.GetChannels() > 1 {
-		panic("This spatial audio functionality is only available for mono Sources. Ensure the Source is not multi-channel before calling this function.")
+		return fmt.Errorf("This spatial audio functionality is only available for mono Sources. Ensure the Source is not multi-channel before calling this function.")
 	}
 
 	s.direction = al.Vector{x, y, z}
 	s.reset()
+	return nil
 }
 
 //Sets whether the Source should loop.
