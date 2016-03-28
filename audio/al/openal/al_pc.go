@@ -4,7 +4,7 @@
 
 // +build darwin linux,!android
 
-package al
+package openal
 
 /*
 #cgo darwin   CFLAGS:  -DGOOS_darwin

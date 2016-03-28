@@ -7,7 +7,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/tanema/amore/audio/al"
-	"github.com/tanema/amore/audio/decoding"
 )
 
 type SourceType int
@@ -23,14 +22,14 @@ const (
 )
 
 type Source struct {
-	decoder           decoding.Decoder
+	decoder           al.Decoder
 	source            al.Source
 	src_type          SourceType
 	pitch             float32
 	volume            float32
-	position          al.Vector
-	velocity          al.Vector
-	direction         al.Vector
+	position          [3]float32
+	velocity          [3]float32
+	direction         [3]float32
 	relative          bool
 	looping           bool
 	paused            bool
@@ -65,7 +64,7 @@ func NewSourceType(filepath string, source_type SourceType) (*Source, error) {
 		createPool()
 	}
 
-	decoder, err := decoding.Decode(filepath)
+	decoder, err := al.Decode(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -80,23 +79,23 @@ func NewSourceType(filepath string, source_type SourceType) (*Source, error) {
 		rolloffFactor:     1,
 		maxDistance:       MAX_ATTENUATION_DISTANCE,
 		cone:              al.Cone{0, 0, 0},
-		position:          al.Vector{},
-		velocity:          al.Vector{},
-		direction:         al.Vector{},
+		position:          [3]float32{},
+		velocity:          [3]float32{},
+		direction:         [3]float32{},
 	}
 
 	if source_type == STATIC_SOURCE {
-		new_source.staticBuffer = al.GenBuffers(1)[0]
+		new_source.staticBuffer = al.CreateBuffer()
 		new_source.staticBuffer.BufferData(decoder.GetFormat(), decoder.GetData(), decoder.GetSampleRate())
 	} else if source_type == STREAM_SOURCE {
-		new_source.streamBuffers = []al.Buffer{} //al.GenBuffers(MAX_BUFFERS)
+		new_source.streamBuffers = []al.Buffer{}
 	}
 
 	return new_source, nil
 }
 
 func (s *Source) isValid() bool {
-	return s.source != 0
+	return s.source.IsValid()
 }
 
 func (s *Source) IsFinished() bool {
@@ -119,7 +118,7 @@ func (s *Source) update() bool {
 		for i := s.source.BuffersProcessed(); i > 0; i-- {
 			buffer := s.source.UnqueueBuffer()
 			s.stream(buffer)
-			s.source.QueueBuffers(buffer)
+			s.source.QueueBuffer(buffer)
 		}
 		return true
 	}
@@ -302,7 +301,7 @@ func (s *Source) SetDirection(x, y, z float32) error {
 		return fmt.Errorf("This spatial audio functionality is only available for mono Sources. Ensure the Source is not multi-channel before calling this function.")
 	}
 
-	s.direction = al.Vector{x, y, z}
+	s.direction = [3]float32{x, y, z}
 	s.reset()
 	return nil
 }
@@ -321,7 +320,7 @@ func (s *Source) SetPitch(p float32) {
 
 // Sets the position of the Source.
 func (s *Source) SetPosition(x, y, z float32) {
-	s.position = al.Vector{x, y, z}
+	s.position = [3]float32{x, y, z}
 	s.reset()
 }
 
@@ -339,7 +338,7 @@ func (s *Source) SetRolloff(roll_off float32) {
 
 // Sets the velocity of the Source.
 func (s *Source) SetVelocity(x, y, z float32) {
-	s.velocity = al.Vector{x, y, z}
+	s.velocity = [3]float32{x, y, z}
 	s.reset()
 }
 
@@ -380,7 +379,7 @@ func (s *Source) Play() bool {
 	} else if s.src_type == STREAM_SOURCE {
 		buffers := []al.Buffer{}
 		for i := 0; i < MAX_BUFFERS; i++ {
-			buffer := al.GenBuffers(1)[0]
+			buffer := al.CreateBuffer()
 			if s.stream(buffer) > 0 {
 				buffers = append(buffers, buffer)
 			}
@@ -388,8 +387,8 @@ func (s *Source) Play() bool {
 				break
 			}
 		}
-		if len(buffers) > 0 {
-			s.source.QueueBuffers(buffers...)
+		for _, buf := range buffers {
+			s.source.QueueBuffer(buf)
 		}
 	}
 
@@ -401,7 +400,7 @@ func (s *Source) Play() bool {
 	// Clear errors.
 	al.Error()
 
-	al.PlaySources(s.source)
+	al.PlaySource(s.source)
 
 	// alSourcePlay may fail if the system has reached its limit of simultaneous
 	// playing sources.
@@ -424,7 +423,7 @@ func (s *Source) Pause() {
 	if s.isValid() {
 		pool.mutex.Lock()
 		defer pool.mutex.Unlock()
-		al.PauseSources(s.source)
+		al.PauseSource(s.source)
 		s.paused = true
 	}
 }
@@ -434,7 +433,7 @@ func (s *Source) Resume() {
 	if s.isValid() && s.paused {
 		pool.mutex.Lock()
 		defer pool.mutex.Unlock()
-		al.PlaySources(s.source)
+		al.PlaySource(s.source)
 		s.paused = false
 	}
 }
@@ -468,11 +467,11 @@ func (s *Source) Stop() {
 	if !s.IsStopped() && s.isValid() {
 		pool.mutex.Lock()
 		queued := s.source.BuffersQueued()
-		al.StopSources(s.source)
+		al.StopSource(s.source)
 		if s.src_type == STREAM_SOURCE {
 			for i := queued; i > 0; i-- {
 				buffer := s.source.UnqueueBuffer()
-				al.DeleteBuffers(buffer)
+				al.DeleteBuffer(buffer)
 			}
 		}
 		s.source.ClearBuffers()

@@ -1,4 +1,6 @@
-package decoding
+// +build !js
+
+package al
 
 import (
 	"bytes"

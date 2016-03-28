@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/go-gl/gl/v2.1/gl"
+	gl2 "github.com/goxjs/gl"
 )
 
 func SetWireframe(enable bool) {
@@ -66,4 +67,9 @@ func (canvas *Canvas) attacheExtra(canvases []*Canvas) {
 		// Make sure the FBO is only using a single draw buffer.
 		gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
 	}
+}
+
+func getCurrentFBO() gl2.Framebuffer {
+	current_fbo := gl2.GetInteger(gl.FRAMEBUFFER_BINDING)
+	return gl2.Framebuffer{Value: uint32(current_fbo)}
 }

@@ -1,9 +1,9 @@
-// +build darwin linux
-// +build arm arm64
+// +build js
 
 package gfx
 
 import (
+	"github.com/gopherjs/gopherjs/js"
 	"github.com/goxjs/gl"
 )
 
@@ -22,5 +22,5 @@ func initMaxValues() {
 
 func getCurrentFBO() gl.Framebuffer {
 	current_fbo := gl.GetInteger(gl.FRAMEBUFFER_BINDING)
-	return gl.Framebuffer{Value: uint32(current_fbo)}
+	return gl.Framebuffer{js.MakeWrapper(current_fbo)}
 }

@@ -1,4 +1,6 @@
-package decoding
+// +build !js
+
+package al
 
 /*
  * This is not the best, it creates a byte array of all the pcm data which is not good,

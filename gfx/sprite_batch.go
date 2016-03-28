@@ -176,7 +176,8 @@ func (sprite_batch *SpriteBatch) Draw(args ...float32) {
 
 	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(sprite_batch.texture.GetHandle())
-	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
+	enableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD, ATTRIB_COLOR)
+	defer disableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD, ATTRIB_COLOR)
 
 	sprite_batch.array_buf.bind()
 	defer sprite_batch.array_buf.unbind()

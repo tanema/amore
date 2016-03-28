@@ -4,7 +4,7 @@
 
 // +build darwin linux
 
-package al
+package openal
 
 import (
 	"errors"

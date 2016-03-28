@@ -223,7 +223,7 @@ func GetPowerInfo() (string, int, int) {
 }
 
 //Creates a new hardware Cursor object from an image.
-func NewCursor(filename string, hx, hy int) (*sdl.Cursor, error) {
+func NewCursor(filename string, hx, hy int) (Cursor, error) {
 	surface, err := loadSurface(filename)
 	if err != nil {
 		return nil, err

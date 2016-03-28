@@ -55,7 +55,7 @@ func delegateWindowEvent(event ui.Event, e *ui.WindowEvent) {
 		case ui.WINDOWEVENT_RESIZED, ui.WINDOWEVENT_SIZE_CHANGED:
 			w, h := window.GetDrawableSize()
 			gfx.SetViewportSize(int32(w), int32(h))
-			window.OnSizeChanged(e.Data1, e.Data2)
+			window.OnSizeChanged(int32(e.Data1), int32(e.Data2))
 		case ui.WINDOWEVENT_CLOSE:
 			window.SetShouldClose(true)
 		}

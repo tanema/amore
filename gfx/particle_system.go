@@ -656,7 +656,8 @@ func (system *ParticleSystem) Draw(args ...float32) {
 
 	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(system.texture.GetHandle())
-	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
+	enableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD, ATTRIB_COLOR)
+	defer disableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD, ATTRIB_COLOR)
 
 	vbo := gl.CreateBuffer()
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)

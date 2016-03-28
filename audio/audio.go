@@ -21,7 +21,7 @@ const (
 )
 
 func init() {
-	if err := al.OpenDevice(); err != nil {
+	if err := al.Init(); err != nil {
 		panic(err)
 	}
 }
@@ -85,20 +85,17 @@ func SetDopplerScale(scale float32) {
 
 //	Sets the orientation of the listener
 func SetOrientation(fx, fy, fz, ux, uy, uz float32) {
-	al.SetListenerOrientation(al.Orientation{
-		Forward: al.Vector{fx, fy, fz},
-		Up:      al.Vector{ux, uy, uz},
-	})
+	al.SetListenerOrientation(fx, fy, fz, ux, uy, uz)
 }
 
 //	Sets the position of the listener
 func SetPosition(x, y, z float32) {
-	al.SetListenerPosition(al.Vector{x, y, z})
+	al.SetListenerPosition([3]float32{x, y, z})
 }
 
 //	Sets the velocity of the listener
 func SetVelocity(x, y, z float32) {
-	al.SetListenerVelocity(al.Vector{x, y, z})
+	al.SetListenerVelocity([3]float32{x, y, z})
 }
 
 //	Sets the master volume

@@ -53,7 +53,6 @@ func InitContext(w, h int32, ctx ui.Context) {
 	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
 	gl.VertexAttrib4fv(ATTRIB_COLOR, glcolor)
 	gl.VertexAttrib4fv(ATTRIB_CONSTANTCOLOR, glcolor)
-	useVertexAttribArrays(0)
 
 	// Enable blending
 	gl.Enable(gl.BLEND)
@@ -75,12 +74,6 @@ func InitContext(w, h int32, ctx ui.Context) {
 	gl_state.boundTextures = make([]gl.Texture, maxTextureUnits)
 	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
 	gl_state.curTextureUnit = int(curgltextureunit - gl.TEXTURE0)
-	// Retrieve currently bound textures for each texture unit.
-	for i := 0; i < len(gl_state.boundTextures); i++ {
-		gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(i)))
-		gl_state.boundTextures[i] = gl.Texture{Value: uint32(gl.GetInteger(gl.TEXTURE_BINDING_2D))}
-	}
-	gl.ActiveTexture(gl.Enum(curgltextureunit))
 	createDefaultTexture()
 	setTextureUnit(0)
 
@@ -123,34 +116,18 @@ func prepareDraw(model *mgl32.Mat4) {
 	gl_state.currentShader.SendFloat("PointSize", states.back().pointSize)
 }
 
-func useVertexAttribArrays(arraybits uint32) {
-	diff := arraybits ^ gl_state.enabledAttribArrays
-
-	if diff == 0 {
-		return
+func enableVertexAttribArrays(attribs ...gl.Attrib) {
+	for _, attrib := range attribs {
+		gl.EnableVertexAttribArray(attrib)
 	}
+}
 
-	// Max 32 attributes. As of when this was written, no GL driver exposes more
-	// than 32. Lets hope that doesn't change...
-	for i := uint32(0); i < 32; i++ {
-		bit := uint32(1 << i)
-		if (diff & bit) > 0 {
-			if (arraybits & bit) > 0 {
-				gl.EnableVertexAttribArray(gl.Attrib{Value: uint(i)})
-			} else {
-				gl.DisableVertexAttribArray(gl.Attrib{Value: uint(i)})
-			}
+func disableVertexAttribArrays(attribs ...gl.Attrib) {
+	for _, attrib := range attribs {
+		gl.DisableVertexAttribArray(attrib)
+		if attrib == ATTRIB_COLOR {
+			gl.VertexAttrib4f(ATTRIB_COLOR, 1.0, 1.0, 1.0, 1.0)
 		}
-	}
-
-	gl_state.enabledAttribArrays = arraybits
-
-	// glDisableVertexAttribArray will make the constant value for a vertex
-	// attribute undefined. We rely on the per-vertex color attribute being
-	// white when no per-vertex color is used, so we set it here.
-	// FIXME: Is there a better place to do this?
-	if (diff&ATTRIBFLAG_COLOR) > 0 && (arraybits&ATTRIBFLAG_COLOR) == 0 {
-		gl.VertexAttrib4f(ATTRIB_COLOR, 1.0, 1.0, 1.0, 1.0)
 	}
 }
 
@@ -197,11 +174,6 @@ func getDefaultFBO() gl.Framebuffer {
 	return gl_state.defaultFBO
 }
 
-func getCurrentFBO() gl.Framebuffer {
-	current_fbo := gl.GetInteger(gl.FRAMEBUFFER_BINDING)
-	return gl.Framebuffer{Value: uint32(current_fbo)}
-}
-
 func GetMaxTextureSize() int32 {
 	return maxTextureSize
 }
@@ -231,7 +203,7 @@ func deleteTexture(texture gl.Texture) {
 	// was bound to before deletion.
 	for i, texid := range gl_state.boundTextures {
 		if texid == texture {
-			gl_state.boundTextures[i] = gl.Texture{Value: 0}
+			gl_state.boundTextures[i] = gl.Texture{}
 		}
 	}
 

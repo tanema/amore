@@ -1,14 +1,11 @@
 // Package decoding is used for converting familiar file types to data usable by
 // OpenAL.
-package decoding
+
+package al
 
 import (
-	"errors"
 	"io"
 	"time"
-
-	"github.com/tanema/amore/audio/al"
-	"github.com/tanema/amore/file"
 )
 
 type (
@@ -41,53 +38,24 @@ type (
 )
 
 var formatBytes = map[uint32]int32{
-	al.FormatMono8:    1,
-	al.FormatMono16:   2,
-	al.FormatStereo8:  2,
-	al.FormatStereo16: 4,
+	FormatMono8:    1,
+	FormatMono16:   2,
+	FormatStereo8:  2,
+	FormatStereo16: 4,
 }
 
 const BUFFER_SIZE = 128 * 1024
 
-func Decode(filepath string) (Decoder, error) {
-	src, err := file.NewFile(filepath)
-	if err != nil {
-		return nil, err
-	}
-
-	var decoder Decoder
-	switch file.Ext(filepath) {
-	case ".wav":
-		decoder = &waveDecoder{decoderBase: decoderBase{src: src}}
-	case ".ogg":
-		decoder = &vorbisDecoder{decoderBase: decoderBase{src: src}}
-	case ".mp3":
-		decoder = &mp3Decoder{decoderBase: decoderBase{src: src}}
-	case ".flac":
-		decoder = &flacDecoder{decoderBase: decoderBase{src: src}}
-	default:
-		src.Close()
-		return nil, errors.New("unsupported audio file extention")
-	}
-
-	if err = decoder.read(); err != nil {
-		src.Close()
-		return nil, err
-	}
-
-	return decoder, nil
-}
-
 func getFormat(channels, depth int16) uint32 {
 	switch channels, depth := channels, depth; {
 	case channels == 1 && depth == 8:
-		return al.FormatMono8
+		return FormatMono8
 	case channels == 1 && depth == 16:
-		return al.FormatMono16
+		return FormatMono16
 	case channels == 2 && depth == 8:
-		return al.FormatStereo8
+		return FormatStereo8
 	case channels == 2 && depth == 16:
-		return al.FormatStereo16
+		return FormatStereo16
 	default:
 		return 0
 	}

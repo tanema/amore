@@ -354,7 +354,8 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
-	useVertexAttribArrays(ATTRIBFLAG_POS)
+	enableVertexAttribArrays(ATTRIB_POS)
+	defer disableVertexAttribArrays(ATTRIB_POS)
 
 	vbo := gl.CreateBuffer()
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
@@ -365,7 +366,8 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 	if polyline.overdraw {
 		c := GetColor()
 		colors := polyline.generateColorArray(len(overdraw), c)
-		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
+		enableVertexAttribArrays(ATTRIB_POS, ATTRIB_COLOR)
+		defer disableVertexAttribArrays(ATTRIB_POS, ATTRIB_COLOR)
 
 		color_vbo := gl.CreateBuffer()
 		gl.BindBuffer(gl.ARRAY_BUFFER, color_vbo)
@@ -393,7 +395,8 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 func (polyline *polyLine) drawTriangleStrip(is_looping bool) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
-	useVertexAttribArrays(ATTRIBFLAG_POS)
+	enableVertexAttribArrays(ATTRIB_POS)
+	defer disableVertexAttribArrays(ATTRIB_POS)
 
 	vbo := gl.CreateBuffer()
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
@@ -406,7 +409,8 @@ func (polyline *polyLine) drawTriangleStrip(is_looping bool) {
 		c := GetColor()
 		overdraw := polyline.renderOverdraw(is_looping)
 		colors := polyline.generateColorArray(len(overdraw), c)
-		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
+		enableVertexAttribArrays(ATTRIB_POS, ATTRIB_COLOR)
+		defer disableVertexAttribArrays(ATTRIB_POS, ATTRIB_COLOR)
 
 		color_vbo := gl.CreateBuffer()
 		gl.BindBuffer(gl.ARRAY_BUFFER, color_vbo)

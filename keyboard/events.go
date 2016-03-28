@@ -36,7 +36,7 @@ func Delegate(event ui.Event) {
 		key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))
 		key_release_cb(key)
 	case *ui.TextEditingEvent:
-		text_edit_cb(string(e.Text[:]), e.Start, e.Length)
+		text_edit_cb(string(e.Text[:]), int32(e.Start), int32(e.Length))
 	case *ui.TextInputEvent:
 		text_input_cb(string(e.Text[:]))
 	}

@@ -249,7 +249,8 @@ func (texture *Texture) unloadVolatile() {
 func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	prepareDraw(model)
 	bindTexture(texture.GetHandle())
-	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD)
+	enableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD)
+	defer disableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD)
 	vbo := gl.CreateBuffer()
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(vertices...), gl.STATIC_DRAW)

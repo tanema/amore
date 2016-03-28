@@ -13,7 +13,7 @@ type (
 		texture        iTexture
 		vbo            *vertexBuffer
 		vertexStride   int
-		enabledattribs uint32
+		enabledattribs []gl.Attrib
 		rangeMin       int
 		rangeMax       int
 		vertexCount    int
@@ -55,13 +55,13 @@ func NewMeshExt(vertices []float32, size int, mode MeshDrawMode, usage Usage) (*
 func (mesh *Mesh) generateFlags() error {
 	switch mesh.vertexStride {
 	case 8:
-		mesh.enabledattribs = ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR
+		mesh.enabledattribs = []gl.Attrib{ATTRIB_POS, ATTRIB_TEXCOORD, ATTRIB_COLOR}
 	case 6:
-		mesh.enabledattribs = ATTRIBFLAG_POS | ATTRIBFLAG_COLOR
+		mesh.enabledattribs = []gl.Attrib{ATTRIB_POS, ATTRIB_COLOR}
 	case 4:
-		mesh.enabledattribs = ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD
+		mesh.enabledattribs = []gl.Attrib{ATTRIB_POS, ATTRIB_TEXCOORD}
 	case 2:
-		mesh.enabledattribs = ATTRIBFLAG_POS
+		mesh.enabledattribs = []gl.Attrib{ATTRIB_POS}
 	default:
 		return fmt.Errorf("invalid mesh verticies format, vertext stride was calculated as %v", mesh.vertexStride)
 	}
@@ -150,7 +150,12 @@ func (mesh *Mesh) GetVertexStride() int {
 }
 
 func (mesh *Mesh) GetVertexFormat() (vertex, text, color bool) {
-	return mesh.enabledattribs&ATTRIBFLAG_POS > 0, mesh.enabledattribs&ATTRIBFLAG_TEXCOORD > 0, mesh.enabledattribs&ATTRIBFLAG_COLOR > 0
+	for _, attrib := range mesh.enabledattribs {
+		vertex = vertex || attrib == ATTRIB_POS
+		text = text || attrib == ATTRIB_TEXCOORD
+		color = color || attrib == ATTRIB_COLOR
+	}
+	return vertex, text, color
 }
 
 func (mesh *Mesh) SetVertexMap(vertex_map []uint32) {
@@ -180,21 +185,23 @@ func (mesh *Mesh) Flush() {
 }
 
 func (mesh *Mesh) bindEnabledAttributes() {
-	useVertexAttribArrays(mesh.enabledattribs)
+	enableVertexAttribArrays(mesh.enabledattribs...)
+	defer disableVertexAttribArrays(mesh.enabledattribs...)
 
 	mesh.vbo.bind()
 	defer mesh.vbo.unbind()
 
 	offset := 0
-	if (mesh.enabledattribs & ATTRIBFLAG_POS) > 0 {
+	vertex, tex, color := mesh.GetVertexFormat()
+	if vertex {
 		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
 		offset += 2 * 4
 	}
-	if (mesh.enabledattribs & ATTRIBFLAG_TEXCOORD) > 0 {
+	if tex {
 		gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
 		offset += 2 * 4
 	}
-	if (mesh.enabledattribs & ATTRIBFLAG_COLOR) > 0 {
+	if color {
 		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, mesh.vertexStride*4, offset)
 	}
 }

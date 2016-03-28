@@ -50,10 +50,6 @@ func (joystick *Joystick) GetGUID() string {
 	return sdl.JoystickGetGUIDString(joystick.stick.GetGUID())
 }
 
-func (joystick *Joystick) GetHandle() *sdl.Joystick {
-	return joystick.stick
-}
-
 func (joystick *Joystick) Close() {
 	if joystick.controller != nil {
 		joystick.controller.Close()
