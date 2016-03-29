@@ -1,6 +1,6 @@
 # Amore
 
-An WIP game framework based on the API and workflow of Love 2D with usage of sdl2 and opengl
+An WIP game framework based on the API and workflow of Love 2D
  
 This project uses [goxjs/gl](https://github.com/goxjs/gl) so that it supports:
 
@@ -13,9 +13,10 @@ Pending a Web wrapper around SDL and Openal functionality, there will be future 
 
 Objectives
 ==========
-* Enable making games easy, fast and fun
-* Making games portable
-* single executable deployment strategy.
+* Enable making games easy, fast, and fun to create.
+* Making games portable. (osx, linux, windows, android, ios, web)
+* Single executable deployment strategy with bundled assets into the binaries.
+* Easy Coding but advanced programmers can take advantage of lower level operations.
  
 Installation
 ============
@@ -45,6 +46,7 @@ _Note: Ubuntu 14.04 currently has broken header file in the SDL2 package that di
 
 Example
 =======
+you can generate this example by running the command `amore new`
 
 ```golang
 package main
@@ -93,6 +95,10 @@ TODO
 * ~~File~~ [ref](https://love2d.org/wiki/love.filesystem)
 * ~~Timer~~
 * ~~Asset Bundling~~
-* Full Platform Support (web support)
-* Wiki
+* Full Platform Support 
+  - web support
+    * ui wrapper
+    * audio wrapper
+  - windows support
+* Wiki and documentation
 
