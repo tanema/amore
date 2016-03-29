@@ -2,15 +2,46 @@
 
 package ui
 
-func PollEvent() Event                                      { return nil }
-func InitJoyStickAndGamePad() error                         { return nil }
-func InitHaptic() bool                                      { return true }
-func DisableScreenSaver()                                   {}
-func EnableScreenSaver()                                    {}
-func GetDisplayCount() int                                  { return 1 }
-func GetDisplayName(displayindex int) string                { return "" }
-func GetFullscreenSizes(displayindex int) [][]int32         { return [][]int32{} }
-func GetDesktopDimensions(displayindex int) (int32, int32)  { return 0, 0 }
+import (
+	"honnef.co/go/js/dom"
+)
+
+func PollEvent() Event { return nil }
+
+func InitJoyStickAndGamePad() error {
+	return nil
+}
+
+func InitHaptic() bool {
+	return true
+}
+
+func DisableScreenSaver() {
+	println("screensaver control is not supported in browser")
+}
+
+func EnableScreenSaver() {
+	println("screensaver control is not supported in browser")
+}
+
+func GetDisplayCount() int {
+	return 1
+}
+
+func GetDisplayName(displayindex int) string {
+	return "browser"
+}
+
+func GetFullscreenSizes(displayindex int) [][]int32 {
+	return [][]int32{
+		[]int32{int32(dom.GetWindow().InnerWidth()), int32(dom.GetWindow().InnerHeight())},
+	}
+}
+
+func GetDesktopDimensions(displayindex int) (int32, int32) {
+	return int32(dom.GetWindow().InnerWidth()), int32(dom.GetWindow().InnerHeight())
+}
+
 func GetMousePosition() (int, int)                          { return 0, 0 }
 func SetMouseVisible(visible bool)                          {}
 func GetMouseVisible() bool                                 { return false }

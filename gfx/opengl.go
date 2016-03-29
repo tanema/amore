@@ -27,7 +27,7 @@ var (
 	gl_state = glState{
 		viewport: make([]int32, 4),
 	}
-	states = displayStateStack{newDisplayState()}
+	states = &displayStateStack{newDisplayState()}
 )
 
 func InitContext(w, h int32, ctx ui.Context) {
@@ -36,7 +36,7 @@ func InitContext(w, h int32, ctx ui.Context) {
 	}
 
 	// Okay, setup OpenGL.
-	gl.ContextWatcher.OnMakeCurrent(ctx)
+	initGLContext(ctx)
 
 	//Get system info
 	opengl_version = gl.GetString(gl.VERSION)

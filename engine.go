@@ -34,9 +34,7 @@ func init() {
 // update and draw will be called synchronously because calls to OpenGL that are
 // not on the main thread will crash your program.
 func Start(update func(float32), draw func()) error {
-	var err error
-	currentWindow, currentContext, err = window.Init()
-	defer currentWindow.Destroy()
+	err := window.Init()
 	if err != nil {
 		return err
 	}
@@ -51,6 +49,7 @@ func Start(update func(float32), draw func()) error {
 		event.Poll()
 	}
 
+	window.Destroy()
 	return nil
 }
 

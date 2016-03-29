@@ -300,14 +300,13 @@ func (shader *Shader) getTextureUnit(name string) (int, error) {
 }
 
 func createVertexCode(code string) (string, error) {
-	codes := struct {
-		Syntax, Header, Uniforms, Code, Footer string
-	}{
-		Syntax:   SYNTAX,
-		Header:   VERTEX_HEADER,
-		Uniforms: UNIFORMS,
-		Code:     code,
-		Footer:   VERTEX_FOOTER,
+	if temp_err != nil {
+		panic(temp_err)
+	}
+	codes := shaderTemplateData{
+		Header: VERTEX_HEADER,
+		Code:   code,
+		Footer: VERTEX_FOOTER,
 	}
 
 	var template_writer bytes.Buffer
@@ -320,13 +319,9 @@ func createVertexCode(code string) (string, error) {
 }
 
 func createPixelCode(code string, is_multicanvas bool) (string, error) {
-	codes := struct {
-		Syntax, Header, Uniforms, Line, Footer, Code string
-	}{
-		Syntax:   SYNTAX,
-		Header:   PIXEL_HEADER,
-		Uniforms: UNIFORMS,
-		Code:     code,
+	codes := shaderTemplateData{
+		Header: PIXEL_HEADER,
+		Code:   code,
 	}
 
 	if is_multicanvas {
@@ -416,7 +411,7 @@ func compileCode(shaderType gl.Enum, src string) gl.Shader {
 	gl.CompileShader(shader)
 	if gl.GetShaderi(shader, gl.COMPILE_STATUS) == 0 {
 		defer gl.DeleteShader(shader)
-		panic(fmt.Errorf("shader compile: %s", gl.GetShaderInfoLog(shader)))
+		panic(fmt.Errorf("shader compile: %s, %s", gl.GetShaderInfoLog(shader), src))
 	}
 	return shader
 }

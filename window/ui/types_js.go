@@ -4,11 +4,16 @@ package ui
 
 import (
 	"github.com/gopherjs/gopherjs/js"
+	"honnef.co/go/js/dom"
 )
 
 type (
-	Context              *js.Object
-	Window               struct{}
+	Context struct {
+		*js.Object
+	}
+	Window struct {
+		*dom.HTMLCanvasElement
+	}
 	Cursor               struct{}
 	MouseButton          int
 	Keycode              string

@@ -5,7 +5,13 @@ package gfx
 import (
 	"github.com/gopherjs/gopherjs/js"
 	"github.com/goxjs/gl"
+
+	"github.com/tanema/amore/window/ui"
 )
+
+func initGLContext(ctx ui.Context) {
+	gl.ContextWatcher.OnMakeCurrent(ctx.Object)
+}
 
 //Not supported
 func enableMultisample()                                      {}

@@ -1,3 +1,5 @@
+// +build js
+
 package file
 
 import (
@@ -6,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,8 +17,7 @@ import (
 
 type (
 	amoreFS struct {
-		zipFiles   map[string]*zip.File
-		assetFiles map[string]string //a map to existing assets in directory, so the user can exclude assets/ in open commands
+		zipFiles map[string]*zip.File
 	}
 	//create a struct so write can be implemented so that it statisfies ReadWriterCloser
 	file struct {
@@ -35,24 +37,9 @@ type (
 var (
 	zipData string
 	fs      = &amoreFS{
-		zipFiles:   make(map[string]*zip.File),
-		assetFiles: make(map[string]string),
+		zipFiles: make(map[string]*zip.File),
 	}
 )
-
-func init() {
-	filepath.Walk("assets", func(path string, fi os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if fi.IsDir() || strings.HasPrefix(fi.Name(), ".") {
-			return nil
-		}
-		simple_path := strings.Replace(path, "assets/", "", -1)
-		fs.assetFiles[simple_path] = path
-		return nil
-	})
-}
 
 func Register(data string) {
 	fs.register(data)
@@ -72,7 +59,19 @@ func (fs *amoreFS) open(path string) (File, error) {
 	path = fs.path(path)
 	zipFile, ok := fs.zipFiles[path]
 	if !ok {
-		return os.Open(path)
+		resp, err := http.Get(path)
+		if err != nil {
+			return nil, err
+		}
+		all, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return &file{
+			ReadCloser: resp.Body,
+			data:       all,
+			reader:     io.NewSectionReader(bytes.NewReader(all), 0, int64(len(all))),
+		}, nil
 	}
 
 	rc, err := zipFile.Open()
@@ -94,7 +93,7 @@ func (fs *amoreFS) stat(path string) (os.FileInfo, error) {
 	path = fs.path(path)
 	zipFile, ok := fs.zipFiles[path]
 	if !ok {
-		return os.Stat(path)
+		return nil, nil
 	}
 	return zipFile.FileInfo(), nil
 }
@@ -103,7 +102,11 @@ func (fs *amoreFS) readFile(path string) ([]byte, error) {
 	path = fs.path(path)
 	zipFile, ok := fs.zipFiles[path]
 	if !ok {
-		return ioutil.ReadFile(path)
+		resp, err := http.Get(path)
+		if err != nil {
+			return nil, err
+		}
+		return ioutil.ReadAll(resp.Body)
 	}
 
 	rc, err := zipFile.Open()
@@ -115,11 +118,11 @@ func (fs *amoreFS) readFile(path string) ([]byte, error) {
 }
 
 func (fs *amoreFS) mkDir(path string) error {
-	return os.MkdirAll(fs.path(path), os.ModeDir|os.ModePerm)
+	return fmt.Errorf("cannot mkdir on web platform")
 }
 
 func (fs *amoreFS) remove(path string) error {
-	return os.Remove(fs.path(path))
+	return fmt.Errorf("cannot rm on web platform")
 }
 
 func (fs *amoreFS) ext(filename string) string {
@@ -133,14 +136,11 @@ func (fs *amoreFS) path(filename string) string {
 		return "assets/" + p
 	}
 
-	if _, ok := fs.assetFiles[p]; ok {
-		return fs.assetFiles[p]
-	}
 	return p
 }
 
 func (f *file) Write(p []byte) (n int, err error) {
-	return 0, fmt.Errorf("Cannot write to a bundled file")
+	return 0, fmt.Errorf("cannot write to file on web platform")
 }
 
 // Reads bytes into p, returns the number of read bytes.

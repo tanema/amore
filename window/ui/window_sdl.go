@@ -99,7 +99,7 @@ func InitWindowAndContext(config WindowConfig) (*Window, Context, error) {
 	CurrentWindow.SetGrab(false)
 	CurrentWindow.SetMinimumSize(config.Minwidth, config.Minheight)
 	CurrentWindow.SetTitle(config.Title)
-	if config.Centered && !config.Fullscreen {
+	if !config.Fullscreen {
 		CurrentWindow.SetPosition(config.X, config.Y)
 	}
 	CurrentWindow.Raise()

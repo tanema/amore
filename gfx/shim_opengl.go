@@ -7,7 +7,13 @@ import (
 
 	"github.com/go-gl/gl/v2.1/gl"
 	gl2 "github.com/goxjs/gl"
+
+	"github.com/tanema/amore/window/ui"
 )
+
+func initGLContext(ctx ui.Context) {
+	gl2.ContextWatcher.OnMakeCurrent(ctx)
+}
 
 func SetWireframe(enable bool) {
 	if enable {

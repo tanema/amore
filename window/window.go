@@ -24,18 +24,18 @@ var (
 	shouldClose    bool
 )
 
-func Init() (*ui.Window, ui.Context, error) {
+func Init() error {
 	if initError != nil {
-		return nil, nil, initError
+		return initError
 	}
-	if currentWindow == nil || currentContext == nil {
+	if currentWindow == nil {
 		config_file, file_err := file.NewFile(config_file_name)
 		if file_err != nil {
-			return nil, nil, file_err
+			return file_err
 		}
 
 		if _, err := toml.DecodeReader(config_file, &currentConfig); err != nil {
-			return nil, nil, err
+			return err
 		}
 
 		//normlize values
@@ -46,23 +46,21 @@ func Init() (*ui.Window, ui.Context, error) {
 		currentWindow, currentContext, initError = ui.InitWindowAndContext(currentConfig)
 
 		if initError != nil {
-			return nil, nil, initError
+			return initError
 		}
 
 		gfx.InitContext(int32(currentConfig.Width), int32(currentConfig.Height), currentContext)
 		currentConfig.PixelWidth, currentConfig.PixelHeight = curWin().GetDrawableSize()
 		joystick.Init()
 	}
-	return currentWindow, currentContext, initError
+	return initError
 }
 
 func curWin() *ui.Window {
 	if currentWindow == nil {
-		newWindow, _, _ := Init()
-		return newWindow
-	} else {
-		return currentWindow
+		Init()
 	}
+	return currentWindow
 }
 
 func OnSizeChanged(width, height int32) {
