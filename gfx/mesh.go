@@ -158,7 +158,7 @@ func (mesh *Mesh) GetVertexFormat() (vertex, text, color bool) {
 	return vertex, text, color
 }
 
-func (mesh *Mesh) SetVertexMap(vertex_map []uint32) {
+func (mesh *Mesh) SetVertexMap(vertex_map []uint16) {
 	if len(vertex_map) > 0 {
 		mesh.ibo = newIndexBuffer(len(vertex_map), vertex_map, mesh.vbo.usage)
 		mesh.elementCount = len(vertex_map)
@@ -170,9 +170,9 @@ func (mesh *Mesh) ClearVertexMap() {
 	mesh.elementCount = 0
 }
 
-func (mesh *Mesh) GetVertexMap() []uint32 {
+func (mesh *Mesh) GetVertexMap() []uint16 {
 	if mesh.ibo == nil {
-		return []uint32{}
+		return []uint16{}
 	}
 	return mesh.ibo.getData()
 }
@@ -184,7 +184,18 @@ func (mesh *Mesh) Flush() {
 	}
 }
 
-func (mesh *Mesh) bindEnabledAttributes() {
+func (mesh *Mesh) bindTexture() {
+	if mesh.texture != nil {
+		bindTexture(mesh.texture.GetHandle())
+	} else {
+		bindTexture(gl_state.defaultTexture)
+	}
+}
+
+func (mesh *Mesh) Draw(args ...float32) {
+	prepareDraw(generateModelMatFromArgs(args))
+	mesh.bindTexture()
+
 	enableVertexAttribArrays(mesh.enabledattribs...)
 	defer disableVertexAttribArrays(mesh.enabledattribs...)
 
@@ -204,20 +215,7 @@ func (mesh *Mesh) bindEnabledAttributes() {
 	if color {
 		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, mesh.vertexStride*4, offset)
 	}
-}
 
-func (mesh *Mesh) bindTexture() {
-	if mesh.texture != nil {
-		bindTexture(mesh.texture.GetHandle())
-	} else {
-		bindTexture(gl_state.defaultTexture)
-	}
-}
-
-func (mesh *Mesh) Draw(args ...float32) {
-	prepareDraw(generateModelMatFromArgs(args))
-	mesh.bindTexture()
-	mesh.bindEnabledAttributes()
 	min, max := mesh.GetDrawRange()
 	if mesh.ibo != nil && mesh.elementCount > 0 {
 		mesh.ibo.drawElements(uint32(mesh.mode), min, max-min+1)

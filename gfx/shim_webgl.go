@@ -3,7 +3,6 @@
 package gfx
 
 import (
-	"github.com/gopherjs/gopherjs/js"
 	"github.com/goxjs/gl"
 
 	"github.com/tanema/amore/window/ui"
@@ -24,9 +23,4 @@ func initMaxValues() {
 	maxTextureSize = int32(gl.GetInteger(gl.MAX_TEXTURE_SIZE))
 	maxTextureUnits = int32(gl.GetInteger(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
 	gl_state.textureCounters = make([]int, maxTextureUnits)
-}
-
-func getCurrentFBO() gl.Framebuffer {
-	current_fbo := gl.GetInteger(gl.FRAMEBUFFER_BINDING)
-	return gl.Framebuffer{js.MakeWrapper(current_fbo)}
 }

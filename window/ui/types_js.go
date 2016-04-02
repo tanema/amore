@@ -13,8 +13,16 @@ type (
 	}
 	Window struct {
 		*dom.HTMLCanvasElement
+		focused           bool
+		grabbed           bool
+		windowListeners   map[string]func(*js.Object)
+		documentListeners map[string]func(*js.Object)
 	}
-	Cursor               struct{}
+	Cursor struct {
+		icon string
+		hx   int
+		hy   int
+	}
 	MouseButton          int
 	Keycode              string
 	Keymod               string
@@ -22,69 +30,83 @@ type (
 	GameControllerAxis   int
 	GameControllerButton int
 	Joystick             struct {
-		id int
-	}
-	Event     interface{}
-	BaseEvent struct {
 		*js.Object
+		id   int
+		name string
+	}
+	Event        interface{}
+	JoyAxisEvent struct {
 		Type      int
 		Timestamp int
 		WindowID  int
-	}
-	JoyAxisEvent struct {
-		*BaseEvent
-		Which int
-		Axis  int
-		Value int
+		Which     int
+		Axis      int
+		Value     int
 	}
 	JoyBallEvent struct {
-		*BaseEvent
-		Which int
-		Ball  int
-		XRel  int
-		YRel  int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
+		Ball      int
+		XRel      int
+		YRel      int
 	}
 	JoyButtonEvent struct {
-		*BaseEvent
-		Which  int
-		Button int
-		State  int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
+		Button    int
+		State     int
 	}
 	JoyHatEvent struct {
-		*BaseEvent
-		Which int
-		Hat   int
-		Value int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
+		Hat       int
+		Value     int
 	}
 	ControllerAxisEvent struct {
-		*BaseEvent
-		Which int
-		Axis  int
-		Value int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
+		Axis      int
+		Value     int
 	}
 	ControllerButtonEvent struct {
-		*BaseEvent
-		Which  int
-		Button int
-		State  int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
+		Button    int
+		State     int
 	}
 	JoyDeviceEvent struct {
-		*BaseEvent
-		Which int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
 	}
 	ControllerDeviceEvent struct {
-		*BaseEvent
-		Which int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
 	}
 	TouchFingerEvent struct {
-		*BaseEvent
-		TouchID  int
-		FingerID int
-		X        float32
-		Y        float32
-		DX       float32
-		DY       float32
-		Pressure float32
+		Type      int
+		Timestamp int
+		WindowID  int
+		TouchID   int
+		FingerID  int
+		X         float32
+		Y         float32
+		DX        float32
+		DY        float32
+		Pressure  float32
 	}
 	Keysym struct {
 		Scancode int
@@ -93,79 +115,108 @@ type (
 		Unicode  uint32
 	}
 	KeyDownEvent struct {
-		*BaseEvent
-		State  int
-		Repeat int
-		Keysym Keysym
+		Type      int
+		Timestamp int
+		WindowID  int
+		State     int
+		Repeat    int
+		Keysym    Keysym
 	}
 	KeyUpEvent struct {
-		*BaseEvent
-		State  int
-		Repeat int
-		Keysym Keysym
+		Type      int
+		Timestamp int
+		WindowID  int
+		State     int
+		Repeat    int
+		Keysym    Keysym
 	}
 	TextEditingEvent struct {
-		*BaseEvent
-		Text   string
-		Start  int
-		Length int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Text      string
+		Start     int
+		Length    int
 	}
 	TextInputEvent struct {
-		*BaseEvent
-		Text string
+		Type      int
+		Timestamp int
+		WindowID  int
+		Text      string
 	}
 	MouseMotionEvent struct {
-		*BaseEvent
-		Which int
-		State int
-		X     int
-		Y     int
-		XRel  int
-		YRel  int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
+		State     int
+		X         int
+		Y         int
+		XRel      int
+		YRel      int
 	}
 	MouseButtonEvent struct {
-		*BaseEvent
-		Which  int
-		Button int
-		State  int
-		X      int
-		Y      int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
+		Button    int
+		State     int
+		X         int
+		Y         int
 	}
 	MouseWheelEvent struct {
-		*BaseEvent
-		Which int
-		X     int
-		Y     int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Which     int
+		X         int
+		Y         int
 	}
 	WindowEvent struct {
-		*BaseEvent
-		Event int
-		Data1 int
-		Data2 int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Event     int
+		Data1     int
+		Data2     int
 	}
 	QuitEvent struct {
-		*BaseEvent
+		Type      int
+		Timestamp int
+		WindowID  int
 	}
 	DropEvent struct {
-		*BaseEvent
+		Type      int
+		Timestamp int
+		WindowID  int
 	}
 	RenderEvent struct {
-		*BaseEvent
+		Type      int
+		Timestamp int
+		WindowID  int
 	}
 	UserEvent struct {
-		*BaseEvent
-		WindowID int
-		Code     int
-		Data1    int
-		Data2    int
+		Type      int
+		Timestamp int
+		WindowID  int
+		Code      int
+		Data1     int
+		Data2     int
 	}
 	ClipboardEvent struct {
-		*BaseEvent
+		Type      int
+		Timestamp int
+		WindowID  int
 	}
 	OSEvent struct {
-		*BaseEvent
+		Type      int
+		Timestamp int
+		WindowID  int
 	}
 	CommonEvent struct {
-		*BaseEvent
+		Type      int
+		Timestamp int
+		WindowID  int
 	}
 )

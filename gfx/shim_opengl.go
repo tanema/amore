@@ -74,8 +74,3 @@ func (canvas *Canvas) attacheExtra(canvases []*Canvas) {
 		gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
 	}
 }
-
-func getCurrentFBO() gl2.Framebuffer {
-	current_fbo := gl2.GetInteger(gl.FRAMEBUFFER_BINDING)
-	return gl2.Framebuffer{Value: uint32(current_fbo)}
-}

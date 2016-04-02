@@ -212,7 +212,7 @@ func (canvas *Canvas) GetStatus() uint32 {
 
 func newFBO(texture gl.Texture) (gl.Framebuffer, uint32) {
 	// get currently bound fbo to reset to it later
-	current_fbo := getCurrentFBO()
+	current_fbo := gl.GetBoundFramebuffer()
 
 	framebuffer := gl.CreateFramebuffer()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, framebuffer)

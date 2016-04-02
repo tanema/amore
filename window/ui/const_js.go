@@ -4,268 +4,189 @@ package ui
 
 const (
 	//mouse buttons
-	BUTTON_LEFT   MouseButton = 1
-	BUTTON_MIDDLE MouseButton = 2
-	BUTTON_RIGHT  MouseButton = 3
-	BUTTON_X1     MouseButton = 4
-	BUTTON_X2     MouseButton = 5
+	BUTTON_LEFT   MouseButton = 0
+	BUTTON_MIDDLE MouseButton = 1
+	BUTTON_RIGHT  MouseButton = 2
+	BUTTON_X1     MouseButton = 3
+	BUTTON_X2     MouseButton = 4
 
 	//keyboard keys
-	K_UNKNOWN            Keycode = ""
-	K_RETURN             Keycode = ""
-	K_ESCAPE             Keycode = ""
-	K_BACKSPACE          Keycode = ""
-	K_TAB                Keycode = ""
-	K_SPACE              Keycode = ""
-	K_EXCLAIM            Keycode = ""
-	K_QUOTEDBL           Keycode = ""
-	K_HASH               Keycode = ""
-	K_PERCENT            Keycode = ""
-	K_DOLLAR             Keycode = ""
-	K_AMPERSAND          Keycode = ""
-	K_QUOTE              Keycode = ""
-	K_LEFTPAREN          Keycode = ""
-	K_RIGHTPAREN         Keycode = ""
-	K_ASTERISK           Keycode = ""
-	K_PLUS               Keycode = ""
-	K_COMMA              Keycode = ""
-	K_MINUS              Keycode = ""
-	K_PERIOD             Keycode = ""
-	K_SLASH              Keycode = ""
-	K_0                  Keycode = ""
-	K_1                  Keycode = ""
-	K_2                  Keycode = ""
-	K_3                  Keycode = ""
-	K_4                  Keycode = ""
-	K_5                  Keycode = ""
-	K_6                  Keycode = ""
-	K_7                  Keycode = ""
-	K_8                  Keycode = ""
-	K_9                  Keycode = ""
-	K_COLON              Keycode = ""
-	K_SEMICOLON          Keycode = ""
-	K_LESS               Keycode = ""
-	K_EQUALS             Keycode = ""
-	K_GREATER            Keycode = ""
-	K_QUESTION           Keycode = ""
-	K_AT                 Keycode = ""
-	K_LEFTBRACKET        Keycode = ""
-	K_BACKSLASH          Keycode = ""
-	K_RIGHTBRACKET       Keycode = ""
-	K_CARET              Keycode = ""
-	K_UNDERSCORE         Keycode = ""
-	K_BACKQUOTE          Keycode = ""
-	K_a                  Keycode = ""
-	K_b                  Keycode = ""
-	K_c                  Keycode = ""
-	K_d                  Keycode = ""
-	K_e                  Keycode = ""
-	K_f                  Keycode = ""
-	K_g                  Keycode = ""
-	K_h                  Keycode = ""
-	K_i                  Keycode = ""
-	K_j                  Keycode = ""
-	K_k                  Keycode = ""
-	K_l                  Keycode = ""
-	K_m                  Keycode = ""
-	K_n                  Keycode = ""
-	K_o                  Keycode = ""
-	K_p                  Keycode = ""
-	K_q                  Keycode = ""
-	K_r                  Keycode = ""
-	K_s                  Keycode = ""
-	K_t                  Keycode = ""
-	K_u                  Keycode = ""
-	K_v                  Keycode = ""
-	K_w                  Keycode = ""
-	K_x                  Keycode = ""
-	K_y                  Keycode = ""
-	K_z                  Keycode = ""
-	K_CAPSLOCK           Keycode = ""
-	K_F1                 Keycode = ""
-	K_F2                 Keycode = ""
-	K_F3                 Keycode = ""
-	K_F4                 Keycode = ""
-	K_F5                 Keycode = ""
-	K_F6                 Keycode = ""
-	K_F7                 Keycode = ""
-	K_F8                 Keycode = ""
-	K_F9                 Keycode = ""
-	K_F10                Keycode = ""
-	K_F11                Keycode = ""
-	K_F12                Keycode = ""
-	K_PRINTSCREEN        Keycode = ""
-	K_SCROLLLOCK         Keycode = ""
-	K_PAUSE              Keycode = ""
-	K_INSERT             Keycode = ""
-	K_HOME               Keycode = ""
-	K_PAGEUP             Keycode = ""
-	K_DELETE             Keycode = ""
-	K_END                Keycode = ""
-	K_PAGEDOWN           Keycode = ""
-	K_RIGHT              Keycode = ""
-	K_LEFT               Keycode = ""
-	K_DOWN               Keycode = ""
-	K_UP                 Keycode = ""
-	K_NUMLOCKCLEAR       Keycode = ""
-	K_APPLICATION        Keycode = ""
-	K_POWER              Keycode = ""
-	K_F13                Keycode = ""
-	K_F14                Keycode = ""
-	K_F15                Keycode = ""
-	K_F16                Keycode = ""
-	K_F17                Keycode = ""
-	K_F18                Keycode = ""
-	K_F19                Keycode = ""
-	K_F20                Keycode = ""
-	K_F21                Keycode = ""
-	K_F22                Keycode = ""
-	K_F23                Keycode = ""
-	K_F24                Keycode = ""
-	K_EXECUTE            Keycode = ""
-	K_HELP               Keycode = ""
-	K_MENU               Keycode = ""
-	K_SELECT             Keycode = ""
-	K_STOP               Keycode = ""
-	K_AGAIN              Keycode = ""
-	K_UNDO               Keycode = ""
-	K_CUT                Keycode = ""
-	K_COPY               Keycode = ""
-	K_PASTE              Keycode = ""
-	K_FIND               Keycode = ""
-	K_MUTE               Keycode = ""
-	K_VOLUMEUP           Keycode = ""
-	K_VOLUMEDOWN         Keycode = ""
-	K_CANCEL             Keycode = ""
-	K_CLEAR              Keycode = ""
-	K_PRIOR              Keycode = ""
-	K_RETURN2            Keycode = ""
-	K_SEPARATOR          Keycode = ""
-	K_OUT                Keycode = ""
-	K_OPER               Keycode = ""
-	K_CLEARAGAIN         Keycode = ""
-	K_CRSEL              Keycode = ""
-	K_EXSEL              Keycode = ""
-	K_THOUSANDSSEPARATOR Keycode = ""
-	K_DECIMALSEPARATOR   Keycode = ""
-	K_CURRENCYUNIT       Keycode = ""
-	K_CURRENCYSUBUNIT    Keycode = ""
-	K_LCTRL              Keycode = ""
-	K_LSHIFT             Keycode = ""
-	K_LALT               Keycode = ""
-	K_LGUI               Keycode = ""
-	K_RCTRL              Keycode = ""
-	K_RSHIFT             Keycode = ""
-	K_RALT               Keycode = ""
-	K_RGUI               Keycode = ""
-	K_MODE               Keycode = ""
-	K_AUDIONEXT          Keycode = ""
-	K_AUDIOPREV          Keycode = ""
-	K_AUDIOSTOP          Keycode = ""
-	K_AUDIOPLAY          Keycode = ""
-	K_AUDIOMUTE          Keycode = ""
-	K_MEDIASELECT        Keycode = ""
-
-	//keyboard modifier keys
-	KMOD_NONE     Keymod = ""
-	KMOD_LSHIFT   Keymod = ""
-	KMOD_RSHIFT   Keymod = ""
-	KMOD_LCTRL    Keymod = ""
-	KMOD_RCTRL    Keymod = ""
-	KMOD_LALT     Keymod = ""
-	KMOD_RALT     Keymod = ""
-	KMOD_LGUI     Keymod = ""
-	KMOD_RGUI     Keymod = ""
-	KMOD_NUM      Keymod = ""
-	KMOD_CAPS     Keymod = ""
-	KMOD_MODE     Keymod = ""
-	KMOD_CTRL     Keymod = ""
-	KMOD_SHIFT    Keymod = ""
-	KMOD_ALT      Keymod = ""
-	KMOD_GUI      Keymod = ""
-	KMOD_RESERVED Keymod = ""
+	K_UNKNOWN      Keycode = ""
+	K_RETURN       Keycode = "Enter"
+	K_ESCAPE       Keycode = "Escape"
+	K_BACKSPACE    Keycode = "Backspace"
+	K_TAB          Keycode = "Tab"
+	K_SPACE        Keycode = "Space"
+	K_COMMA        Keycode = "Comma"
+	K_MINUS        Keycode = "Minus"
+	K_PERIOD       Keycode = "Period"
+	K_SLASH        Keycode = "Slash"
+	K_0            Keycode = "Digit0"
+	K_1            Keycode = "Digit1"
+	K_2            Keycode = "Digit2"
+	K_3            Keycode = "Digit3"
+	K_4            Keycode = "Digit4"
+	K_5            Keycode = "Digit5"
+	K_6            Keycode = "Digit6"
+	K_7            Keycode = "Digit7"
+	K_8            Keycode = "Digit8"
+	K_9            Keycode = "Digit9"
+	K_SEMICOLON    Keycode = "Semicolon"
+	K_EQUALS       Keycode = "Equal"
+	K_LEFTBRACKET  Keycode = "BracketLeft"
+	K_BACKSLASH    Keycode = "BackSlash"
+	K_RIGHTBRACKET Keycode = "BracketRight"
+	K_a            Keycode = "KeyA"
+	K_b            Keycode = "KeyB"
+	K_c            Keycode = "KeyC"
+	K_d            Keycode = "KeyD"
+	K_e            Keycode = "KeyE"
+	K_f            Keycode = "KeyF"
+	K_g            Keycode = "KeyG"
+	K_h            Keycode = "KeyH"
+	K_i            Keycode = "KeyI"
+	K_j            Keycode = "KeyJ"
+	K_k            Keycode = "KeyK"
+	K_l            Keycode = "KeyL"
+	K_m            Keycode = "KeyM"
+	K_n            Keycode = "KeyN"
+	K_o            Keycode = "KeyO"
+	K_p            Keycode = "KeyP"
+	K_q            Keycode = "KeyQ"
+	K_r            Keycode = "KeyR"
+	K_s            Keycode = "KeyS"
+	K_t            Keycode = "KeyT"
+	K_u            Keycode = "KeyU"
+	K_v            Keycode = "KeyV"
+	K_w            Keycode = "KeyW"
+	K_x            Keycode = "KeyX"
+	K_y            Keycode = "KeyY"
+	K_z            Keycode = "KeyZ"
+	K_CAPSLOCK     Keycode = "CapsLock"
+	K_F1           Keycode = "F1"
+	K_F2           Keycode = "F2"
+	K_F3           Keycode = "F3"
+	K_F4           Keycode = "F4"
+	K_F5           Keycode = "F5"
+	K_F6           Keycode = "F6"
+	K_F7           Keycode = "F7"
+	K_F8           Keycode = "F8"
+	K_F9           Keycode = "F9"
+	K_F10          Keycode = "F10"
+	K_F11          Keycode = "F11"
+	K_F12          Keycode = "F12"
+	K_PRINTSCREEN  Keycode = ""
+	K_SCROLLLOCK   Keycode = ""
+	K_PAUSE        Keycode = ""
+	K_INSERT       Keycode = ""
+	K_HOME         Keycode = "Home"
+	K_PAGEUP       Keycode = "PageUp"
+	K_DELETE       Keycode = "Delete"
+	K_END          Keycode = "End"
+	K_PAGEDOWN     Keycode = "PageDown"
+	K_RIGHT        Keycode = "ArrowRight"
+	K_LEFT         Keycode = "ArrowLeft"
+	K_DOWN         Keycode = "ArrowDown"
+	K_UP           Keycode = "ArrowUp"
+	K_MUTE         Keycode = ""
+	K_VOLUMEUP     Keycode = ""
+	K_VOLUMEDOWN   Keycode = ""
+	K_LCTRL        Keycode = "ControlLeft"
+	K_LSHIFT       Keycode = "ShiftLeft"
+	K_LALT         Keycode = "AltLeft"
+	K_LGUI         Keycode = ""
+	K_RCTRL        Keycode = "ControlRight"
+	K_RSHIFT       Keycode = "ShiftRight"
+	K_RALT         Keycode = "AltRight"
+	K_RGUI         Keycode = ""
+	K_MODE         Keycode = ""
+	K_AUDIONEXT    Keycode = ""
+	K_AUDIOPREV    Keycode = ""
+	K_AUDIOSTOP    Keycode = ""
+	K_AUDIOPLAY    Keycode = ""
+	K_AUDIOMUTE    Keycode = ""
 
 	//keyboard scancodes
-	SCANCODE_UNKNOWN            Scancode = 0
-	SCANCODE_A                  Scancode = 0
-	SCANCODE_B                  Scancode = 0
-	SCANCODE_C                  Scancode = 0
-	SCANCODE_D                  Scancode = 0
-	SCANCODE_E                  Scancode = 0
-	SCANCODE_F                  Scancode = 0
-	SCANCODE_G                  Scancode = 0
-	SCANCODE_H                  Scancode = 0
-	SCANCODE_I                  Scancode = 0
-	SCANCODE_J                  Scancode = 0
-	SCANCODE_K                  Scancode = 0
-	SCANCODE_L                  Scancode = 0
-	SCANCODE_M                  Scancode = 0
-	SCANCODE_N                  Scancode = 0
-	SCANCODE_O                  Scancode = 0
-	SCANCODE_P                  Scancode = 0
-	SCANCODE_Q                  Scancode = 0
-	SCANCODE_R                  Scancode = 0
-	SCANCODE_S                  Scancode = 0
-	SCANCODE_T                  Scancode = 0
-	SCANCODE_U                  Scancode = 0
-	SCANCODE_V                  Scancode = 0
-	SCANCODE_W                  Scancode = 0
-	SCANCODE_X                  Scancode = 0
-	SCANCODE_Y                  Scancode = 0
-	SCANCODE_Z                  Scancode = 0
-	SCANCODE_1                  Scancode = 0
-	SCANCODE_2                  Scancode = 0
-	SCANCODE_3                  Scancode = 0
-	SCANCODE_4                  Scancode = 0
-	SCANCODE_5                  Scancode = 0
-	SCANCODE_6                  Scancode = 0
-	SCANCODE_7                  Scancode = 0
-	SCANCODE_8                  Scancode = 0
-	SCANCODE_9                  Scancode = 0
-	SCANCODE_0                  Scancode = 0
-	SCANCODE_RETURN             Scancode = 0
-	SCANCODE_ESCAPE             Scancode = 0
-	SCANCODE_BACKSPACE          Scancode = 0
-	SCANCODE_TAB                Scancode = 0
-	SCANCODE_SPACE              Scancode = 0
-	SCANCODE_MINUS              Scancode = 0
-	SCANCODE_EQUALS             Scancode = 0
-	SCANCODE_LEFTBRACKET        Scancode = 0
-	SCANCODE_RIGHTBRACKET       Scancode = 0
-	SCANCODE_BACKSLASH          Scancode = 0
-	SCANCODE_NONUSHASH          Scancode = 0
-	SCANCODE_SEMICOLON          Scancode = 0
-	SCANCODE_APOSTROPHE         Scancode = 0
-	SCANCODE_GRAVE              Scancode = 0
-	SCANCODE_COMMA              Scancode = 0
-	SCANCODE_PERIOD             Scancode = 0
-	SCANCODE_SLASH              Scancode = 0
-	SCANCODE_CAPSLOCK           Scancode = 0
-	SCANCODE_F1                 Scancode = 0
-	SCANCODE_F2                 Scancode = 0
-	SCANCODE_F3                 Scancode = 0
-	SCANCODE_F4                 Scancode = 0
-	SCANCODE_F5                 Scancode = 0
-	SCANCODE_F6                 Scancode = 0
-	SCANCODE_F7                 Scancode = 0
-	SCANCODE_F8                 Scancode = 0
-	SCANCODE_F9                 Scancode = 0
-	SCANCODE_F10                Scancode = 0
-	SCANCODE_F11                Scancode = 0
-	SCANCODE_F12                Scancode = 0
+	SCANCODE_UNKNOWN Scancode = 0
+
+	SCANCODE_0 Scancode = iota + 48
+	SCANCODE_1
+	SCANCODE_2
+	SCANCODE_3
+	SCANCODE_4
+	SCANCODE_5
+	SCANCODE_6
+	SCANCODE_7
+	SCANCODE_8
+	SCANCODE_9
+	SCANCODE_A Scancode = iota + 65
+	SCANCODE_B
+	SCANCODE_C
+	SCANCODE_D
+	SCANCODE_E
+	SCANCODE_F
+	SCANCODE_G
+	SCANCODE_H
+	SCANCODE_I
+	SCANCODE_J
+	SCANCODE_K
+	SCANCODE_L
+	SCANCODE_M
+	SCANCODE_N
+	SCANCODE_O
+	SCANCODE_P
+	SCANCODE_Q
+	SCANCODE_R
+	SCANCODE_S
+	SCANCODE_T
+	SCANCODE_U
+	SCANCODE_V
+	SCANCODE_W
+	SCANCODE_X
+	SCANCODE_Y
+	SCANCODE_Z
+	SCANCODE_RETURN       Scancode = 13
+	SCANCODE_ESCAPE       Scancode = 27
+	SCANCODE_BACKSPACE    Scancode = 8
+	SCANCODE_TAB          Scancode = 9
+	SCANCODE_SPACE        Scancode = 32
+	SCANCODE_MINUS        Scancode = 189
+	SCANCODE_EQUALS       Scancode = 187
+	SCANCODE_LEFTBRACKET  Scancode = 219
+	SCANCODE_BACKSLASH    Scancode = 220
+	SCANCODE_RIGHTBRACKET Scancode = 221
+	SCANCODE_APOSTROPHE   Scancode = 222
+	SCANCODE_SEMICOLON    Scancode = 186
+	SCANCODE_GRAVE        Scancode = 0
+	SCANCODE_COMMA        Scancode = 188
+	SCANCODE_PERIOD       Scancode = 190
+	SCANCODE_SLASH        Scancode = 191
+	SCANCODE_CAPSLOCK     Scancode = 20
+	SCANCODE_F1           Scancode = iota + 112
+	SCANCODE_F2
+	SCANCODE_F3
+	SCANCODE_F4
+	SCANCODE_F5
+	SCANCODE_F6
+	SCANCODE_F7
+	SCANCODE_F8
+	SCANCODE_F9
+	SCANCODE_F10
+	SCANCODE_F11
+	SCANCODE_F12
 	SCANCODE_PRINTSCREEN        Scancode = 0
 	SCANCODE_SCROLLLOCK         Scancode = 0
 	SCANCODE_PAUSE              Scancode = 0
 	SCANCODE_INSERT             Scancode = 0
-	SCANCODE_HOME               Scancode = 0
-	SCANCODE_PAGEUP             Scancode = 0
-	SCANCODE_DELETE             Scancode = 0
-	SCANCODE_END                Scancode = 0
-	SCANCODE_PAGEDOWN           Scancode = 0
-	SCANCODE_RIGHT              Scancode = 0
-	SCANCODE_LEFT               Scancode = 0
-	SCANCODE_DOWN               Scancode = 0
-	SCANCODE_UP                 Scancode = 0
+	SCANCODE_HOME               Scancode = 36
+	SCANCODE_PAGEUP             Scancode = 33
+	SCANCODE_DELETE             Scancode = 46
+	SCANCODE_END                Scancode = 35
+	SCANCODE_PAGEDOWN           Scancode = 34
+	SCANCODE_RIGHT              Scancode = 39
+	SCANCODE_LEFT               Scancode = 37
+	SCANCODE_DOWN               Scancode = 40
+	SCANCODE_UP                 Scancode = 38
 	SCANCODE_NUMLOCKCLEAR       Scancode = 0
 	SCANCODE_NONUSBACKSLASH     Scancode = 0
 	SCANCODE_APPLICATION        Scancode = 0
@@ -319,7 +240,7 @@ const (
 	SCANCODE_CANCEL             Scancode = 0
 	SCANCODE_CLEAR              Scancode = 0
 	SCANCODE_PRIOR              Scancode = 0
-	SCANCODE_RETURN2            Scancode = 0
+	SCANCODE_RETURN2            Scancode = 13
 	SCANCODE_SEPARATOR          Scancode = 0
 	SCANCODE_OUT                Scancode = 0
 	SCANCODE_OPER               Scancode = 0
@@ -330,13 +251,13 @@ const (
 	SCANCODE_DECIMALSEPARATOR   Scancode = 0
 	SCANCODE_CURRENCYUNIT       Scancode = 0
 	SCANCODE_CURRENCYSUBUNIT    Scancode = 0
-	SCANCODE_LCTRL              Scancode = 0
-	SCANCODE_LSHIFT             Scancode = 0
-	SCANCODE_LALT               Scancode = 0
+	SCANCODE_LCTRL              Scancode = 17
+	SCANCODE_LSHIFT             Scancode = 16
+	SCANCODE_LALT               Scancode = 18
 	SCANCODE_LGUI               Scancode = 0
-	SCANCODE_RCTRL              Scancode = 0
-	SCANCODE_RSHIFT             Scancode = 0
-	SCANCODE_RALT               Scancode = 0
+	SCANCODE_RCTRL              Scancode = 17
+	SCANCODE_RSHIFT             Scancode = 16
+	SCANCODE_RALT               Scancode = 18
 	SCANCODE_RGUI               Scancode = 0
 	SCANCODE_MODE               Scancode = 0
 	SCANCODE_AUDIONEXT          Scancode = 0
@@ -345,7 +266,6 @@ const (
 	SCANCODE_AUDIOPLAY          Scancode = 0
 	SCANCODE_AUDIOMUTE          Scancode = 0
 	SCANCODE_MEDIASELECT        Scancode = 0
-	NUM_SCANCODES               Scancode = 0
 
 	CONTROLLER_AXIS_INVALID      GameControllerAxis = 0
 	CONTROLLER_AXIS_LEFTX        GameControllerAxis = 0
@@ -356,7 +276,7 @@ const (
 	CONTROLLER_AXIS_TRIGGERRIGHT GameControllerAxis = 0
 	CONTROLLER_AXIS_MAX          GameControllerAxis = 0
 
-	CONTROLLER_BUTTON_INVALID       GameControllerButton = 0
+	CONTROLLER_BUTTON_INVALID       GameControllerButton = -1
 	CONTROLLER_BUTTON_A             GameControllerButton = 0
 	CONTROLLER_BUTTON_B             GameControllerButton = 0
 	CONTROLLER_BUTTON_X             GameControllerButton = 0

@@ -136,6 +136,10 @@ func (fs *amoreFS) path(filename string) string {
 		return "assets/" + p
 	}
 
+	if filename != "conf.toml" {
+		return "assets/" + p
+	}
+
 	return p
 }
 

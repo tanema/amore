@@ -300,9 +300,6 @@ func (shader *Shader) getTextureUnit(name string) (int, error) {
 }
 
 func createVertexCode(code string) (string, error) {
-	if temp_err != nil {
-		panic(temp_err)
-	}
 	codes := shaderTemplateData{
 		Header: VERTEX_HEADER,
 		Code:   code,

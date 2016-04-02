@@ -36,14 +36,14 @@ type quadIndices struct {
 }
 
 func newQuadIndices(size int) *quadIndices {
-	indices := make([]uint32, size*6)
+	indices := make([]uint16, size*6)
 	for i := 0; i < size; i++ {
-		indices[i*6+0] = uint32(i*4 + 0)
-		indices[i*6+1] = uint32(i*4 + 1)
-		indices[i*6+2] = uint32(i*4 + 2)
-		indices[i*6+3] = uint32(i*4 + 2)
-		indices[i*6+4] = uint32(i*4 + 1)
-		indices[i*6+5] = uint32(i*4 + 3)
+		indices[i*6+0] = uint16(i*4 + 0)
+		indices[i*6+1] = uint16(i*4 + 1)
+		indices[i*6+2] = uint16(i*4 + 2)
+		indices[i*6+3] = uint16(i*4 + 2)
+		indices[i*6+4] = uint16(i*4 + 1)
+		indices[i*6+5] = uint16(i*4 + 3)
 	}
 
 	return &quadIndices{
@@ -52,15 +52,15 @@ func newQuadIndices(size int) *quadIndices {
 }
 
 func newAltQuadIndices(size int) *quadIndices {
-	indices := make([]uint32, size*6)
+	indices := make([]uint16, size*6)
 	for i := 0; i < size; i++ {
-		indices[i*6+0] = uint32(i*4 + 0)
-		indices[i*6+1] = uint32(i*4 + 1)
-		indices[i*6+2] = uint32(i*4 + 2)
+		indices[i*6+0] = uint16(i*4 + 0)
+		indices[i*6+1] = uint16(i*4 + 1)
+		indices[i*6+2] = uint16(i*4 + 2)
 
-		indices[i*6+3] = uint32(i*4 + 0)
-		indices[i*6+4] = uint32(i*4 + 2)
-		indices[i*6+5] = uint32(i*4 + 3)
+		indices[i*6+3] = uint16(i*4 + 0)
+		indices[i*6+4] = uint16(i*4 + 2)
+		indices[i*6+5] = uint16(i*4 + 3)
 	}
 
 	return &quadIndices{

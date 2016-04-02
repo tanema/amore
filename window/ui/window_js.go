@@ -11,29 +11,46 @@ import (
 )
 
 var (
-	CurrentWindow      *Window
-	document           = dom.GetWindow().Document().(dom.HTMLDocument)
-	grabSupport        bool
-	fullscreenSupport  bool
-	animationFrameChan = make(chan struct{})
+	CurrentWindow     *Window
+	document          = dom.GetWindow().Document().(dom.HTMLDocument)
+	grabSupport       bool
+	fullscreenSupport bool
+	contextConfig     = map[string]bool{
+		"alpha":                 false,
+		"depth":                 true,
+		"stencil":               true,
+		"premultipliedAlpha":    false,
+		"preserveDrawingBuffer": true,
+	}
 )
 
 func InitWindowAndContext(config WindowConfig) (*Window, Context, error) {
+	if js.Global.Get("WebGLRenderingContext") == js.Undefined {
+		return nil, Context{}, errors.New("Your browser doesn't appear to support WebGL.")
+	}
+
 	canvas := document.CreateElement("canvas").(*dom.HTMLCanvasElement)
-
+	canvas.Width = config.Width
+	canvas.Height = config.Height
 	canvas.Style().SetProperty("position", "absolute", "")
-	canvas.Style().SetProperty("width", fmt.Sprintf("%vpx", config.Width), "")
-	canvas.Style().SetProperty("height", fmt.Sprintf("%vpx", config.Height), "")
-
 	document.Body().AppendChild(canvas)
 
 	// Create GL context.
-	context, err := newContext(config, canvas.Underlying())
-	if err != nil {
-		return nil, Context{}, err
+	contextConfig["antialias"] = (config.Msaa > 0)
+
+	var context *js.Object
+	if context = canvas.Call("getContext", "webgl", contextConfig); context == nil {
+		if context = canvas.Call("getContext", "experimental-webgl", contextConfig); context == nil {
+			return nil, Context{}, errors.New("Creating a WebGL context has failed.")
+		}
 	}
 
-	CurrentWindow := &Window{canvas}
+	CurrentWindow = &Window{
+		HTMLCanvasElement: canvas,
+		focused:           true,
+		windowListeners:   make(map[string]func(*js.Object)),
+		documentListeners: make(map[string]func(*js.Object)),
+	}
 
 	grabSupport = CurrentWindow.Underlying().Get("requestPointerLock") == js.Undefined || document.Underlying().Get("exitPointerLock") == js.Undefined
 	fullscreenSupport = CurrentWindow.Underlying().Get("webkitRequestFullscreen") == js.Undefined || document.Underlying().Get("webkitExitFullscreen") == js.Undefined
@@ -43,8 +60,16 @@ func InitWindowAndContext(config WindowConfig) (*Window, Context, error) {
 	CurrentWindow.SetTitle(config.Title)
 
 	if config.Centered {
-		config.X = (dom.GetWindow().InnerWidth() - config.Width) / 2
-		config.Y = (dom.GetWindow().InnerHeight() - config.Height) / 2
+		if dom.GetWindow().InnerWidth() > config.Width {
+			config.X = (dom.GetWindow().InnerWidth() - config.Width) / 2
+		} else {
+			config.Y = 0
+		}
+		if dom.GetWindow().InnerHeight() > config.Height {
+			config.Y = (dom.GetWindow().InnerHeight() - config.Height) / 2
+		} else {
+			config.Y = 0
+		}
 	}
 
 	if !config.Fullscreen {
@@ -53,23 +78,44 @@ func InitWindowAndContext(config WindowConfig) (*Window, Context, error) {
 
 	CurrentWindow.Raise()
 
-	// Request first animation frame.
-	js.Global.Call("requestAnimationFrame", animationFrame)
+	CurrentWindow.bindEvents()
 
 	return CurrentWindow, Context{context}, nil
 }
 
-func newContext(config WindowConfig, canvas *js.Object) (*js.Object, error) {
-	if js.Global.Get("WebGLRenderingContext") == js.Undefined {
-		return nil, errors.New("Your browser doesn't appear to support WebGL.")
-	}
+var windowEventWrappers = map[string]func(event dom.Event) Event{
+	"resize":              func(event dom.Event) Event { return nil },
+	"gamepadconnected":    func(event dom.Event) Event { return nil },
+	"gamepaddisconnected": func(event dom.Event) Event { return nil },
+}
 
-	if gl := canvas.Call("getContext", "webgl"); gl != nil {
-		return gl, nil
-	} else if gl := canvas.Call("getContext", "experimental-webgl"); gl != nil {
-		return gl, nil
-	} else {
-		return nil, errors.New("Creating a WebGL context has failed.")
+var documentEventWrappers = map[string]func(event dom.Event) Event{
+	"keydown":     func(event dom.Event) Event { return nil },
+	"keyup":       func(event dom.Event) Event { return nil },
+	"mousedown":   func(event dom.Event) Event { return nil },
+	"contextmenu": func(event dom.Event) Event { return nil },
+	"mouseup":     func(event dom.Event) Event { return nil },
+	"mousemove":   func(event dom.Event) Event { return nil },
+	"wheel":       func(event dom.Event) Event { return nil },
+	"touchstart":  func(event dom.Event) Event { return nil },
+	"touchmove":   func(event dom.Event) Event { return nil },
+	"touchend":    func(event dom.Event) Event { return nil },
+	"focus":       func(event dom.Event) Event { return nil },
+	"blur":        func(event dom.Event) Event { return nil },
+}
+
+func (window *Window) bindEvents() {
+	for eventName, wrapper := range windowEventWrappers {
+		window.windowListeners[eventName] = dom.GetWindow().AddEventListener(eventName, false, func(event dom.Event) {
+			event_buffer = append(event_buffer, wrapper(event))
+			event.PreventDefault()
+		})
+	}
+	for eventName, wrapper := range documentEventWrappers {
+		window.documentListeners[eventName] = document.AddEventListener(eventName, false, func(event dom.Event) {
+			event_buffer = append(event_buffer, wrapper(event))
+			event.PreventDefault()
+		})
 	}
 }
 
@@ -78,14 +124,18 @@ func (window *Window) SetTitle(title string) {
 }
 
 func (window *Window) Minimize() {
+	event_buffer = append(event_buffer, &WindowEvent{Event: WINDOWEVENT_HIDDEN})
 	window.Style().SetProperty("display", "none", "")
 }
 
 func (window *Window) Maximize() {
+	event_buffer = append(event_buffer, &WindowEvent{Event: WINDOWEVENT_SHOWN})
 	window.Style().SetProperty("display", "block", "")
 }
 
-func (window *Window) WarpMouseInWindow(x, y int) {}
+func (window *Window) IsMouseGrabbed() bool {
+	return window.grabbed
+}
 
 func (window *Window) SetGrab(grabbed bool) {
 	if grabbed && grabSupport {
@@ -93,9 +143,8 @@ func (window *Window) SetGrab(grabbed bool) {
 	} else if grabSupport {
 		document.Underlying().Call("exitPointerLock")
 	}
+	window.grabbed = grabbed
 }
-
-func (window *Window) SetMinimumSize(w, h int) {}
 
 func (window *Window) SetPosition(x, y int) {
 	window.Style().SetProperty("left", fmt.Sprintf("%vpx", x), "")
@@ -112,23 +161,34 @@ func (window *Window) SwapBuffers() {
 	js.Global.Call("requestAnimationFrame", animationFrame)
 }
 
+var animationFrameChan = make(chan int)
+
 func animationFrame() {
 	go func() {
-		animationFrameChan <- struct{}{}
+		animationFrameChan <- 0
 	}()
 }
 
 func (window *Window) Raise() {
 	window.Maximize()
+	js.Global.Call("requestAnimationFrame", animationFrame)
 }
 
 func (window *Window) Destroy() {
 	if window != nil {
 		document.Body().RemoveChild(window.HTMLCanvasElement)
+		for eventName, listener := range window.windowListeners {
+			dom.GetWindow().RemoveEventListener(eventName, false, listener)
+		}
+		for eventName, listener := range window.documentListeners {
+			document.RemoveEventListener(eventName, false, listener)
+		}
 	}
 }
 
-func (window *Window) GetDrawableSize() (int, int) { return 0, 0 }
+func (window *Window) GetDrawableSize() (int, int) {
+	return window.Width, window.Height
+}
 
 func (window *Window) SetIcon(path string) error {
 	link := document.CreateElement("link").(*dom.HTMLLinkElement)
@@ -136,8 +196,6 @@ func (window *Window) SetIcon(path string) error {
 	link.Set("href", path)
 	return nil
 }
-
-func (window *Window) IsMouseGrabbed() bool { return false }
 
 func (window *Window) IsVisible() bool {
 	return window.Style().GetPropertyValue("display") == "block"
@@ -152,13 +210,23 @@ func (window *Window) Confirm(title, message string) bool {
 	return dom.GetWindow().Confirm(fmt.Sprintf("%v\n%v", title, message))
 }
 
+func (window *Window) HasFocus() bool {
+	return window.focused
+}
+
+func (window *Window) HasMouseFocus() bool {
+	return window.focused
+}
+
+// NOT SUPPORTED
+
+func (window *Window) WarpMouseInWindow(x, y int) {}
+func (window *Window) SetMinimumSize(w, h int)    {}
+
 func (window *Window) ShowMessageBox(title, message string, buttons []string) string {
 	println("ShowMessageBox not supported")
 	return ""
 }
-
-func (window *Window) HasFocus() bool      { return false }
-func (window *Window) HasMouseFocus() bool { return false }
 
 func (window *Window) RequestAttention(continuous bool) {
 	println("RequestAttention not supported")

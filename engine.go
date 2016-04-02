@@ -16,12 +16,6 @@ import (
 	"github.com/tanema/amore/gfx"
 	"github.com/tanema/amore/timer"
 	"github.com/tanema/amore/window"
-	"github.com/tanema/amore/window/ui"
-)
-
-var (
-	currentWindow  *ui.Window
-	currentContext ui.Context
 )
 
 func init() {
@@ -34,11 +28,9 @@ func init() {
 // update and draw will be called synchronously because calls to OpenGL that are
 // not on the main thread will crash your program.
 func Start(update func(float32), draw func()) error {
-	err := window.Init()
-	if err != nil {
+	if err := window.Init(); err != nil {
 		return err
 	}
-
 	for !window.ShouldClose() {
 		timer.Step()
 		update(timer.GetDelta())
@@ -48,7 +40,6 @@ func Start(update func(float32), draw func()) error {
 		gfx.Present()
 		event.Poll()
 	}
-
 	window.Destroy()
 	return nil
 }

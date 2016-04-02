@@ -30,6 +30,11 @@ var (
 	batch         *gfx.SpriteBatch
 	text          *gfx.Text
 	amore_text    *gfx.Text
+	star          = []float32{
+		133, 30, 198, 82, 259, 86, 197, 163,
+		235, 243, 140, 184, 60, 243, 85, 158,
+		34, 78, 113, 77, 132, 30,
+	}
 )
 
 func main() {
@@ -114,7 +119,7 @@ func keyUp(key keyboard.Key) {
 	case keyboard.Key3:
 		println(window.Confirm("test", "alert"))
 	case keyboard.Key4:
-		triangle_mesh.SetVertexMap([]uint32{0, 1, 2})
+		triangle_mesh.SetVertexMap([]uint16{0, 1, 2})
 	case keyboard.Key5:
 		triangle_mesh.ClearVertexMap()
 	case keyboard.Key6:
@@ -147,6 +152,10 @@ func draw() {
 
 	gfx.SetLineWidth(10)
 
+	// line
+	gfx.SetColor(0, 0, 170, 255)
+	gfx.Line(star...)
+
 	gfx.SetColor(255, 255, 255, 255)
 	gfx.Draw(batch, 50, 150)
 
@@ -175,19 +184,11 @@ func draw() {
 	gfx.Arc("line", 200.0, 550.0, 50.0, 0, math.Pi)
 	gfx.Ellipse("line", 300.0, 550.0, 50.0, 20.0)
 
-	// line
-	gfx.SetColor(0, 0, 170, 255)
-	gfx.Line(
-		800.0, 100.0, 850.0, 100.0,
-		900.0, 20.0, 950.0, 100.0,
-		1030.0, 100.0, 950.0, 180.0,
-	)
-
 	// image
 	gfx.SetColor(255, 255, 255, 255)
 	//x, y, rotate radians, scale x, y, offset x, y, shear x, y
 	gfx.Draw(tree, 500, 50, -0.4, 0.5, 0.8, -100, -200, -0.2, 0.4)
-	gfx.Drawq(tree, quad, 1000, 500)
+	gfx.Drawq(tree, quad, 400, 50)
 
 	// image font
 	gfx.SetFont(image_font)
@@ -196,17 +197,17 @@ func draw() {
 	gfx.SetFont(ttf)
 	gfx.Print("test one two", 200, 100, math.Pi/2, 2, 2)
 
-	//FPS
-	gfx.SetColor(0, 170, 170, 255)
-	gfx.Print(fmt.Sprintf("fps: %v", timer.GetFPS()), 1200, 10)
-
 	gfx.Draw(psystem, 200, 200)
 
 	gfx.SetColor(255, 255, 255, 255)
-	gfx.Draw(triangle_mesh, 50, 50)
+	gfx.Draw(triangle_mesh, 200, 200)
 
 	//mouse position
 	gfx.Circle("fill", mx, my, 20.0)
+
+	//FPS
+	gfx.SetColor(0, 170, 170, 255)
+	gfx.Print(fmt.Sprintf("fps: %v", timer.GetFPS()), 720, 10)
 
 	gfx.Draw(amore_text, 500, 400, 0, 3, 3)
 }

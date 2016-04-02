@@ -145,23 +145,23 @@ type indexBuffer struct {
 	*glBuffer
 }
 
-func newIndexBuffer(size int, data []uint32, usage Usage) *indexBuffer {
+func newIndexBuffer(size int, data []uint16, usage Usage) *indexBuffer {
 	new_buffer := &indexBuffer{
-		glBuffer: newGlBuffer(gl.ELEMENT_ARRAY_BUFFER, size*4, u32Bytes(data...), usage),
+		glBuffer: newGlBuffer(gl.ELEMENT_ARRAY_BUFFER, size*4, u16Bytes(data...), usage),
 	}
 	return new_buffer
 }
 
-func (buffer *indexBuffer) fill(offset int, data []uint32) {
-	buffer.glBuffer.fill(offset*4, u32Bytes(data...))
+func (buffer *indexBuffer) fill(offset int, data []uint16) {
+	buffer.glBuffer.fill(offset*4, u16Bytes(data...))
 }
 
 func (buffer *indexBuffer) drawElements(mode uint32, offset, size int) {
 	buffer.bind()
 	defer buffer.unbind()
-	gl.DrawElements(gl.Enum(mode), size, gl.UNSIGNED_INT, offset*4)
+	gl.DrawElements(gl.Enum(mode), size, gl.UNSIGNED_SHORT, offset*4)
 }
 
-func (buffer *indexBuffer) getData() []uint32 {
-	return u32FromByte(buffer.glBuffer.data)
+func (buffer *indexBuffer) getData() []uint16 {
+	return u16FromByte(buffer.glBuffer.data)
 }

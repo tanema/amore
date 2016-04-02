@@ -23,11 +23,8 @@ var (
 	screen_height          = int32(0)
 	modelIdent             = mgl32.Ident4()
 	defaultShader          *Shader
-
-	gl_state = glState{
-		viewport: make([]int32, 4),
-	}
-	states = &displayStateStack{newDisplayState()}
+	gl_state               = glState{viewport: make([]int32, 4)}
+	states                 = &displayStateStack{newDisplayState()}
 )
 
 func InitContext(w, h int32, ctx ui.Context) {
@@ -41,7 +38,7 @@ func InitContext(w, h int32, ctx ui.Context) {
 	//Get system info
 	opengl_version = gl.GetString(gl.VERSION)
 	opengl_vendor = gl.GetString(gl.VENDOR)
-	gl_state.defaultFBO = getCurrentFBO()
+	gl_state.defaultFBO = gl.GetBoundFramebuffer()
 	gl.GetIntegerv(gl.VIEWPORT, gl_state.viewport)
 	// And the current scissor - but we need to compensate for GL scissors
 	// starting at the bottom left instead of top left.
@@ -69,7 +66,7 @@ func InitContext(w, h int32, ctx ui.Context) {
 	gl_state.viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
 
 	SetViewportSize(w, h)
-	SetBackgroundColor(0, 0, 0, 1)
+	SetBackgroundColor(0, 0, 0, 255)
 
 	gl_state.boundTextures = make([]gl.Texture, maxTextureUnits)
 	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
@@ -252,6 +249,8 @@ func Clear(r, g, b, a float32) {
 func ClearC(c Color) {
 	Clear(c[0], c[1], c[2], c[3])
 }
+
+var active_count = 1
 
 func Present() {
 	if !IsActive() {
@@ -553,7 +552,7 @@ func GetFont() *Font {
 }
 
 func SetCanvas(canvases ...*Canvas) error {
-	if canvases == nil || len(canvases) < 0 {
+	if canvases == nil || len(canvases) == 0 {
 		states.back().canvases = nil
 		if gl_state.currentCanvas != nil {
 			gl_state.currentCanvas.stopGrab(false)

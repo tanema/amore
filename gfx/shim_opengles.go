@@ -25,8 +25,3 @@ func initMaxValues() {
 	maxTextureUnits = int32(gl.GetInteger(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
 	gl_state.textureCounters = make([]int, maxTextureUnits)
 }
-
-func getCurrentFBO() gl.Framebuffer {
-	current_fbo := gl.GetInteger(gl.FRAMEBUFFER_BINDING)
-	return gl.Framebuffer{Value: uint32(current_fbo)}
-}
