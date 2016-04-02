@@ -9,6 +9,7 @@ const (
 )
 
 var (
+	start_time          = time.Now()
 	fps                 int
 	frames              int
 	current_time        float32
@@ -16,22 +17,14 @@ var (
 	previous_fps_update float32
 	dt                  float32
 	average_delta       float32
-	ticks               int32
 )
-
-func init() {
-	ticker := time.NewTicker(time.Millisecond)
-	go func() {
-		for range ticker.C {
-			ticks++
-		}
-	}()
-}
 
 func Step() {
 	frames++
+
 	previous_time = current_time
 	current_time = GetTime()
+
 	dt = current_time - previous_time
 
 	time_since_last := current_time - previous_fps_update
@@ -44,7 +37,7 @@ func Step() {
 }
 
 func GetTime() float32 {
-	return float32(ticks) / 1000.0
+	return float32(time.Now().Sub(start_time).Seconds())
 }
 
 func GetDelta() float32 {
