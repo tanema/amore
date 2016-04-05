@@ -8,7 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32/matstack"
 	"github.com/goxjs/gl"
 
-	"github.com/tanema/amore/window/ui"
+	"github.com/tanema/amore/window"
 )
 
 var (
@@ -23,17 +23,20 @@ var (
 	screen_height          = int32(0)
 	modelIdent             = mgl32.Ident4()
 	defaultShader          *Shader
-	gl_state               = glState{viewport: make([]int32, 4)}
-	states                 = &displayStateStack{newDisplayState()}
+
+	gl_state = glState{
+		viewport: make([]int32, 4),
+	}
+	states = displayStateStack{newDisplayState()}
 )
 
-func InitContext(w, h int32, ctx ui.Context) {
+func InitContext(w, h int32) {
 	if gl_state.initialized {
 		return
 	}
 
 	// Okay, setup OpenGL.
-	initGLContext(ctx)
+	gl.ContextWatcher.OnMakeCurrent(nil)
 
 	//Get system info
 	opengl_version = gl.GetString(gl.VERSION)
@@ -50,6 +53,7 @@ func InitContext(w, h int32, ctx ui.Context) {
 	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
 	gl.VertexAttrib4fv(ATTRIB_COLOR, glcolor)
 	gl.VertexAttrib4fv(ATTRIB_CONSTANTCOLOR, glcolor)
+	useVertexAttribArrays(0)
 
 	// Enable blending
 	gl.Enable(gl.BLEND)
@@ -66,16 +70,22 @@ func InitContext(w, h int32, ctx ui.Context) {
 	gl_state.viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
 
 	SetViewportSize(w, h)
-	SetBackgroundColor(0, 0, 0, 255)
+	SetBackgroundColor(0, 0, 0, 1)
 
 	gl_state.boundTextures = make([]gl.Texture, maxTextureUnits)
 	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
 	gl_state.curTextureUnit = int(curgltextureunit - gl.TEXTURE0)
+	// Retrieve currently bound textures for each texture unit.
+	for i := 0; i < len(gl_state.boundTextures); i++ {
+		gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(i)))
+		gl_state.boundTextures[i] = gl.Texture{Value: uint32(gl.GetInteger(gl.TEXTURE_BINDING_2D))}
+	}
+	gl.ActiveTexture(gl.Enum(curgltextureunit))
 	createDefaultTexture()
 	setTextureUnit(0)
 
 	// We always need a default shader.
-	defaultShader, _ = NewShader()
+	defaultShader = NewShader()
 
 	gl_state.initialized = true
 
@@ -113,18 +123,34 @@ func prepareDraw(model *mgl32.Mat4) {
 	gl_state.currentShader.SendFloat("PointSize", states.back().pointSize)
 }
 
-func enableVertexAttribArrays(attribs ...gl.Attrib) {
-	for _, attrib := range attribs {
-		gl.EnableVertexAttribArray(attrib)
-	}
-}
+func useVertexAttribArrays(arraybits uint32) {
+	diff := arraybits ^ gl_state.enabledAttribArrays
 
-func disableVertexAttribArrays(attribs ...gl.Attrib) {
-	for _, attrib := range attribs {
-		gl.DisableVertexAttribArray(attrib)
-		if attrib == ATTRIB_COLOR {
-			gl.VertexAttrib4f(ATTRIB_COLOR, 1.0, 1.0, 1.0, 1.0)
+	if diff == 0 {
+		return
+	}
+
+	// Max 32 attributes. As of when this was written, no GL driver exposes more
+	// than 32. Lets hope that doesn't change...
+	for i := uint32(0); i < 32; i++ {
+		bit := uint32(1 << i)
+		if (diff & bit) > 0 {
+			if (arraybits & bit) > 0 {
+				gl.EnableVertexAttribArray(gl.Attrib{Value: uint(i)})
+			} else {
+				gl.DisableVertexAttribArray(gl.Attrib{Value: uint(i)})
+			}
 		}
+	}
+
+	gl_state.enabledAttribArrays = arraybits
+
+	// glDisableVertexAttribArray will make the constant value for a vertex
+	// attribute undefined. We rely on the per-vertex color attribute being
+	// white when no per-vertex color is used, so we set it here.
+	// FIXME: Is there a better place to do this?
+	if (diff&ATTRIBFLAG_COLOR) > 0 && (arraybits&ATTRIBFLAG_COLOR) == 0 {
+		gl.VertexAttrib4f(ATTRIB_COLOR, 1.0, 1.0, 1.0, 1.0)
 	}
 }
 
@@ -200,7 +226,7 @@ func deleteTexture(texture gl.Texture) {
 	// was bound to before deletion.
 	for i, texid := range gl_state.boundTextures {
 		if texid == texture {
-			gl_state.boundTextures[i] = gl.Texture{}
+			gl_state.boundTextures[i] = gl.Texture{Value: 0}
 		}
 	}
 
@@ -250,8 +276,6 @@ func ClearC(c Color) {
 	Clear(c[0], c[1], c[2], c[3])
 }
 
-var active_count = 1
-
 func Present() {
 	if !IsActive() {
 		return
@@ -260,7 +284,7 @@ func Present() {
 	// Make sure we don't have a canvas active.
 	canvases := states.back().canvases
 	SetCanvas()
-	ui.CurrentWindow.SwapBuffers()
+	window.GetCurrent().SwapBuffers()
 	// Restore the currently active canvas, if there is one.
 	SetCanvas(canvases...)
 }
@@ -268,7 +292,7 @@ func Present() {
 func IsActive() bool {
 	// The graphics module is only completely 'active' if there's a window, a
 	// context, and the active variable is set.
-	return gl_state.active && isCreated() && ui.CurrentWindow != nil
+	return gl_state.active && isCreated() && window.GetCurrent().IsOpen()
 }
 
 func SetActive(enable bool) {
@@ -298,9 +322,9 @@ func Rotate(angle float32) {
 	gl_state.viewStack.LeftMul(mgl32.HomogRotate3D(angle, mgl32.Vec3{0, 0, 1}))
 }
 
-func Scale(args ...float32) error {
+func Scale(args ...float32) {
 	if args == nil || len(args) == 0 {
-		return fmt.Errorf("not enough params passed to scale call")
+		panic("not enough params passed to scale call")
 	}
 	var sx, sy float32
 	sx = args[0]
@@ -313,12 +337,11 @@ func Scale(args ...float32) error {
 	gl_state.viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
 
 	states.back().pixelSize *= (2.0 / (mgl32.Abs(sx) + mgl32.Abs(sy)))
-	return nil
 }
 
-func Shear(args ...float32) error {
+func Shear(args ...float32) {
 	if args == nil || len(args) == 0 {
-		return fmt.Errorf("not enough params passed to scale call")
+		panic("not enough params passed to scale call")
 	}
 	var kx, ky float32
 	kx = args[0]
@@ -329,7 +352,6 @@ func Shear(args ...float32) error {
 	}
 
 	gl_state.viewStack.LeftMul(mgl32.ShearX3D(kx, ky))
-	return nil
 }
 
 func Push() {
@@ -342,7 +364,7 @@ func Pop() {
 	states.pop()
 }
 
-func SetScissor(args ...int32) error {
+func SetScissor(args ...int32) {
 	if args == nil {
 		gl.Disable(gl.SCISSOR_TEST)
 		states.back().scissor = false
@@ -359,9 +381,8 @@ func SetScissor(args ...int32) error {
 		states.back().scissorBox = []int32{x, y, width, height}
 		states.back().scissor = true
 	} else {
-		return fmt.Errorf("incorrect number of arguments to setscissor")
+		panic("incorrect number of arguments to setscissor")
 	}
-	return nil
 }
 
 func IntersectScissor(x, y, width, height int32) {
@@ -552,7 +573,7 @@ func GetFont() *Font {
 }
 
 func SetCanvas(canvases ...*Canvas) error {
-	if canvases == nil || len(canvases) == 0 {
+	if canvases == nil || len(canvases) < 0 {
 		states.back().canvases = nil
 		if gl_state.currentCanvas != nil {
 			gl_state.currentCanvas.stopGrab(false)

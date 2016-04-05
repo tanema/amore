@@ -98,15 +98,16 @@ func Ellipsep(mode string, x, y, a, b float32, points int) {
 func Point(x, y float32) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
-	enableVertexAttribArrays(ATTRIB_POS)
-	defer disableVertexAttribArrays(ATTRIB_POS)
+	useVertexAttribArrays(ATTRIBFLAG_POS)
 
 	point := []float32{x, y}
 	vbo := gl.CreateBuffer()
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(point...), gl.STATIC_DRAW)
+
 	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, 0)
 	gl.DrawArrays(gl.POINTS, 0, 1)
+
 	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
 	gl.DeleteBuffer(vbo)
 }
@@ -130,9 +131,7 @@ func Polygon(mode string, coords []float32) {
 	} else {
 		prepareDraw(nil)
 		bindTexture(gl_state.defaultTexture)
-		enableVertexAttribArrays(ATTRIB_POS)
-		defer disableVertexAttribArrays(ATTRIB_POS)
-
+		useVertexAttribArrays(ATTRIBFLAG_POS)
 		vbo := gl.CreateBuffer()
 		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 		gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(coords...), gl.STATIC_DRAW)

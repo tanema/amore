@@ -6,19 +6,11 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func u16FromByte(b []byte) []uint16 {
-	f := make([]uint16, len(b)/2)
-	for i := 0; i < len(b)/2; i++ {
-		f[i] = uint16(b[2*i+0]) | uint16(b[2*i+1])<<8
-	}
-	return f
-}
-
 func u16Bytes(values ...uint16) []byte {
 	b := make([]byte, 2*len(values))
 	for i, u := range values {
-		b[2*i+0] = byte(u >> 0)
-		b[2*i+1] = byte(u >> 8)
+		b[4*i+0] = byte(u >> 0)
+		b[4*i+1] = byte(u >> 8)
 	}
 	return b
 }

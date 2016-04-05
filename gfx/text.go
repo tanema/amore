@@ -9,7 +9,7 @@ type (
 	Text struct {
 		font      *Font
 		strings   []string
-		colors    []Color
+		colors    []*Color
 		wrapLimit float32
 		align     AlignMode
 		batches   map[rasterizer]*SpriteBatch
@@ -28,7 +28,7 @@ func Print(fs string, argv ...float32) {
 	text.Release()
 }
 
-func Printc(strs []string, colors []Color, argv ...float32) {
+func Printc(strs []string, colors []*Color, argv ...float32) {
 	text, err := NewColorText(GetFont(), strs, colors)
 	if err != nil {
 		return
@@ -46,7 +46,7 @@ func Printf(fs string, wrapLimit float32, align AlignMode, argv ...float32) {
 	text.Release()
 }
 
-func Printfc(strs []string, colors []Color, wrapLimit float32, align AlignMode, argv ...float32) {
+func Printfc(strs []string, colors []*Color, wrapLimit float32, align AlignMode, argv ...float32) {
 	text, err := NewColorTextExt(GetFont(), strs, colors, wrapLimit, align)
 	if err != nil {
 		return
@@ -63,14 +63,14 @@ func NewTextExt(font *Font, text string, wrap_limit float32, align AlignMode) (*
 	if text == "" {
 		return nil, fmt.Errorf("Cannot create an text object with blank string")
 	}
-	return NewColorTextExt(font, []string{text}, []Color{NewColor(255, 255, 255, 255)}, wrap_limit, align)
+	return NewColorTextExt(font, []string{text}, []*Color{NewColor(255, 255, 255, 255)}, wrap_limit, align)
 }
 
-func NewColorText(font *Font, strs []string, colors []Color) (*Text, error) {
+func NewColorText(font *Font, strs []string, colors []*Color) (*Text, error) {
 	return NewColorTextExt(font, strs, colors, -1, ALIGN_LEFT)
 }
 
-func NewColorTextExt(font *Font, strs []string, colors []Color, wrap_limit float32, align AlignMode) (*Text, error) {
+func NewColorTextExt(font *Font, strs []string, colors []*Color, wrap_limit float32, align AlignMode) (*Text, error) {
 	if len(strs) == 0 {
 		return nil, fmt.Errorf("Nothing to print")
 	}
@@ -271,10 +271,10 @@ func (text *Text) SetFont(f *Font) {
 }
 
 func (text *Text) Set(t string) {
-	text.Setc([]string{t}, []Color{NewColor(255, 255, 255, 255)})
+	text.Setc([]string{t}, []*Color{NewColor(255, 255, 255, 255)})
 }
 
-func (text *Text) Setc(strs []string, colors []Color) {
+func (text *Text) Setc(strs []string, colors []*Color) {
 	text.strings = strs
 	text.colors = colors
 	text.generate()
@@ -290,7 +290,7 @@ func (text *Text) Draw(args ...float32) {
 
 type word struct {
 	glyphs []glyphData
-	colors []Color
+	colors []*Color
 	rasts  []rasterizer
 	kern   []float32
 	size   int
@@ -300,12 +300,12 @@ type word struct {
 func newWord() *word {
 	return &word{
 		glyphs: []glyphData{},
-		colors: []Color{},
+		colors: []*Color{},
 		rasts:  []rasterizer{},
 	}
 }
 
-func (w *word) add(g glyphData, color Color, rast rasterizer, kern float32) {
+func (w *word) add(g glyphData, color *Color, rast rasterizer, kern float32) {
 	w.glyphs = append(w.glyphs, g)
 	w.colors = append(w.colors, color)
 	w.rasts = append(w.rasts, rast)

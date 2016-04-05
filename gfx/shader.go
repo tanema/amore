@@ -24,16 +24,12 @@ type Shader struct {
 	activeTexUnits []gl.Texture
 }
 
-func NewShader(paths ...string) (*Shader, error) {
+func NewShader(paths ...string) *Shader {
 	new_shader := &Shader{}
 	code := pathsToCode(paths...)
-	var err error
-	new_shader.vertex_code, new_shader.pixel_code, err = shaderCodeToGLSL(code...)
-	if err != nil {
-		return nil, err
-	}
+	new_shader.vertex_code, new_shader.pixel_code = shaderCodeToGLSL(code...)
 	registerVolatile(new_shader)
-	return new_shader, nil
+	return new_shader
 }
 
 func (shader *Shader) loadVolatile() bool {
@@ -99,7 +95,9 @@ func (shader *Shader) mapUniforms() {
 			}
 		}
 
-		shader.uniforms[u.Name] = u
+		if u.Location.Value != -1 {
+			shader.uniforms[u.Name] = u
+		}
 	}
 }
 
@@ -241,10 +239,7 @@ func (shader *Shader) SendTexture(name string, texture iTexture) error {
 	defer states.back().shader.attach(false)
 
 	gltex := texture.GetHandle()
-	texunit, e := shader.getTextureUnit(name)
-	if e != nil {
-		return e
-	}
+	texunit := shader.getTextureUnit(name)
 
 	uniform, err := shader.getUniformAndCheck(name, UNIFORM_SAMPLER, 1)
 	if err != nil {
@@ -266,10 +261,10 @@ func (shader *Shader) SendTexture(name string, texture iTexture) error {
 	return nil
 }
 
-func (shader *Shader) getTextureUnit(name string) (int, error) {
+func (shader *Shader) getTextureUnit(name string) int {
 	unit, found := shader.texUnitPool[name]
 	if found {
-		return unit, nil
+		return unit
 	}
 
 	texunit := -1
@@ -291,34 +286,42 @@ func (shader *Shader) getTextureUnit(name string) (int, error) {
 		}
 
 		if texunit == -1 {
-			return 0, fmt.Errorf("No more texture units available for shader.")
+			panic("No more texture units available for shader.")
 		}
 	}
 
 	shader.texUnitPool[name] = texunit
-	return shader.texUnitPool[name], nil
+	return shader.texUnitPool[name]
 }
 
-func createVertexCode(code string) (string, error) {
-	codes := shaderTemplateData{
-		Header: VERTEX_HEADER,
-		Code:   code,
-		Footer: VERTEX_FOOTER,
+func createVertexCode(code string) string {
+	codes := struct {
+		Syntax, Header, Uniforms, Code, Footer string
+	}{
+		Syntax:   SYNTAX,
+		Header:   VERTEX_HEADER,
+		Uniforms: UNIFORMS,
+		Code:     code,
+		Footer:   VERTEX_FOOTER,
 	}
 
 	var template_writer bytes.Buffer
 	err := SHADER_TEMPLATE.Execute(&template_writer, codes)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
-	return template_writer.String(), nil
+	return template_writer.String()
 }
 
-func createPixelCode(code string, is_multicanvas bool) (string, error) {
-	codes := shaderTemplateData{
-		Header: PIXEL_HEADER,
-		Code:   code,
+func createPixelCode(code string, is_multicanvas bool) string {
+	codes := struct {
+		Syntax, Header, Uniforms, Line, Footer, Code string
+	}{
+		Syntax:   SYNTAX,
+		Header:   PIXEL_HEADER,
+		Uniforms: UNIFORMS,
+		Code:     code,
 	}
 
 	if is_multicanvas {
@@ -330,10 +333,10 @@ func createPixelCode(code string, is_multicanvas bool) (string, error) {
 	var template_writer bytes.Buffer
 	err := SHADER_TEMPLATE.Execute(&template_writer, codes)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
-	return template_writer.String(), nil
+	return template_writer.String()
 }
 
 func isVertexCode(code string) bool {
@@ -369,7 +372,7 @@ func pathsToCode(paths ...string) []string {
 	return code
 }
 
-func shaderCodeToGLSL(code ...string) (string, string, error) {
+func shaderCodeToGLSL(code ...string) (string, string) {
 	vertexcode := DEFAULT_VERTEX_SHADER_CODE
 	pixelcode := DEFAULT_PIXEL_SHADER_CODE
 	is_multicanvas := false // whether pixel code has "effects" function instead of "effect"
@@ -386,17 +389,7 @@ func shaderCodeToGLSL(code ...string) (string, string, error) {
 		}
 	}
 
-	vc, verr := createVertexCode(vertexcode)
-	if verr != nil {
-		return "", "", verr
-	}
-
-	pc, perr := createPixelCode(pixelcode, is_multicanvas)
-	if perr != nil {
-		return "", "", perr
-	}
-
-	return vc, pc, nil
+	return createVertexCode(vertexcode), createPixelCode(pixelcode, is_multicanvas)
 }
 
 func compileCode(shaderType gl.Enum, src string) gl.Shader {
@@ -408,7 +401,7 @@ func compileCode(shaderType gl.Enum, src string) gl.Shader {
 	gl.CompileShader(shader)
 	if gl.GetShaderi(shader, gl.COMPILE_STATUS) == 0 {
 		defer gl.DeleteShader(shader)
-		panic(fmt.Errorf("shader compile: %s, %s", gl.GetShaderInfoLog(shader), src))
+		panic(fmt.Errorf("shader compile: %s", gl.GetShaderInfoLog(shader)))
 	}
 	return shader
 }

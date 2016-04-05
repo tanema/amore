@@ -33,7 +33,7 @@ func createPool() {
 
 	// Generate sources.
 	for i := 0; i < MAX_SOURCES; i++ {
-		pool.sources[i] = al.CreateSource()
+		pool.sources[i] = al.GenSources(1)[0]
 
 		// We might hit an implementation-dependent limit on the total number
 		// of sources before reaching MAX_SOURCES.
@@ -105,7 +105,7 @@ func (p *audioPool) claim(source *Source) bool {
 func (p *audioPool) release(source *Source) {
 	p.available = append(p.available, source.source)
 	delete(p.playing, source.source)
-	source.source = al.Source{}
+	source.source = 0
 }
 
 func (p *audioPool) Stop(source *Source) {

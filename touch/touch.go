@@ -1,18 +1,19 @@
+// The touch Pacakge handles touch events in the gl context
 package touch
 
 import (
-	"github.com/tanema/amore/window/ui"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type (
 	touchCB func(x, y, dx, dy, pressure float32)
 	Touch   struct {
-		event *ui.TouchFingerEvent
+		event *sdl.TouchFingerEvent
 	}
 )
 
 var (
-	touches = make(map[int64]*ui.TouchFingerEvent)
+	touches = make(map[int64]*sdl.TouchFingerEvent)
 
 	press_default   touchCB = func(x, y, dx, dy, pressure float32) {}
 	release_default touchCB = func(x, y, dx, dy, pressure float32) {}
@@ -23,15 +24,15 @@ var (
 	touch_move_cb    = move_default
 )
 
-func Delegate(event *ui.TouchFingerEvent) {
+func Delegate(event *sdl.TouchFingerEvent) {
 	switch event.Type {
-	case ui.FINGERMOTION:
+	case sdl.FINGERMOTION:
 		touches[int64(event.TouchID)] = event
 		touch_move_cb(event.X, event.Y, event.DX, event.DY, event.Pressure)
-	case ui.FINGERDOWN:
+	case sdl.FINGERDOWN:
 		touches[int64(event.TouchID)] = event
 		touch_press_cb(event.X, event.Y, event.DX, event.DY, event.Pressure)
-	case ui.FINGERUP:
+	case sdl.FINGERUP:
 		delete(touches, int64(event.TouchID))
 		touch_release_cb(event.X, event.Y, event.DX, event.DY, event.Pressure)
 	}

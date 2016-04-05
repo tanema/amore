@@ -11,7 +11,7 @@ import (
 type SpriteBatch struct {
 	size         int
 	count        int
-	color        Color // Current color. This color, if present, will be applied to the next added sprite.
+	color        *Color // Current color. This color, if present, will be applied to the next added sprite.
 	array_buf    *vertexBuffer
 	quad_indices *quadIndices
 	usage        Usage
@@ -29,7 +29,7 @@ func NewSpriteBatchExt(texture iTexture, size int, usage Usage) *SpriteBatch {
 		size:         size,
 		texture:      texture,
 		usage:        usage,
-		color:        Color{1, 1, 1, 1},
+		color:        &Color{1, 1, 1, 1},
 		array_buf:    newVertexBuffer(size*4*8, []float32{}, usage),
 		quad_indices: newQuadIndices(size),
 		rangeMin:     -1,
@@ -78,15 +78,15 @@ func (sprite_batch *SpriteBatch) GetTexture() iTexture {
 	return sprite_batch.texture
 }
 
-func (sprite_batch *SpriteBatch) SetColor(color Color) {
+func (sprite_batch *SpriteBatch) SetColor(color *Color) {
 	sprite_batch.color = color
 }
 
 func (sprite_batch *SpriteBatch) ClearColor() {
-	sprite_batch.color = Color{1, 1, 1, 1}
+	sprite_batch.color = &Color{1, 1, 1, 1}
 }
 
-func (sprite_batch *SpriteBatch) GetColor() Color {
+func (sprite_batch *SpriteBatch) GetColor() *Color {
 	return sprite_batch.color
 }
 
@@ -176,8 +176,7 @@ func (sprite_batch *SpriteBatch) Draw(args ...float32) {
 
 	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(sprite_batch.texture.GetHandle())
-	enableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD, ATTRIB_COLOR)
-	defer disableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD, ATTRIB_COLOR)
+	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
 
 	sprite_batch.array_buf.bind()
 	defer sprite_batch.array_buf.unbind()

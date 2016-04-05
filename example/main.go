@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"image/png"
 	"math"
+	"os"
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/audio"
@@ -30,18 +32,11 @@ var (
 	batch         *gfx.SpriteBatch
 	text          *gfx.Text
 	amore_text    *gfx.Text
-	star          = []float32{
-		133, 30, 198, 82, 259, 86, 197, 163,
-		235, 243, 140, 184, 60, 243, 85, 158,
-		34, 78, 113, 77, 132, 30,
-	}
-	mouseColor = gfx.NewColor(255, 255, 255, 255)
 )
 
 func main() {
-	window.SetMouseVisible(false)
+	window.GetCurrent().SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
-	mouse.SetButtonReleaseCB(mouseButtonUp)
 
 	canvas = gfx.NewCanvas(800, 600)
 	tree, _ = gfx.NewImage("images/palm_tree.png")
@@ -49,15 +44,19 @@ func main() {
 	ttf = gfx.NewFont("fonts/arialbd.ttf", 20)
 	image_font = gfx.NewImageFont("fonts/image_font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 	image_font.SetFallbacks(ttf)
-	shader, _ = gfx.NewShader("shaders/blackandwhite.glsl")
-	bomb, _ = audio.NewSource("audio/bomb.wav")
+	shader = gfx.NewShader("shaders/blackandwhite.glsl")
+	var er error
+	bomb, er = audio.NewSource("audio/bomb.wav")
+	if er != nil {
+		panic(er)
+	}
 	bomb.SetLooping(true)
 	text, _ = gfx.NewColorTextExt(ttf,
 		[]string{file.ReadString("text/lorem.txt"), file.ReadString("text/lorem.txt")},
-		[]gfx.Color{gfx.NewColor(255, 255, 255, 255), gfx.NewColor(255, 0, 255, 255)},
+		[]*gfx.Color{gfx.NewColor(255, 255, 255, 255), gfx.NewColor(255, 0, 255, 255)},
 		500, gfx.ALIGN_CENTER)
 	amore_text, _ = gfx.NewColorText(ttf, []string{"a", "m", "o", "r", "e"},
-		[]gfx.Color{
+		[]*gfx.Color{
 			gfx.NewColor(0, 255, 0, 255),
 			gfx.NewColor(255, 0, 255, 255),
 			gfx.NewColor(255, 255, 0, 255),
@@ -66,7 +65,7 @@ func main() {
 		})
 
 	particle, _ := gfx.NewImage("images/particle.png")
-	psystem, _ = gfx.NewParticleSystem(particle, 10)
+	psystem = gfx.NewParticleSystem(particle, 10)
 	psystem.SetParticleLifetime(2, 5) // Particles live at least 2s and at most 5s.
 	psystem.SetEmissionRate(5)
 	psystem.SetSizeVariation(1)
@@ -106,14 +105,6 @@ func main() {
 	amore.Start(update, draw)
 }
 
-func mouseButtonUp(x, y float32, button mouse.MouseButton) {
-	if button == mouse.LeftButton {
-		mouseColor = gfx.NewColor(255, 0, 0, 255)
-	} else if button == mouse.RightButton {
-		mouseColor = gfx.NewColor(0, 255, 0, 255)
-	}
-}
-
 func keyUp(key keyboard.Key) {
 	switch key {
 	case keyboard.KeyEscape:
@@ -127,9 +118,11 @@ func keyUp(key keyboard.Key) {
 			bomb.Play()
 		}
 	case keyboard.Key3:
-		println(window.Confirm("test", "alert"))
+		img := gfx.NewScreenshot()
+		out, _ := os.Create("./output.png")
+		png.Encode(out, img)
 	case keyboard.Key4:
-		triangle_mesh.SetVertexMap([]uint16{0, 1, 2})
+		triangle_mesh.SetVertexMap([]uint32{0, 1, 2})
 	case keyboard.Key5:
 		triangle_mesh.ClearVertexMap()
 	case keyboard.Key6:
@@ -141,7 +134,7 @@ func keyUp(key keyboard.Key) {
 
 func update(deltaTime float32) {
 	mx, my = mouse.GetPosition()
-	mx, my = window.PixelToWindowCoords(mx, my)
+	mx, my = window.GetCurrent().PixelToWindowCoords(mx, my)
 	psystem.Update(deltaTime)
 }
 
@@ -161,10 +154,6 @@ func draw() {
 	gfx.Rect("line", 0, 300, 500, text.GetHeight())
 
 	gfx.SetLineWidth(10)
-
-	// line
-	gfx.SetColor(0, 0, 170, 255)
-	gfx.Line(star...)
 
 	gfx.SetColor(255, 255, 255, 255)
 	gfx.Draw(batch, 50, 150)
@@ -194,11 +183,19 @@ func draw() {
 	gfx.Arc("line", 200.0, 550.0, 50.0, 0, math.Pi)
 	gfx.Ellipse("line", 300.0, 550.0, 50.0, 20.0)
 
+	// line
+	gfx.SetColor(0, 0, 170, 255)
+	gfx.Line(
+		800.0, 100.0, 850.0, 100.0,
+		900.0, 20.0, 950.0, 100.0,
+		1030.0, 100.0, 950.0, 180.0,
+	)
+
 	// image
 	gfx.SetColor(255, 255, 255, 255)
 	//x, y, rotate radians, scale x, y, offset x, y, shear x, y
 	gfx.Draw(tree, 500, 50, -0.4, 0.5, 0.8, -100, -200, -0.2, 0.4)
-	gfx.Drawq(tree, quad, 400, 50)
+	gfx.Drawq(tree, quad, 1000, 500)
 
 	// image font
 	gfx.SetFont(image_font)
@@ -207,18 +204,17 @@ func draw() {
 	gfx.SetFont(ttf)
 	gfx.Print("test one two", 200, 100, math.Pi/2, 2, 2)
 
+	//FPS
+	gfx.SetColor(0, 170, 170, 255)
+	gfx.Print(fmt.Sprintf("fps: %v", timer.GetFPS()), 1200, 10)
+
 	gfx.Draw(psystem, 200, 200)
 
 	gfx.SetColor(255, 255, 255, 255)
-	gfx.Draw(triangle_mesh, 200, 200)
+	gfx.Draw(triangle_mesh, 50, 50)
 
 	//mouse position
-	gfx.SetColorC(mouseColor)
 	gfx.Circle("fill", mx, my, 20.0)
-
-	//FPS
-	gfx.SetColor(0, 170, 170, 255)
-	gfx.Print(fmt.Sprintf("fps: %v", timer.GetFPS()), 720, 10)
 
 	gfx.Draw(amore_text, 500, 400, 0, 3, 3)
 }

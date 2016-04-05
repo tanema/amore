@@ -1,7 +1,6 @@
 package gfx
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -89,9 +88,9 @@ func calculate_variation(inner, outer, v float32) float32 {
 	return low*(1-r) + high*r
 }
 
-func NewParticleSystem(texture iTexture, size int) (*ParticleSystem, error) {
+func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
 	if size == 0 || size > MAX_PARTICLES {
-		return nil, fmt.Errorf("Invalid ParticleSystem size.")
+		panic("Invalid ParticleSystem size.")
 	}
 	new_ps := &ParticleSystem{
 		texture:                texture,
@@ -108,7 +107,7 @@ func NewParticleSystem(texture iTexture, size int) (*ParticleSystem, error) {
 		quadIndices:            newQuadIndices(size),
 	}
 
-	return new_ps, nil
+	return new_ps
 }
 
 func (system *ParticleSystem) resetOffset() {
@@ -120,9 +119,9 @@ func (system *ParticleSystem) resetOffset() {
 	}
 }
 
-func (system *ParticleSystem) SetBufferSize(size int) error {
+func (system *ParticleSystem) SetBufferSize(size int) {
 	if size == 0 || size > MAX_PARTICLES {
-		return fmt.Errorf("Invalid buffer size")
+		panic("Invalid buffer size")
 	}
 	if len(system.particles) > int(size) {
 		system.particles = system.particles[:int(size)]
@@ -132,7 +131,6 @@ func (system *ParticleSystem) SetBufferSize(size int) error {
 	system.quadIndices = newQuadIndices(size)
 	system.life = system.lifetime
 	system.emitCounter = 0
-	return nil
 }
 
 func (system *ParticleSystem) GetBufferSize() int {
@@ -233,12 +231,11 @@ func (system *ParticleSystem) GetInsertMode() ParticleInsertion {
 	return system.insertMode
 }
 
-func (system *ParticleSystem) SetEmissionRate(rate float32) error {
+func (system *ParticleSystem) SetEmissionRate(rate float32) {
 	if rate < 0.0 {
-		return fmt.Errorf("Invalid emission rate")
+		panic("Invalid emission rate")
 	}
 	system.emissionRate = rate
-	return nil
 }
 
 func (system *ParticleSystem) GetEmissionRate() float32 {
@@ -656,8 +653,7 @@ func (system *ParticleSystem) Draw(args ...float32) {
 
 	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(system.texture.GetHandle())
-	enableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD, ATTRIB_COLOR)
-	defer disableVertexAttribArrays(ATTRIB_POS, ATTRIB_TEXCOORD, ATTRIB_COLOR)
+	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
 
 	vbo := gl.CreateBuffer()
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)

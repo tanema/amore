@@ -43,6 +43,7 @@ type glState struct {
 	currentShader          *Shader
 	textureCounters        []int
 	writingToStencil       bool
+	enabledAttribArrays    uint32
 }
 
 func newDisplayState() displayState {

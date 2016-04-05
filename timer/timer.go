@@ -1,7 +1,9 @@
+// The timer Package manages game timing by calling step so that the user can get
+// FPS, and delta time from this pacakge
 package timer
 
 import (
-	"time"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 const (
@@ -9,7 +11,6 @@ const (
 )
 
 var (
-	start_time          = time.Now()
 	fps                 int
 	frames              int
 	current_time        float32
@@ -21,10 +22,8 @@ var (
 
 func Step() {
 	frames++
-
 	previous_time = current_time
 	current_time = GetTime()
-
 	dt = current_time - previous_time
 
 	time_since_last := current_time - previous_fps_update
@@ -37,7 +36,7 @@ func Step() {
 }
 
 func GetTime() float32 {
-	return float32(time.Now().Sub(start_time).Seconds())
+	return float32(sdl.GetTicks()) / 1000.0
 }
 
 func GetDelta() float32 {

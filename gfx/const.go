@@ -27,10 +27,10 @@ var (
 	ATTRIB_COLOR         = gl.Attrib{Value: 2}
 	ATTRIB_CONSTANTCOLOR = gl.Attrib{Value: 3}
 
-	ATTRIBFLAG_POS           = uint32(1 << 0)
-	ATTRIBFLAG_TEXCOORD      = uint32(1 << 1)
-	ATTRIBFLAG_COLOR         = uint32(1 << 2)
-	ATTRIBFLAG_CONSTANTCOLOR = uint32(1 << 3)
+	ATTRIBFLAG_POS           = uint32(1 << ATTRIB_POS.Value)
+	ATTRIBFLAG_TEXCOORD      = uint32(1 << ATTRIB_TEXCOORD.Value)
+	ATTRIBFLAG_COLOR         = uint32(1 << ATTRIB_COLOR.Value)
+	ATTRIBFLAG_CONSTANTCOLOR = uint32(1 << ATTRIB_CONSTANTCOLOR.Value)
 )
 
 const (
