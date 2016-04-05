@@ -12,6 +12,7 @@ import (
 
 var (
 	CurrentWindow     *Window
+	currentConfig     WindowConfig
 	document          = dom.GetWindow().Document().(dom.HTMLDocument)
 	grabSupport       bool
 	fullscreenSupport bool
@@ -50,6 +51,7 @@ func InitWindowAndContext(config WindowConfig) (*Window, Context, error) {
 		focused:           true,
 		windowListeners:   make(map[string]func(*js.Object)),
 		documentListeners: make(map[string]func(*js.Object)),
+		canvasListeners:   make(map[string]func(*js.Object)),
 	}
 
 	grabSupport = CurrentWindow.Underlying().Get("requestPointerLock") == js.Undefined || document.Underlying().Get("exitPointerLock") == js.Undefined
@@ -59,63 +61,187 @@ func InitWindowAndContext(config WindowConfig) (*Window, Context, error) {
 	CurrentWindow.SetMinimumSize(config.Minwidth, config.Minheight)
 	CurrentWindow.SetTitle(config.Title)
 
-	if config.Centered {
-		if dom.GetWindow().InnerWidth() > config.Width {
-			config.X = (dom.GetWindow().InnerWidth() - config.Width) / 2
-		} else {
-			config.Y = 0
-		}
-		if dom.GetWindow().InnerHeight() > config.Height {
-			config.Y = (dom.GetWindow().InnerHeight() - config.Height) / 2
-		} else {
-			config.Y = 0
-		}
-	}
-
-	if !config.Fullscreen {
-		CurrentWindow.SetPosition(config.X, config.Y)
-	}
-
+	currentConfig = config
+	onResize(nil)
 	CurrentWindow.Raise()
-
 	CurrentWindow.bindEvents()
 
 	return CurrentWindow, Context{context}, nil
 }
 
 var windowEventWrappers = map[string]func(event dom.Event) Event{
-	"resize":              func(event dom.Event) Event { return nil },
-	"gamepadconnected":    func(event dom.Event) Event { return nil },
-	"gamepaddisconnected": func(event dom.Event) Event { return nil },
+	"resize":              onResize,
+	"gamepadconnected":    onGamepadConnected,
+	"gamepaddisconnected": onGamepadDisconnected,
 }
 
 var documentEventWrappers = map[string]func(event dom.Event) Event{
-	"keydown":     func(event dom.Event) Event { return nil },
-	"keyup":       func(event dom.Event) Event { return nil },
-	"mousedown":   func(event dom.Event) Event { return nil },
-	"contextmenu": func(event dom.Event) Event { return nil },
-	"mouseup":     func(event dom.Event) Event { return nil },
-	"mousemove":   func(event dom.Event) Event { return nil },
-	"wheel":       func(event dom.Event) Event { return nil },
-	"touchstart":  func(event dom.Event) Event { return nil },
-	"touchmove":   func(event dom.Event) Event { return nil },
-	"touchend":    func(event dom.Event) Event { return nil },
-	"focus":       func(event dom.Event) Event { return nil },
-	"blur":        func(event dom.Event) Event { return nil },
+	"keydown": onKeyDown, "keyup": onKeyUp,
+	"visibilitychange": onVisibilityChange,
+}
+
+var canvasEventWrappers = map[string]func(event dom.Event) Event{
+	"mousedown": onMouseDown, "mouseup": onMouseUp,
+	"mousemove": onMouseMove, "contextmenu": onContextMenu,
+	"mouseleave": onMouseOut, "mouseenter": onMouseEnter,
+	"wheel": onMouseWheel, "touchstart": onTouchStart,
+	"touchmove": onTouchMove, "touchend": onTouchEnd,
 }
 
 func (window *Window) bindEvents() {
-	for eventName, wrapper := range windowEventWrappers {
+	for eventName, _ := range windowEventWrappers {
 		window.windowListeners[eventName] = dom.GetWindow().AddEventListener(eventName, false, func(event dom.Event) {
-			event_buffer = append(event_buffer, wrapper(event))
+			event_buffer = append(event_buffer, windowEventWrappers[event.Type()](event))
 			event.PreventDefault()
 		})
 	}
-	for eventName, wrapper := range documentEventWrappers {
+	for eventName, _ := range documentEventWrappers {
 		window.documentListeners[eventName] = document.AddEventListener(eventName, false, func(event dom.Event) {
-			event_buffer = append(event_buffer, wrapper(event))
+			event_buffer = append(event_buffer, documentEventWrappers[event.Type()](event))
 			event.PreventDefault()
 		})
+	}
+	for eventName, _ := range canvasEventWrappers {
+		window.canvasListeners[eventName] = window.AddEventListener(eventName, false, func(event dom.Event) {
+			event_buffer = append(event_buffer, canvasEventWrappers[event.Type()](event))
+			event.PreventDefault()
+		})
+	}
+}
+
+func onResize(event dom.Event) Event {
+	if currentConfig.Fullscreen {
+		CurrentWindow.Style().SetProperty("width", fmt.Sprintf("%vpx", dom.GetWindow().InnerWidth()), "")
+		CurrentWindow.Style().SetProperty("height", fmt.Sprintf("%vpx", dom.GetWindow().InnerHeight()), "")
+	}
+
+	var x, y int
+	if currentConfig.Centered && !currentConfig.Fullscreen {
+		if dom.GetWindow().InnerWidth() > CurrentWindow.Width {
+			x = (dom.GetWindow().InnerWidth() - CurrentWindow.Width) / 2
+		}
+		if dom.GetWindow().InnerHeight() > CurrentWindow.Height {
+			y = (dom.GetWindow().InnerHeight() - CurrentWindow.Height) / 2
+		}
+	} else if !currentConfig.Centered && !currentConfig.Fullscreen {
+		x, y = currentConfig.X, currentConfig.Y
+	}
+	CurrentWindow.SetPosition(x, y)
+
+	return nil
+}
+
+func onGamepadConnected(event dom.Event) Event    { return nil }
+func onGamepadDisconnected(event dom.Event) Event { return nil }
+
+func onKeyDown(event dom.Event) Event {
+	ke := event.(*dom.KeyboardEvent)
+	keycode := Keycode(ke.Get("code").String())
+	scancode := Scancode(ke.KeyCode)
+
+	keyMap[scancode] = true
+	keyMeaningMap[keycode] = scancode
+	scancodeMeaningMap[scancode] = keycode
+
+	repeat := 0
+	if ke.Repeat {
+		repeat = 1
+	}
+
+	return &KeyDownEvent{
+		Timestamp: int(ke.Get("timeStamp").Float() * 100),
+		Repeat:    repeat,
+		Keysym: Keysym{
+			Scancode: ke.KeyCode,
+		},
+	}
+}
+
+func onKeyUp(event dom.Event) Event {
+	ke := event.(*dom.KeyboardEvent)
+	keyMap[Scancode(ke.KeyCode)] = false
+
+	repeat := 0
+	if ke.Repeat {
+		repeat = 1
+	}
+
+	return &KeyUpEvent{
+		Timestamp: int(ke.Get("timeStamp").Float() * 100),
+		Repeat:    repeat,
+		Keysym: Keysym{
+			Scancode: ke.KeyCode,
+		},
+	}
+}
+
+func onMouseDown(event dom.Event) Event {
+	me := event.(*dom.MouseEvent)
+	mouseButtonMap[MouseButton(me.Button)] = false
+	return &MouseButtonEvent{
+		Timestamp: int(me.Get("timeStamp").Float() * 100),
+		Type:      MOUSEBUTTONDOWN,
+		Button:    me.Button,
+		X:         me.Get("offsetX").Int(),
+		Y:         me.Get("offsetY").Int(),
+	}
+}
+
+func onMouseUp(event dom.Event) Event {
+	me := event.(*dom.MouseEvent)
+	mouseButtonMap[MouseButton(me.Button)] = false
+	return &MouseButtonEvent{
+		Timestamp: int(me.Get("timeStamp").Float() * 100),
+		Type:      MOUSEBUTTONUP,
+		Button:    me.Button,
+		X:         me.Get("offsetX").Int(),
+		Y:         me.Get("offsetY").Int(),
+	}
+}
+
+func onMouseMove(event dom.Event) Event {
+	me := event.(*dom.MouseEvent)
+	x, y := me.Get("offsetX").Int(), me.Get("offsetY").Int()
+	mdx, mdy := x-mousePos[0], y-mousePos[1]
+	mousePos[0], mousePos[1] = x, y
+	return &MouseMotionEvent{
+		Timestamp: int(me.Get("timeStamp").Float() * 100),
+		X:         x,
+		Y:         y,
+		XRel:      mdx,
+		YRel:      mdy,
+	}
+}
+
+//not used but context menu prevented
+func onContextMenu(event dom.Event) Event { return nil }
+
+func onMouseWheel(event dom.Event) Event {
+	me := event.(*dom.WheelEvent)
+	return &MouseWheelEvent{
+		Timestamp: int(me.Get("timeStamp").Float() * 100),
+		X:         int(me.DeltaX),
+		Y:         int(me.DeltaY),
+	}
+}
+
+func onMouseOut(event dom.Event) Event {
+	return &WindowEvent{Event: WINDOWEVENT_LEAVE}
+}
+
+func onMouseEnter(event dom.Event) Event {
+	return &WindowEvent{Event: WINDOWEVENT_ENTER}
+}
+
+func onTouchStart(event dom.Event) Event { return nil }
+func onTouchEnd(event dom.Event) Event   { return nil }
+func onTouchMove(event dom.Event) Event  { return nil }
+
+func onVisibilityChange(event dom.Event) Event {
+	if document.Underlying().Get("hidden").Bool() {
+		return &WindowEvent{Event: WINDOWEVENT_FOCUS_LOST}
+	} else {
+		return &WindowEvent{Event: WINDOWEVENT_FOCUS_GAINED}
 	}
 }
 
@@ -176,13 +302,16 @@ func (window *Window) Raise() {
 
 func (window *Window) Destroy() {
 	if window != nil {
-		document.Body().RemoveChild(window.HTMLCanvasElement)
 		for eventName, listener := range window.windowListeners {
 			dom.GetWindow().RemoveEventListener(eventName, false, listener)
 		}
 		for eventName, listener := range window.documentListeners {
 			document.RemoveEventListener(eventName, false, listener)
 		}
+		for eventName, listener := range window.canvasListeners {
+			window.RemoveEventListener(eventName, false, listener)
+		}
+		document.Body().RemoveChild(window.HTMLCanvasElement)
 	}
 }
 
@@ -218,10 +347,14 @@ func (window *Window) HasMouseFocus() bool {
 	return window.focused
 }
 
-// NOT SUPPORTED
+func (window *Window) WarpMouseInWindow(x, y int) {
+	mousePos[0], mousePos[1] = x, y
+}
 
-func (window *Window) WarpMouseInWindow(x, y int) {}
-func (window *Window) SetMinimumSize(w, h int)    {}
+func (window *Window) SetMinimumSize(w, h int) {
+	window.minWidth = w
+	window.minHeight = h
+}
 
 func (window *Window) ShowMessageBox(title, message string, buttons []string) string {
 	println("ShowMessageBox not supported")

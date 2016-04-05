@@ -36,6 +36,7 @@ const (
 	K_LEFTBRACKET  Keycode = "BracketLeft"
 	K_BACKSLASH    Keycode = "BackSlash"
 	K_RIGHTBRACKET Keycode = "BracketRight"
+	K_APOSTROPHE   Keycode = "Quote"
 	K_a            Keycode = "KeyA"
 	K_b            Keycode = "KeyB"
 	K_c            Keycode = "KeyC"

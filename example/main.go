@@ -35,11 +35,13 @@ var (
 		235, 243, 140, 184, 60, 243, 85, 158,
 		34, 78, 113, 77, 132, 30,
 	}
+	mouseColor = gfx.NewColor(255, 255, 255, 255)
 )
 
 func main() {
 	window.SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
+	mouse.SetButtonReleaseCB(mouseButtonUp)
 
 	canvas = gfx.NewCanvas(800, 600)
 	tree, _ = gfx.NewImage("images/palm_tree.png")
@@ -52,10 +54,10 @@ func main() {
 	bomb.SetLooping(true)
 	text, _ = gfx.NewColorTextExt(ttf,
 		[]string{file.ReadString("text/lorem.txt"), file.ReadString("text/lorem.txt")},
-		[]*gfx.Color{gfx.NewColor(255, 255, 255, 255), gfx.NewColor(255, 0, 255, 255)},
+		[]gfx.Color{gfx.NewColor(255, 255, 255, 255), gfx.NewColor(255, 0, 255, 255)},
 		500, gfx.ALIGN_CENTER)
 	amore_text, _ = gfx.NewColorText(ttf, []string{"a", "m", "o", "r", "e"},
-		[]*gfx.Color{
+		[]gfx.Color{
 			gfx.NewColor(0, 255, 0, 255),
 			gfx.NewColor(255, 0, 255, 255),
 			gfx.NewColor(255, 255, 0, 255),
@@ -102,6 +104,14 @@ func main() {
 	batch.Addq(q, 100, 50)
 
 	amore.Start(update, draw)
+}
+
+func mouseButtonUp(x, y float32, button mouse.MouseButton) {
+	if button == mouse.LeftButton {
+		mouseColor = gfx.NewColor(255, 0, 0, 255)
+	} else if button == mouse.RightButton {
+		mouseColor = gfx.NewColor(0, 255, 0, 255)
+	}
 }
 
 func keyUp(key keyboard.Key) {
@@ -203,6 +213,7 @@ func draw() {
 	gfx.Draw(triangle_mesh, 200, 200)
 
 	//mouse position
+	gfx.SetColorC(mouseColor)
 	gfx.Circle("fill", mx, my, 20.0)
 
 	//FPS

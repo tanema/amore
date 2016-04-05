@@ -6,20 +6,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gopherjs/gopherjs/js"
 	"honnef.co/go/js/dom"
 )
 
 var (
-	event_buffer   []Event
-	currentCursor  Cursor
-	mousePos       = [2]float32{}
-	mouseRelative  = false
-	mouseButtonMap = make(map[MouseButton]bool)
-	textInput      = true
-	keyMap         = make(map[Scancode]bool)
-	keyMeaningMap  = make(map[string]Scancode)
-	joysticks      = []Joystick{}
+	event_buffer       []Event
+	currentCursor      Cursor
+	mousePos           = [2]int{}
+	mouseRelative      = false
+	mouseButtonMap     = make(map[MouseButton]bool)
+	textInput          = true
+	keyMap             = make(map[Scancode]bool)
+	keyMeaningMap      = make(map[Keycode]Scancode)
+	scancodeMeaningMap = make(map[Scancode]Keycode)
+	joysticks          = []Joystick{}
 )
 
 func PollEvent() Event {
@@ -57,7 +57,7 @@ func GetDesktopDimensions(displayindex int) (int32, int32) {
 }
 
 func GetMousePosition() (int, int) {
-	return int(mousePos[0]), int(mousePos[1])
+	return mousePos[0], mousePos[1]
 }
 
 func SetMouseVisible(visible bool) {
@@ -78,6 +78,10 @@ func GetMouseVisible() bool {
 
 func SetRelativeMouseMode(is_relative bool) {
 	mouseRelative = is_relative
+}
+
+func GetRelativeMouseMode() bool {
+	return mouseRelative
 }
 
 func IsMouseDown(button MouseButton) bool {
@@ -154,11 +158,21 @@ func IsScancodeDown(scancode Scancode) bool {
 }
 
 func GetKeyFromScancode(code Scancode) Keycode {
-	return Keycode(js.Global.Get("String").Call("fromCharCode", int(code)).String())
+	keycode, ok := scancodeMeaningMap[code]
+	if ok {
+		return keycode
+	} else {
+		return K_UNKNOWN
+	}
 }
 
 func GetScancodeFromKey(key Keycode) Scancode {
-	return Scancode(js.MakeWrapper(string(key)).Call("charCodeAt", 0).Int())
+	scancode, ok := keyMeaningMap[key]
+	if ok {
+		return scancode
+	} else {
+		return SCANCODE_UNKNOWN
+	}
 }
 
 func NumJoysticks() int {

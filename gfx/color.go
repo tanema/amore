@@ -6,8 +6,8 @@ type ColorMask struct {
 	r, g, b, a bool
 }
 
-func NewColor(r, g, b, a float32) *Color {
-	return &Color{
+func NewColor(r, g, b, a float32) Color {
+	return Color{
 		r / 255.0,
 		g / 255.0,
 		b / 255.0,

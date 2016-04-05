@@ -77,6 +77,7 @@ func (bndlr *bundler) addFile(path string) error {
 		return err
 	}
 	_, err = f.Write(b)
+	fmt.Println("added file:", path)
 	return err
 }
 

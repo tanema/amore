@@ -35,29 +35,22 @@ func Poll() {
 }
 
 func delegateWindowEvent(event ui.Event, e *ui.WindowEvent) {
-	switch e.Type {
+	switch e.Event {
 	case ui.WINDOWEVENT_NONE:
 		return
 	case ui.WINDOWEVENT_ENTER, ui.WINDOWEVENT_LEAVE:
 		mouse.Delegate(event)
-	default:
-		switch e.Event {
-		case ui.WINDOWEVENT_NONE:
-			return
-		case ui.WINDOWEVENT_ENTER, ui.WINDOWEVENT_LEAVE:
-			mouse.Delegate(event)
-		case ui.WINDOWEVENT_SHOWN, ui.WINDOWEVENT_FOCUS_GAINED:
-			gfx.SetActive(true)
-			ui.DisableScreenSaver()
-		case ui.WINDOWEVENT_HIDDEN, ui.WINDOWEVENT_FOCUS_LOST:
-			gfx.SetActive(false)
-			ui.EnableScreenSaver()
-		case ui.WINDOWEVENT_RESIZED, ui.WINDOWEVENT_SIZE_CHANGED:
-			w, h := window.GetDrawableSize()
-			gfx.SetViewportSize(int32(w), int32(h))
-			window.OnSizeChanged(int32(e.Data1), int32(e.Data2))
-		case ui.WINDOWEVENT_CLOSE:
-			window.SetShouldClose(true)
-		}
+	case ui.WINDOWEVENT_SHOWN, ui.WINDOWEVENT_FOCUS_GAINED:
+		gfx.SetActive(true)
+		ui.DisableScreenSaver()
+	case ui.WINDOWEVENT_HIDDEN, ui.WINDOWEVENT_FOCUS_LOST:
+		gfx.SetActive(false)
+		ui.EnableScreenSaver()
+	case ui.WINDOWEVENT_RESIZED, ui.WINDOWEVENT_SIZE_CHANGED:
+		w, h := window.GetDrawableSize()
+		gfx.SetViewportSize(int32(w), int32(h))
+		window.OnSizeChanged(int32(e.Data1), int32(e.Data2))
+	case ui.WINDOWEVENT_CLOSE:
+		window.SetShouldClose(true)
 	}
 }

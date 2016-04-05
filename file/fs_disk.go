@@ -135,9 +135,15 @@ func (fs *amoreFS) path(filename string) string {
 		return "assets/" + p
 	}
 
+	//this catches conf.toml and arialdb.ttf
+	if _, ok := fs.zipFiles[p]; ok {
+		return p
+	}
+
 	if _, ok := fs.assetFiles[p]; ok {
 		return fs.assetFiles[p]
 	}
+
 	return p
 }
 

@@ -3,6 +3,7 @@
 package ui
 
 import (
+	"math"
 	"os"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -16,6 +17,11 @@ func InitWindowAndContext(config WindowConfig) (*Window, Context, error) {
 	if err = sdl.InitSubSystem(sdl.INIT_VIDEO); err != nil {
 		return nil, nil, err
 	}
+
+	//normlize values
+	config.Minwidth = int(math.Max(float64(config.Minwidth), 1.0))
+	config.Minheight = int(math.Max(float64(config.Minheight), 1.0))
+	config.Display = int(math.Min(math.Max(float64(config.Display), 0.0), float64(GetDisplayCount()-1)))
 
 	if config.Width == 0 || config.Height == 0 {
 		var mode sdl.DisplayMode

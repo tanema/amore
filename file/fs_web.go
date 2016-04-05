@@ -4,11 +4,13 @@ package file
 
 import (
 	"archive/zip"
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +19,8 @@ import (
 
 type (
 	amoreFS struct {
-		zipFiles map[string]*zip.File
+		zipFiles  map[string]*zip.File
+		fileCache map[string][]byte
 	}
 	//create a struct so write can be implemented so that it statisfies ReadWriterCloser
 	file struct {
@@ -37,7 +40,8 @@ type (
 var (
 	zipData string
 	fs      = &amoreFS{
-		zipFiles: make(map[string]*zip.File),
+		zipFiles:  make(map[string]*zip.File),
+		fileCache: make(map[string][]byte),
 	}
 )
 
@@ -59,7 +63,7 @@ func (fs *amoreFS) open(path string) (File, error) {
 	path = fs.path(path)
 	zipFile, ok := fs.zipFiles[path]
 	if !ok {
-		resp, err := http.Get(path)
+		resp, err := fs.get(path)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +106,7 @@ func (fs *amoreFS) readFile(path string) ([]byte, error) {
 	path = fs.path(path)
 	zipFile, ok := fs.zipFiles[path]
 	if !ok {
-		resp, err := http.Get(path)
+		resp, err := fs.get(path)
 		if err != nil {
 			return nil, err
 		}
@@ -136,11 +140,35 @@ func (fs *amoreFS) path(filename string) string {
 		return "assets/" + p
 	}
 
+	//this catches conf.toml and arialdb.ttf
+	if _, ok := fs.zipFiles[p]; ok {
+		return p
+	}
+
+	//if conf not bundled then scope path under assets
 	if filename != "conf.toml" {
 		return "assets/" + p
 	}
 
 	return p
+}
+
+func (fs *amoreFS) get(path string) (*http.Response, error) {
+	body, ok := fs.fileCache[path]
+	if !ok {
+		resp, err := http.Get(path)
+		if err != nil {
+			return &http.Response{}, err
+		}
+
+		var dumpErr error
+		fs.fileCache[path], dumpErr = httputil.DumpResponse(resp, true)
+		if dumpErr != nil {
+			return &http.Response{}, dumpErr
+		}
+		return resp, nil
+	}
+	return http.ReadResponse(bufio.NewReader(bytes.NewReader(body)), nil)
 }
 
 func (f *file) Write(p []byte) (n int, err error) {

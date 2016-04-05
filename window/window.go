@@ -2,8 +2,6 @@
 package window
 
 import (
-	"math"
-
 	"github.com/BurntSushi/toml"
 
 	"github.com/tanema/amore/file"
@@ -37,11 +35,6 @@ func Init() error {
 		if _, err := toml.DecodeReader(config_file, &currentConfig); err != nil {
 			return err
 		}
-
-		//normlize values
-		currentConfig.Minwidth = int(math.Max(float64(currentConfig.Minwidth), 1.0))
-		currentConfig.Minheight = int(math.Max(float64(currentConfig.Minheight), 1.0))
-		currentConfig.Display = int(math.Min(math.Max(float64(currentConfig.Display), 0.0), float64(GetDisplayCount()-1)))
 
 		currentWindow, currentContext, initError = ui.InitWindowAndContext(currentConfig)
 

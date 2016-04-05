@@ -8,17 +8,20 @@ type ButtonPressCB func(x, y float32, button MouseButton)
 type ButtonReleaseCB func(x, y float32, button MouseButton)
 type MoveCB func(x, y, dx, dy float32)
 type FocusCb func(has_focus bool)
+type WheelMoveCB func(x, y int32)
 
 var (
 	button_press_default   ButtonPressCB   = func(x, y float32, button MouseButton) {}
 	button_release_default ButtonReleaseCB = func(x, y float32, button MouseButton) {}
 	move_default           MoveCB          = func(x, y, dx, dy float32) {}
 	focus_default          FocusCb         = func(has_focus bool) {}
+	wheel_moved_default    WheelMoveCB     = func(x, y int32) {}
 
 	button_press_cb   = button_press_default
 	button_release_cb = button_release_default
 	move_cb           = move_default
 	focus_cb          = focus_default
+	wheel_cb          = wheel_moved_default
 )
 
 func Delegate(event ui.Event) {
@@ -35,6 +38,7 @@ func Delegate(event ui.Event) {
 	case *ui.WindowEvent:
 		focus_cb(e.Type == ui.WINDOWEVENT_ENTER)
 	case *ui.MouseWheelEvent:
+		wheel_cb(int32(e.X), int32(e.Y))
 	}
 }
 
@@ -67,5 +71,13 @@ func SetFocusCB(cb FocusCb) {
 		focus_cb = focus_default
 	} else {
 		focus_cb = cb
+	}
+}
+
+func SetWheelMoveCB(cb WheelMoveCB) {
+	if cb == nil {
+		wheel_cb = wheel_moved_default
+	} else {
+		wheel_cb = cb
 	}
 }

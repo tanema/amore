@@ -15,8 +15,15 @@ type (
 		*dom.HTMLCanvasElement
 		focused           bool
 		grabbed           bool
+		x                 int
+		y                 int
+		width             int
+		height            int
+		minWidth          int
+		minHeight         int
 		windowListeners   map[string]func(*js.Object)
 		documentListeners map[string]func(*js.Object)
+		canvasListeners   map[string]func(*js.Object)
 	}
 	Cursor struct {
 		icon string
