@@ -13,7 +13,7 @@ func newProject(project_name string) {
 		if err := os.MkdirAll(path.Join("assets", folder), os.ModeDir|os.ModePerm); err != nil {
 			exitWithError(err)
 		}
-		fmt.Sprintln("created assets/%v", folder)
+		fmt.Println(fmt.Sprintf("created assets/%v", folder))
 	}
 	err := writeOutTemplate("./conf.toml", configTemplate, struct{ Name string }{Name: project_name})
 	if err != nil {
