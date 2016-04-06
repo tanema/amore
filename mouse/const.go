@@ -4,6 +4,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+// Button refers to a physical mouse button, BUTTON_LEFT, BUTTON_RIGHT, ect.
 type Button uint32
 
 const (

@@ -4,16 +4,11 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type ButtonPressCB func(x, y float32, button Button)
-type ButtonReleaseCB func(x, y float32, button Button)
-type MoveCB func(x, y, dx, dy float32)
-type FocusCb func(has_focus bool)
-
 var (
-	button_press_default   ButtonPressCB   = func(x, y float32, button Button) {}
-	button_release_default ButtonReleaseCB = func(x, y float32, button Button) {}
-	move_default           MoveCB          = func(x, y, dx, dy float32) {}
-	focus_default          FocusCb         = func(has_focus bool) {}
+	button_press_default   = func(x, y float32, button Button) {}
+	button_release_default = func(x, y float32, button Button) {}
+	move_default           = func(x, y, dx, dy float32) {}
+	focus_default          = func(has_focus bool) {}
 
 	button_press_cb   = button_press_default
 	button_release_cb = button_release_default
@@ -21,6 +16,8 @@ var (
 	focus_cb          = focus_default
 )
 
+// Delegate is used by amore/event to pass events to the mouse package. It may
+// also be useful to stub or fake events
 func Delegate(event sdl.Event) {
 	switch e := event.(type) {
 	case *sdl.MouseMotionEvent:
@@ -38,7 +35,9 @@ func Delegate(event sdl.Event) {
 	}
 }
 
-func SetButtonPressCB(cb ButtonPressCB) {
+// SetButtonPressCB will set a callbac to call when the a button on the mouse is
+// pressed down.
+func SetButtonPressCB(cb func(x, y float32, button Button)) {
 	if cb == nil {
 		button_press_cb = button_press_default
 	} else {
@@ -46,7 +45,9 @@ func SetButtonPressCB(cb ButtonPressCB) {
 	}
 }
 
-func SetButtonReleaseCB(cb ButtonReleaseCB) {
+// SetButtonReleaseCB will set a callback to call when the a button on the mouse is
+// released.
+func SetButtonReleaseCB(cb func(x, y float32, button Button)) {
 	if cb == nil {
 		button_release_cb = button_release_default
 	} else {
@@ -54,7 +55,8 @@ func SetButtonReleaseCB(cb ButtonReleaseCB) {
 	}
 }
 
-func SetMoveCB(cb MoveCB) {
+// SetMoveCB will set a callback to call when the mouse is moved
+func SetMoveCB(cb func(x, y, dx, dy float32)) {
 	if cb == nil {
 		move_cb = move_default
 	} else {
@@ -62,7 +64,9 @@ func SetMoveCB(cb MoveCB) {
 	}
 }
 
-func SetFocusCB(cb FocusCb) {
+// SetFocusCB will set a callback to call when the program has mouse focus or loses
+// mouse focus.
+func SetFocusCB(cb func(has_focus bool)) {
 	if cb == nil {
 		focus_cb = focus_default
 	} else {

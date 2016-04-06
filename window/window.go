@@ -335,17 +335,17 @@ func SwapBuffers() {
 // WindowToPixelCoords translates window coords to pixel coords for pixel perfect
 // operations
 func WindowToPixelCoords(x, y float32) (float32, float32) {
-	win := getCurrent()
-	new_x := x * (float32(win.pixel_width) / float32(win.Config.Width))
-	new_y := y * (float32(win.pixel_height) / float32(win.Config.Height))
+	config := getCurrent().Config
+	new_x := x * (float32(config.PixelWidth) / float32(config.Width))
+	new_y := y * (float32(config.PixelHeight) / float32(config.Height))
 	return new_x, new_y
 }
 
 // PixelToWindowCoords translates pixel coords to window coords
 func PixelToWindowCoords(x, y float32) (float32, float32) {
-	win := getCurrent()
-	new_x := x * (float32(win.Config.Width) / float32(win.pixel_width))
-	new_y := y * (float32(win.Config.Height) / float32(win.pixel_height))
+	config := getCurrent().Config
+	new_x := x * (float32(config.Width) / float32(config.PixelWidth))
+	new_y := y * (float32(config.Height) / float32(config.PixelHeight))
 	return new_x, new_y
 }
 

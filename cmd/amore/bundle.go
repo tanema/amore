@@ -10,11 +10,15 @@ import (
 	"strings"
 )
 
+// bundler contains the bundled data and writes out the bundled data to the asset
+// bundle
 type bundler struct {
 	buffer    *bytes.Buffer
 	zipWriter *zip.Writer
 }
 
+// bundle will bundle inputed file paths. If no paths were given then it will bundle
+// the default assets folder and the conf.toml file.
 func bundle(inputs ...string) {
 	b := newBundler()
 
@@ -43,6 +47,7 @@ func bundle(inputs ...string) {
 	}
 }
 
+// newBundle creates a pointer to a new bundler object.
 func newBundler() *bundler {
 	nb := &bundler{
 		buffer: new(bytes.Buffer),
@@ -51,6 +56,8 @@ func newBundler() *bundler {
 	return nb
 }
 
+// addDir will walk the directory and add each individual file in the directory
+// recursively.
 func (bndlr *bundler) addDir(srcPath string) error {
 	return filepath.Walk(srcPath, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
@@ -67,6 +74,7 @@ func (bndlr *bundler) addDir(srcPath string) error {
 	})
 }
 
+// addFile will write the file to the zipWriter to be written out later.
 func (bndlr *bundler) addFile(path string) error {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -77,9 +85,13 @@ func (bndlr *bundler) addFile(path string) error {
 		return err
 	}
 	_, err = f.Write(b)
+	if err == nil {
+		fmt.Println(fmt.Sprintf("bundled file -> %v", path))
+	}
 	return err
 }
 
+// writeOut will write out the data to a asset_bundle file using a template
 func (bndlr *bundler) writeOut() error {
 	err := bndlr.zipWriter.Close()
 	if err != nil {

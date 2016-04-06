@@ -9,22 +9,17 @@ import (
 	"github.com/tanema/amore/audio/decoding"
 )
 
-type SourceType int
-
 const (
-	STATIC_SOURCE SourceType = iota
-	STREAM_SOURCE
+	MAX_ATTENUATION_DISTANCE = 1000000.0 // upper limit of sound attentuation time.
+	MAX_BUFFERS              = 8         //arbitrary limit of umber of buffers a source can use to stream
 )
 
-const (
-	MAX_ATTENUATION_DISTANCE = 1000000.0
-	MAX_BUFFERS              = 8
-)
-
+// Source manages decoding sound data, creates an openal sound and manages the
+// data associated with the source.
 type Source struct {
 	decoder           decoding.Decoder
 	source            al.Source
-	src_type          SourceType
+	isStatic          bool
 	pitch             float32
 	volume            float32
 	position          al.Vector
@@ -43,10 +38,9 @@ type Source struct {
 	streamBuffers     []al.Buffer
 }
 
-// State indicates the current playing state of the player.
+// State indicates the current playing state of the source.
 type State int
 
-//go:generate stringer -type=State
 const (
 	Unknown = State(0)
 	Initial = State(al.Initial)
@@ -55,11 +49,11 @@ const (
 	Stopped = State(al.Stopped)
 )
 
-//	Creates a new Source from a file, SoundData, or Decoder
-func NewStaticSource(filepath string) (*Source, error) { return NewSourceType(filepath, STATIC_SOURCE) }
-func NewStreamSource(filepath string) (*Source, error) { return NewSourceType(filepath, STREAM_SOURCE) }
-func NewSource(filepath string) (*Source, error)       { return NewSourceType(filepath, STREAM_SOURCE) }
-func NewSourceType(filepath string, source_type SourceType) (*Source, error) {
+// NewSource creates a new Source from a file at the path provided. If you
+// specify a static source it will all be buffered into a single buffer. If
+// false then it will create many buffers a cycle through them with data chunks.
+// This allows a smaller memory footprint while playing bigger music files.
+func NewSource(filepath string, static bool) (*Source, error) {
 	if pool == nil {
 		createPool()
 	}
@@ -71,7 +65,7 @@ func NewSourceType(filepath string, source_type SourceType) (*Source, error) {
 
 	new_source := &Source{
 		decoder:           decoder,
-		src_type:          source_type,
+		isStatic:          static,
 		pitch:             1,
 		volume:            1,
 		maxVolume:         1,
@@ -84,33 +78,40 @@ func NewSourceType(filepath string, source_type SourceType) (*Source, error) {
 		direction:         al.Vector{},
 	}
 
-	if source_type == STATIC_SOURCE {
+	if static {
 		new_source.staticBuffer = al.GenBuffers(1)[0]
 		new_source.staticBuffer.BufferData(decoder.GetFormat(), decoder.GetData(), decoder.GetSampleRate())
-	} else if source_type == STREAM_SOURCE {
+	} else {
 		new_source.streamBuffers = []al.Buffer{} //al.GenBuffers(MAX_BUFFERS)
 	}
 
 	return new_source, nil
 }
 
+// isValid will return true if the source is associated with an openal source anymore.
+// if not it will return false and will disable most funtionality
 func (s *Source) isValid() bool {
 	return s.source != 0
 }
 
+// IsFinished will return true if the source is at the end of its duration and
+// it is not a looping source.
 func (s *Source) IsFinished() bool {
-	if s.src_type == STATIC_SOURCE {
+	if s.isStatic {
 		return s.IsStopped()
 	}
 	return s.IsStopped() && !s.IsLooping() && s.decoder.IsFinished()
 }
 
+// update will return true if successfully updated the source. If the source is
+// static it will return if the item is still playing. If the item is a streamed
+// source it will return true if it is still playing but after updating it's buffers.
 func (s *Source) update() bool {
 	if !s.isValid() {
 		return false
 	}
 
-	if s.src_type == STATIC_SOURCE {
+	if s.isStatic {
 		return !s.IsStopped()
 	} else if s.IsLooping() || !s.IsFinished() {
 		pool.mutex.Lock()
@@ -126,6 +127,7 @@ func (s *Source) update() bool {
 	return false
 }
 
+// reset sets all the source's values in openal to the preset values.
 func (s *Source) reset() {
 	if !s.isValid() {
 		return
@@ -142,12 +144,12 @@ func (s *Source) reset() {
 	s.source.SetRolloff(s.rolloffFactor)
 	s.source.SetRelative(s.relative)
 	s.source.SetCone(s.cone)
-	if s.src_type == STATIC_SOURCE {
+	if s.isStatic {
 		s.source.SetLooping(s.looping)
 	}
 }
 
-// Gets the reference and maximum attenuation distances of the Source.
+// GetAttenuationDistances returns the reference and maximum attenuation distances of the Source.
 func (s *Source) GetAttenuationDistances() (float32, float32) {
 	if s.isValid() {
 		return s.source.ReferenceDistance(), s.source.MaxDistance()
@@ -155,16 +157,18 @@ func (s *Source) GetAttenuationDistances() (float32, float32) {
 	return s.referenceDistance, s.maxDistance
 }
 
-// Gets the number of channels in the Source.
+// GetChannels returns the number of channels in the Source.
 func (s *Source) GetChannels() int16 {
 	return s.decoder.GetChannels()
 }
 
+// GetDuration returns the total duration of the source.
 func (s *Source) GetDuration() time.Duration {
 	return s.decoder.GetDuration()
 }
 
-// Gets the Source's directional volume cones.
+// GetCone returns the Source's directional volume cones by inner angle, outer angle,
+// and outer volume.
 func (s *Source) GetCone() (float32, float32, float32) {
 	if s.isValid() {
 		c := s.source.Cone()
@@ -173,7 +177,7 @@ func (s *Source) GetCone() (float32, float32, float32) {
 	return mgl32.DegToRad(float32(s.cone.InnerAngle)), mgl32.DegToRad(float32(s.cone.OuterAngle)), s.cone.OuterVolume
 }
 
-//Gets the direction of the Source.
+// GetDirection returns the direction of the Source with a vector of x, y, z
 func (s *Source) GetDirection() (float32, float32, float32) {
 	if s.isValid() {
 		d := s.source.Direction()
@@ -182,7 +186,7 @@ func (s *Source) GetDirection() (float32, float32, float32) {
 	return s.direction[0], s.direction[1], s.direction[2]
 }
 
-//Gets the current pitch of the Source.
+// GetPitch returns the current pitch of the Source in the range 0.0, 1.0
 func (s *Source) GetPitch() float32 {
 	if s.isValid() {
 		return s.source.Pitch()
@@ -190,7 +194,7 @@ func (s *Source) GetPitch() float32 {
 	return s.pitch
 }
 
-// Gets the position of the Source.
+// GetPosition returns the position of the Source in a point x, y, z
 func (s *Source) GetPosition() (float32, float32, float32) {
 	if s.isValid() {
 		vec := s.source.Position()
@@ -199,7 +203,7 @@ func (s *Source) GetPosition() (float32, float32, float32) {
 	return s.position[0], s.position[1], s.position[2]
 }
 
-//Returns the rolloff factor of the source.
+// GetRolloff returns the rolloff factor of the source.
 func (s *Source) GetRolloff() float32 {
 	if s.isValid() {
 		return s.source.Rolloff()
@@ -207,7 +211,7 @@ func (s *Source) GetRolloff() float32 {
 	return s.rolloffFactor
 }
 
-// Gets the velocity of the Source.
+// GetVelocity returns the velocity of the Source with a vector x, y, x
 func (s *Source) GetVelocity() (float32, float32, float32) {
 	if s.isValid() {
 		vec := s.source.Velocity()
@@ -216,7 +220,7 @@ func (s *Source) GetVelocity() (float32, float32, float32) {
 	return s.velocity[0], s.velocity[1], s.velocity[2]
 }
 
-// Gets the current volume of the Source.
+// GetVolume returns the current volume of the Source.
 func (s *Source) GetVolume() float32 {
 	if s.isValid() {
 		return s.source.Gain()
@@ -224,7 +228,7 @@ func (s *Source) GetVolume() float32 {
 	return s.volume
 }
 
-// Returns the volume limits of the source.
+// GetVolumeLimits returns the volume limits of the source, min, max.
 func (s *Source) GetVolumeLimits() (float32, float32) {
 	if s.isValid() {
 		return s.source.MinGain(), s.source.MaxGain()
@@ -232,16 +236,18 @@ func (s *Source) GetVolumeLimits() (float32, float32) {
 	return s.minVolume, s.maxVolume
 }
 
+// GetState returns the playing state of the source.
+//     source.GetState() == audio.Playing
 func (s *Source) GetState() State {
 	return State(s.source.State())
 }
 
-// Returns whether the Source will loop.
+// IsLooping returns whether the Source will loop.
 func (s *Source) IsLooping() bool {
 	return s.looping
 }
 
-//Returns whether the Source is paused.
+// IsPaused returns whether the Source is paused.
 func (s *Source) IsPaused() bool {
 	if s.isValid() {
 		return s.GetState() == Paused
@@ -249,7 +255,7 @@ func (s *Source) IsPaused() bool {
 	return false
 }
 
-// Returns whether the Source is playing.
+// IsPlaying returns whether the Source is playing.
 func (s *Source) IsPlaying() bool {
 	if s.isValid() {
 		return s.GetState() == Playing
@@ -257,7 +263,8 @@ func (s *Source) IsPlaying() bool {
 	return false
 }
 
-//Gets whether the Source's position and direction are relative to the listener.
+// IsRelative returns whether the Source's position and direction are relative
+// to the listener.
 func (s *Source) IsRelative() bool {
 	if s.isValid() {
 		return s.source.Relative()
@@ -265,12 +272,12 @@ func (s *Source) IsRelative() bool {
 	return s.relative
 }
 
-//Returns whether the Source is static or stream.
+// IsStatic returns whether the Source is static or stream.
 func (s *Source) IsStatic() bool {
-	return s.src_type == STATIC_SOURCE
+	return s.isStatic
 }
 
-// Returns whether the Source is stopped.
+// IsStopped returns whether the Source is stopped.
 func (s *Source) IsStopped() bool {
 	if s.isValid() {
 		return s.GetState() == Stopped
@@ -278,14 +285,15 @@ func (s *Source) IsStopped() bool {
 	return true
 }
 
-// Sets the reference and maximum attenuation distances of the Source.
+// SetAttenuationDistances sets the reference and maximum attenuation distances of the Source.
 func (s *Source) SetAttenuationDistances(ref, max float32) {
 	s.referenceDistance = ref
 	s.maxDistance = max
 	s.reset()
 }
 
-// Sets the Source's directional volume cones.
+// SetCone sets the Source's directional volume cones with the inner angle, outer
+// angle, and outer volume
 func (s *Source) SetCone(innerAngle, outerAngle, outerVolume float32) {
 	s.cone = al.Cone{
 		InnerAngle:  int32(mgl32.RadToDeg(innerAngle)),
@@ -295,7 +303,7 @@ func (s *Source) SetCone(innerAngle, outerAngle, outerVolume float32) {
 	s.reset()
 }
 
-//Sets the direction of the Source.
+// SetDirection sets the direction of the Source with the vector x, y, z
 func (s *Source) SetDirection(x, y, z float32) {
 	if s.GetChannels() > 1 {
 		panic("This spatial audio functionality is only available for mono Sources. Ensure the Source is not multi-channel before calling this function.")
@@ -305,63 +313,64 @@ func (s *Source) SetDirection(x, y, z float32) {
 	s.reset()
 }
 
-//Sets whether the Source should loop.
+// SetLooping sets whether the Source should loop when the source is complete.
 func (s *Source) SetLooping(do_loop bool) {
 	s.looping = do_loop
 	s.reset()
 }
 
-//Sets the pitch of the Source.
+// SetPitch sets the pitch of the Source, the value should be between 0.0, 1.0
 func (s *Source) SetPitch(p float32) {
 	s.pitch = p
 	s.reset()
 }
 
-// Sets the position of the Source.
+// SetPosition sets the position of the Source at the point x, y, z
 func (s *Source) SetPosition(x, y, z float32) {
 	s.position = al.Vector{x, y, z}
 	s.reset()
 }
 
-// Sets whether the Source's position and direction are relative to the listener.
+// SetRelative sets whether the Source's position and direction are relative to
+// the listener.
 func (s *Source) SetRelative(is_relative bool) {
 	s.relative = is_relative
 	s.reset()
 }
 
-//Sets the rolloff factor.
+// SetRolloff sets the rolloff factor.
 func (s *Source) SetRolloff(roll_off float32) {
 	s.rolloffFactor = roll_off
 	s.reset()
 }
 
-// Sets the velocity of the Source.
+// SetVelocity sets the velocity of the Source with the vector x, y, z
 func (s *Source) SetVelocity(x, y, z float32) {
 	s.velocity = al.Vector{x, y, z}
 	s.reset()
 }
 
-// Sets the current volume of the Source.
+// SetVolume sets the current volume of the Source.
 func (s *Source) SetVolume(v float32) {
 	s.volume = v
 	s.reset()
 }
 
-// Sets the volume limits of the source.
+// SetVolumeLimits sets the volume limits of the source both min and max
 func (s *Source) SetVolumeLimits(min, max float32) {
 	s.minVolume = min
 	s.maxVolume = max
 	s.reset()
 }
 
-//Plays a source.
+// Play starts playing the source.
 func (s *Source) Play() bool {
 	if s.IsPlaying() {
 		return true
 	}
 
 	if s.IsPaused() {
-		pool.Resume(s)
+		s.Resume()
 		return true
 	}
 
@@ -373,9 +382,9 @@ func (s *Source) Play() bool {
 	pool.mutex.Lock()
 	defer pool.mutex.Unlock()
 
-	if s.src_type == STATIC_SOURCE {
+	if s.isStatic {
 		s.source.SetBuffer(s.staticBuffer)
-	} else if s.src_type == STREAM_SOURCE {
+	} else {
 		buffers := []al.Buffer{}
 		for i := 0; i < MAX_BUFFERS; i++ {
 			buffer := al.GenBuffers(1)[0]
@@ -406,6 +415,7 @@ func (s *Source) Play() bool {
 	return al.Error() == al.NoError
 }
 
+// stream fills a buffer with the next chunk of data
 func (s *Source) stream(buffer al.Buffer) int {
 	decoded := s.decoder.Decode() //get more data
 	if decoded > 0 {
@@ -417,7 +427,7 @@ func (s *Source) stream(buffer al.Buffer) int {
 	return decoded
 }
 
-// Pauses a source.
+// Pause pauses the source.
 func (s *Source) Pause() {
 	if s.isValid() {
 		pool.mutex.Lock()
@@ -427,7 +437,7 @@ func (s *Source) Pause() {
 	}
 }
 
-//Resumes a paused source.
+// Resume resumes a paused source.
 func (s *Source) Resume() {
 	if s.isValid() && s.paused {
 		pool.mutex.Lock()
@@ -437,14 +447,14 @@ func (s *Source) Resume() {
 	}
 }
 
-//Rewinds a source.
+// Rewind rewinds the source source to its start time.
 func (s *Source) Rewind() { s.Seek(0) }
 
-//Sets the currently playing position of the Source.
+// Seek sets the currently playing position of the Source.
 func (s *Source) Seek(offset time.Duration) {
 	if s.isValid() {
 		size := s.decoder.DurToByteOffset(offset)
-		if s.src_type == STREAM_SOURCE {
+		if !s.isStatic {
 			waspaused := s.paused
 			// Because we still have old data from before the seek in the buffers let's empty them.
 			s.Stop()
@@ -461,13 +471,13 @@ func (s *Source) Seek(offset time.Duration) {
 	}
 }
 
-//Stops a source.
+// Stop stops a playing source.
 func (s *Source) Stop() {
 	if !s.IsStopped() && s.isValid() {
 		pool.mutex.Lock()
 		queued := s.source.BuffersQueued()
 		al.StopSources(s.source)
-		if s.src_type == STREAM_SOURCE {
+		if !s.isStatic {
 			for i := queued; i > 0; i-- {
 				buffer := s.source.UnqueueBuffer()
 				al.DeleteBuffers(buffer)
@@ -480,7 +490,7 @@ func (s *Source) Stop() {
 	s.decoder.Seek(0)
 }
 
-//Gets the currently playing position of the Source.
+// Tell returns the currently playing position of the Source.
 func (s *Source) Tell() time.Duration {
 	if s.isValid() {
 		pool.mutex.Lock()

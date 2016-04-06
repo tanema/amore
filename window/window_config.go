@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	config_file_name = "conf.toml"
+	config_file_name = "conf.toml" // default config file name.
 )
 
+// windowConfig is the struct that the config file will unmarshalled into
 type windowConfig struct {
 	Identity    string `toml:"identity"` // The name of the save directory (string)
 	Title       string `toml:"title"`    // The window title (string)
@@ -37,6 +38,10 @@ type windowConfig struct {
 	Y           int32  `toml:"y"`              // The y-coordinate of the window's position in the specified display (number)
 }
 
+// loadConfig will find the config file (works with bundle) and load it into the
+// struct and the return it. If the config does not exist it will return a default
+// config. If there was an issue reading the file it will return the error, possibly
+// permission errors.
 func loadConfig() (*windowConfig, error) {
 	var config windowConfig
 	path := path.Join(".", config_file_name)

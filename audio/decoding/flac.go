@@ -11,6 +11,7 @@ type flacDecoder struct {
 	decoderBase
 }
 
+// read will decode the file
 func (decoder *flacDecoder) read() error {
 	d, err := flac.NewDecoder(decoder.src)
 	if err != nil {

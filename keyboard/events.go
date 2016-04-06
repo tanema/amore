@@ -4,16 +4,11 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type KeyPressCB func(key Key, is_repeat bool)
-type KeyReleaseCB func(key Key)
-type TextInputCB func(str string)
-type TextEditCB func(str string, start, length int32)
-
 var (
-	key_press_default   KeyPressCB   = func(key Key, is_repeat bool) {}
-	key_release_default KeyReleaseCB = func(key Key) {}
-	text_input_default  TextInputCB  = func(str string) {}
-	text_edit_default   TextEditCB   = func(str string, start, length int32) {}
+	key_press_default   = func(key Key, is_repeat bool) {}
+	key_release_default = func(key Key) {}
+	text_input_default  = func(str string) {}
+	text_edit_default   = func(str string, start, length int32) {}
 
 	key_press_cb   = key_press_default
 	key_release_cb = key_release_default
@@ -21,6 +16,8 @@ var (
 	text_edit_cb   = text_edit_default
 )
 
+// Delegate is used by amore/event to pass events to the keyboard package. It may
+// also be useful to stub or fake events
 func Delegate(event sdl.Event) {
 	switch e := event.(type) {
 	case *sdl.KeyDownEvent:
@@ -42,7 +39,9 @@ func Delegate(event sdl.Event) {
 	}
 }
 
-func SetKeyPressCB(cb KeyPressCB) {
+// SetKeyPressCB will set a callback to call when the a key on the keyboard is
+// pressed down.
+func SetKeyPressCB(cb func(key Key, is_repeat bool)) {
 	if cb == nil {
 		key_press_cb = key_press_default
 	} else {
@@ -50,7 +49,9 @@ func SetKeyPressCB(cb KeyPressCB) {
 	}
 }
 
-func SetKeyReleaseCB(cb KeyReleaseCB) {
+// SetKeyReleaseCB will set a callback to call when the a key on the keyboard is
+// released.
+func SetKeyReleaseCB(cb func(key Key)) {
 	if cb == nil {
 		key_release_cb = key_release_default
 	} else {
@@ -58,7 +59,9 @@ func SetKeyReleaseCB(cb KeyReleaseCB) {
 	}
 }
 
-func SetTextInputCB(cb TextInputCB) {
+// SetTextInputCB is called when text has been entered by the user. For example if
+// shift-2 is pressed on an American keyboard layout, the text "@" will be generated.
+func SetTextInputCB(cb func(str string)) {
 	if cb == nil {
 		text_input_cb = text_input_default
 	} else {
@@ -66,7 +69,9 @@ func SetTextInputCB(cb TextInputCB) {
 	}
 }
 
-func SetTextEditCB(cb TextEditCB) {
+// SetTextEditCB is called when the candidate text for an IME (Input Method Editor)
+// has changed.
+func SetTextEditCB(cb func(str string, start, length int32)) {
 	if cb == nil {
 		text_edit_cb = text_edit_default
 	} else {

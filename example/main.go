@@ -45,7 +45,7 @@ func main() {
 	image_font.SetFallbacks(ttf)
 	shader = gfx.NewShader("shaders/blackandwhite.glsl")
 	var er error
-	bomb, er = audio.NewSource("audio/bomb.wav")
+	bomb, er = audio.NewSource("audio/bomb.wav", true)
 	if er != nil {
 		panic(er)
 	}

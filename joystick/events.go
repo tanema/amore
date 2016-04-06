@@ -4,6 +4,8 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+// Delegate is used by amore/event to pass events to the mouse package. It may
+// also be useful to stub or fake events
 func Delegate(event sdl.Event) {
 	switch e := event.(type) {
 	case *sdl.JoyAxisEvent:

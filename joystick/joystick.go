@@ -1,4 +1,5 @@
-// The joystick Package handles joystick, and gamepad events on the gl context
+// The joystick Package handles any joystick or gamepad events on the gl context,
+// it can be used for feedback and input.
 package joystick
 
 import (
@@ -7,7 +8,9 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type Vibration struct {
+// vibration is a struct that keeps track of vibration patterns and lengths for
+// communication with sdl
+type vibration struct {
 	Left, Right float32
 	Effect      sdl.HapticEffect
 	Data        [4]uint16
@@ -15,16 +18,20 @@ type Vibration struct {
 	Endtime     uint32
 }
 
+// Joystick is an instance of any joystick or gamepad that is connected to the
+// program.
 type Joystick struct {
 	id         int
 	stick      *sdl.Joystick
 	controller *sdl.GameController
 	haptic     *sdl.Haptic
-	vibration  *Vibration
+	vibration  *vibration
 }
 
-func (joystick *Joystick) Open() bool {
-	joystick.Close()
+// open connects the joystick to the sdl instance, it will return true if successful
+// and false if it could not get the joystick.
+func (joystick *Joystick) open() bool {
+	joystick.close()
 
 	joystick.stick = sdl.JoystickOpen(joystick.id)
 
@@ -35,14 +42,17 @@ func (joystick *Joystick) Open() bool {
 	return joystick.IsConnected()
 }
 
+// IsGamepad gets whether the Joystick is recognized as a gamepad.
 func (joystick *Joystick) IsGamepad() bool {
 	return joystick.controller != nil
 }
 
+// GetID Gets the joystick's unique identifier.
 func (joystick *Joystick) GetID() int {
 	return joystick.id
 }
 
+// GetName the name of the joystick as it is identified on the os.
 func (joystick *Joystick) GetName() string {
 	// Prefer the Joystick name for consistency.
 	name := joystick.stick.Name()
@@ -53,19 +63,23 @@ func (joystick *Joystick) GetName() string {
 	return name
 }
 
+// IsConnected gets whether the Joystick is connected.
 func (joystick *Joystick) IsConnected() bool {
 	return joystick.stick != nil && joystick.stick.GetAttached()
 }
 
+// GetGUID gets a stable GUID unique to the type of the physical joystick.
 func (joystick *Joystick) GetGUID() string {
 	return sdl.JoystickGetGUIDString(joystick.stick.GetGUID())
 }
 
-func (joystick *Joystick) GetHandle() *sdl.Joystick {
+// getHandle gets the sdl instance id for this joystick
+func (joystick *Joystick) getHandle() *sdl.Joystick {
 	return joystick.stick
 }
 
-func (joystick *Joystick) Close() {
+// close disconnects this joystick from the sdl instance.
+func (joystick *Joystick) close() {
 	if joystick.controller != nil {
 		joystick.controller.Close()
 	}
@@ -76,14 +90,15 @@ func (joystick *Joystick) Close() {
 	joystick.controller = nil
 }
 
+// IsDown checks if a button on the Joystick is pressed.
 func (joystick *Joystick) IsDown(button int) bool {
 	if joystick.IsConnected() == false {
 		return false
 	}
-
 	return joystick.stick.GetButton(button) == 1
 }
 
+// GetAxisCount gets the number of axes on the joystick.
 func (joystick *Joystick) GetAxisCount() int {
 	if joystick.IsConnected() == false {
 		return 0
@@ -91,6 +106,7 @@ func (joystick *Joystick) GetAxisCount() int {
 	return joystick.stick.NumAxes()
 }
 
+// GetButtonCount gets the number of buttons on the joystick.
 func (joystick *Joystick) GetButtonCount() int {
 	if joystick.IsConnected() == false {
 		return 0
@@ -98,6 +114,7 @@ func (joystick *Joystick) GetButtonCount() int {
 	return joystick.stick.NumButtons()
 }
 
+// GetHatCount gets the number of hats on the joystick.
 func (joystick *Joystick) GetHatCount() int {
 	if joystick.IsConnected() == false {
 		return 0
@@ -105,6 +122,7 @@ func (joystick *Joystick) GetHatCount() int {
 	return joystick.stick.NumHats()
 }
 
+// GetAxis gets the direction of an axis. Values are clamped.
 func (joystick *Joystick) GetAxis(axisindex int) float32 {
 	if joystick.IsConnected() == false || axisindex < 0 || axisindex >= joystick.GetAxisCount() {
 		return 0.0
@@ -113,6 +131,7 @@ func (joystick *Joystick) GetAxis(axisindex int) float32 {
 	return clampval(float32(joystick.stick.GetAxis(axisindex)) / 32768.0)
 }
 
+// GetAxes gets the direction of each axis. Values are clamped.
 func (joystick *Joystick) GetAxes() []float32 {
 	count := joystick.GetAxisCount()
 	axes := []float32{}
@@ -128,6 +147,7 @@ func (joystick *Joystick) GetAxes() []float32 {
 	return axes
 }
 
+// GetHat gets the direction of a hat.
 func (joystick *Joystick) GetHat(hatindex int) byte {
 	if joystick.IsConnected() == false || hatindex < 0 || hatindex >= joystick.GetHatCount() {
 		return 0
@@ -136,6 +156,7 @@ func (joystick *Joystick) GetHat(hatindex int) byte {
 	return joystick.stick.GetHat(hatindex)
 }
 
+// GetGamepadAxis gets the direction of a virtual gamepad axis. Values are clamped.
 func (joystick *Joystick) GetGamepadAxis(axis GameControllerAxis) float32 {
 	if joystick.IsConnected() == false || joystick.IsGamepad() == false {
 		return 0.0
@@ -146,6 +167,7 @@ func (joystick *Joystick) GetGamepadAxis(axis GameControllerAxis) float32 {
 	return clampval(float32(value) / 32768.0)
 }
 
+// IsGamePadDown checks if a virtual gamepad button on the Joystick is pressed.
 func (joystick *Joystick) IsGamepadDown(button GameControllerButton) bool {
 	if joystick.IsConnected() == false || joystick.IsGamepad() == false {
 		return false
@@ -154,6 +176,7 @@ func (joystick *Joystick) IsGamepadDown(button GameControllerButton) bool {
 	return joystick.controller.GetButton(sdl.GameControllerButton(button)) == 1
 }
 
+// IsVibrationSupported gets whether the Joystick supports vibration.
 func (joystick *Joystick) IsVibrationSupported() bool {
 	if joystick.checkCreateHaptic() == false {
 		return false
@@ -178,6 +201,9 @@ func (joystick *Joystick) IsVibrationSupported() bool {
 	return false
 }
 
+// checkCreateHaptic will check the controller and the system if it supports
+// haptic feedback and will enable it if it is able to do so. It will return
+// if it was successful or not
 func (joystick *Joystick) checkCreateHaptic() bool {
 	if joystick.IsConnected() == false {
 		return false
@@ -196,7 +222,7 @@ func (joystick *Joystick) checkCreateHaptic() bool {
 	}
 
 	joystick.haptic = sdl.HapticOpenFromJoystick(joystick.stick)
-	joystick.vibration = &Vibration{
+	joystick.vibration = &vibration{
 		ID:      -1,
 		Left:    0.0,
 		Right:   0.0,
@@ -207,6 +233,8 @@ func (joystick *Joystick) checkCreateHaptic() bool {
 	return joystick.haptic != nil
 }
 
+// runVibrationEffect will initiate the joysticks haptic vibration and will return
+// if it was successful in running the vibration.
 func (joystick *Joystick) runVibrationEffect() bool {
 	if joystick.vibration.ID != -1 {
 		if joystick.haptic.UpdateEffect(joystick.vibration.ID, &joystick.vibration.Effect) == 0 {
@@ -229,6 +257,12 @@ func (joystick *Joystick) runVibrationEffect() bool {
 	return false
 }
 
+// SetVibration sets the vibration motor speeds on a Joystick with rumble support.
+// if passed no arguments it will stop the vibration. If passed one value it will
+// set the vibration for both left and right with a duration of INFINITY. If passed
+// two parameters it will set left and right intensities with a duration of INFINITY.
+// If passed 3 parameters it will set both intensities and the diration as the third
+// parameter, all other parameters will be ignored.
 func (joystick *Joystick) SetVibration(args ...float32) bool {
 	if !joystick.checkCreateHaptic() {
 		return false
@@ -321,6 +355,7 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 	return success
 }
 
+// stopVibration will pause the vibration in the controller.
 func (joystick *Joystick) stopVibration() bool {
 	success := true
 
@@ -336,6 +371,8 @@ func (joystick *Joystick) stopVibration() bool {
 	return success
 }
 
+// GetVibration will return the current intensity of both the left and right motors
+// currently vibrating. It will return 0s if they are not vibrating.
 func (joystick *Joystick) GetVibration() (float32, float32) {
 	if joystick.vibration.Endtime != sdl.HAPTIC_INFINITY {
 		// With some drivers, the effect physically stops at the right time, but

@@ -6,7 +6,7 @@ import (
 	"github.com/tanema/amore/window/surface"
 )
 
-//Creates a new hardware Cursor object from an image.
+// NewCursor creates a new hardware Cursor object from an image.
 func NewCursor(filename string, hx, hy int) (*sdl.Cursor, error) {
 	new_surface, err := surface.Load(filename)
 	if err != nil {
@@ -17,17 +17,17 @@ func NewCursor(filename string, hx, hy int) (*sdl.Cursor, error) {
 	return cursor, nil
 }
 
-//Sets the current mouse cursor.
+// SetCursor sets the current mouse cursor.
 func SetCursor(cursor *sdl.Cursor) {
 	sdl.SetCursor(cursor)
 }
 
-//Gets the current Cursor.
+// GetCursor gets the current Cursor the program is using.
 func GetCursor() *sdl.Cursor {
 	return sdl.GetCursor()
 }
 
-//Gets a Cursor object representing a system-native hardware cursor.
+// GetSystemCursor Gets a Cursor object representing a system-native hardware cursor.
 func GetSystemCursor(name string) *sdl.Cursor {
 	var cursor_type sdl.SystemCursor
 	switch name {

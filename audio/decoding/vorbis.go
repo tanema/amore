@@ -18,6 +18,7 @@ type vorbisDecoder struct {
 	decoderBase
 }
 
+// read will decode the file
 func (decoder *vorbisDecoder) read() error {
 	var err error
 	var channels, sampleRate int

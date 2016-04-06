@@ -13,6 +13,9 @@ import (
 	"github.com/tanema/amore/window"
 )
 
+// Poll is used by the game loop to gather events and delegate to each pacakge.
+// Generally you should not have to use this method however if you are doing your
+// own game loop this should be called at the end.
 func Poll() {
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 		switch e := event.(type) {
@@ -37,6 +40,8 @@ func Poll() {
 	}
 }
 
+// delegateWindowEvent handles window events and delegates them to the pacakges
+// that handle those events.
 func delegateWindowEvent(event sdl.Event, e *sdl.WindowEvent) {
 	switch e.Type {
 	case sdl.WINDOWEVENT_NONE:

@@ -11,6 +11,8 @@ var (
 	activeSticks = []*Joystick{}
 )
 
+// init will init the joystick subsystem and open any pre-existing joysticks connected
+// to the system.
 func init() {
 	if err := sdl.InitSubSystem(sdl.INIT_JOYSTICK | sdl.INIT_GAMECONTROLLER); err != nil {
 		panic(err)
@@ -24,6 +26,7 @@ func init() {
 	sdl.GameControllerEventState(sdl.ENABLE)
 }
 
+// addJoystick will open the joystick and add it to our queue from usage in amore.
 func addJoystick(idx int) *Joystick {
 	if idx < 0 || idx >= sdl.NumJoysticks() {
 		return nil
@@ -53,7 +56,7 @@ func addJoystick(idx int) *Joystick {
 	// Make sure multiple instances of the same physical joystick aren't added
 	// to the active list.
 	for _, stick := range activeSticks {
-		if joystick.GetHandle() == stick.GetHandle() {
+		if joystick.getHandle() == stick.getHandle() {
 			// If we just created the stick, remove it since it's a duplicate.
 			if !reused {
 				joysticks = joysticks[:len(joysticks)-1]
@@ -62,7 +65,7 @@ func addJoystick(idx int) *Joystick {
 		}
 	}
 
-	if !joystick.Open() {
+	if !joystick.open() {
 		return nil
 	}
 
@@ -70,6 +73,8 @@ func addJoystick(idx int) *Joystick {
 	return joystick
 }
 
+// removeJoystick will remove the joystick from the active joystics queue so it
+// will no longer be returns from GetJoysticks
 func removeJoystick(joystick *Joystick) {
 	if joystick == nil {
 		return
@@ -83,6 +88,7 @@ func removeJoystick(joystick *Joystick) {
 	}
 }
 
+// getDeviceGUID will return the device specific id for the device with the index id.
 func getDeviceGUID(idx int) string {
 	if idx < 0 || idx >= sdl.NumJoysticks() {
 		return ""
@@ -110,6 +116,9 @@ func getJoystickFromID(id int) *Joystick {
 	return nil
 }
 
+// clampval will clamp axis values so that they are not contantly with a non-zero
+// value, as can happen with gamepads and joysticks. It will also clamp the values
+// to the absolute -1, 1 values because sometimes joysticks wont reach all the way.
 func clampval(x float32) float32 {
 	if math.Abs(float64(x)) < 0.01 {
 		return 0.0

@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	amoreVersion = "0.0.4"
+	amoreVersion = "0.0.5" // command line version
 )
 
 var (
@@ -37,6 +37,7 @@ func main() {
 	}
 }
 
+// printVersion outputs the command line version
 func printVersion() {
 	fmt.Printf("Amore version: %v", amoreVersion)
 }

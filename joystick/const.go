@@ -4,7 +4,10 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+// Specifies which hardware axis on the controller
 type GameControllerAxis sdl.GameControllerAxis
+
+// Specifies the hardware button on the controller
 type GameControllerButton sdl.GameControllerButton
 
 const (
@@ -36,19 +39,4 @@ const (
 	ButtonDpadLeft      = GameControllerButton(sdl.CONTROLLER_BUTTON_DPAD_LEFT)
 	ButtonDpadRight     = GameControllerButton(sdl.CONTROLLER_BUTTON_DPAD_RIGHT)
 	ButtonMax           = GameControllerButton(sdl.CONTROLLER_BUTTON_MAX)
-)
-
-type HatDirection int
-
-const (
-	HatInvalid  HatDirection = -1
-	HatCentered HatDirection = iota
-	HatUp
-	HatRight
-	HatDown
-	HatLeft
-	HatRightUp
-	HatRightDown
-	HatLeftup
-	HatLeftdown
 )

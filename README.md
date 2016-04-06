@@ -1,17 +1,22 @@
 # Amore
+ 
+[![GoDoc](https://godoc.org/github.com/tanema/amore?status.svg)](http://godoc.org/github.com/tanema/amore)
 
 An WIP game framework based on the API and workflow of Love 2D with usage of sdl2 and opengl
  
-This project uses [goxjs/gl](https://github.com/goxjs/gl) so that it supports:
+Aimed Platform Support:
 
-- **OS X**, **Linux** and **Windows** via OpenGL 2.1 backend,
-- **iOS** and **Android** via OpenGL ES 2.0 backend,
+- **OS X**
+- **Linux**
+- **Windows**
+- **iOS** 
+- **Android**
 
 Objectives
 ==========
 * Enable making games easy, fast and fun
 * Making games portable
-* single executable deployment strategy.
+* Single executable deployment strategy.
  
 Installation
 ============
@@ -66,8 +71,11 @@ func draw() {
 }
 ```
 
-TODO
-=====
+Lack of Physics package
+=======================
+
+I suggest that you used an port of box-2d here: [github.com/neguse/go-box2d-lite](https://github.com/neguse/go-box2d-lite)
+
 * ~~Audio (wav, ogg, flac)~~
 * GFX [ref](https://love2d.org/wiki/love.graphics)
   - ~~primitives (polygons, lines, color, stencil, scissor)~~

@@ -12,10 +12,10 @@ type waveDecoder struct {
 	dataSize int32
 }
 
-const (
-	WAV_HEADER_SIZE = 44
-)
+// constant header size in wav files
+const WAV_HEADER_SIZE = 44
 
+// read will decode the file
 func (decoder *waveDecoder) read() error {
 	var riffMarker, waveMarker, fmtMarker, dataMarker [4]byte
 	var fmtChunkSize, fileSize, byteRate int32

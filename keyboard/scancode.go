@@ -4,6 +4,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+// Scancode is the id for a character independant of keyboard setup
 type Scancode uint32
 
 const (
