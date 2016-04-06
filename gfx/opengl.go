@@ -284,7 +284,7 @@ func Present() {
 	// Make sure we don't have a canvas active.
 	canvases := states.back().canvases
 	SetCanvas()
-	window.GetCurrent().SwapBuffers()
+	window.SwapBuffers()
 	// Restore the currently active canvas, if there is one.
 	SetCanvas(canvases...)
 }
@@ -292,7 +292,7 @@ func Present() {
 func IsActive() bool {
 	// The graphics module is only completely 'active' if there's a window, a
 	// context, and the active variable is set.
-	return gl_state.active && isCreated() && window.GetCurrent().IsOpen()
+	return gl_state.active && isCreated() && window.IsOpen()
 }
 
 func SetActive(enable bool) {

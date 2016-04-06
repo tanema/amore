@@ -29,7 +29,7 @@ func Poll() {
 		case *sdl.TouchFingerEvent:
 			touch.Delegate(e)
 		case *sdl.QuitEvent:
-			window.GetCurrent().SetShouldClose(true)
+			window.Close(true)
 		case *sdl.DropEvent, *sdl.RenderEvent, *sdl.UserEvent,
 			*sdl.ClipboardEvent, *sdl.OSEvent, *sdl.CommonEvent:
 			//discard not used in amore yet
@@ -54,11 +54,11 @@ func delegateWindowEvent(event sdl.Event, e *sdl.WindowEvent) {
 		case sdl.WINDOWEVENT_HIDDEN, sdl.WINDOWEVENT_FOCUS_LOST:
 			gfx.SetActive(false)
 		case sdl.WINDOWEVENT_RESIZED, sdl.WINDOWEVENT_SIZE_CHANGED:
-			w, h := window.GetCurrent().GetDrawableSize()
+			w, h := window.GetDrawableSize()
 			gfx.SetViewportSize(w, h)
 		case sdl.WINDOWEVENT_CLOSE:
-			window.GetCurrent().SetShouldClose(true)
+			window.Close(true)
 		}
-		window.GetCurrent().Delegate(e)
+		window.Delegate(e)
 	}
 }

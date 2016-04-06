@@ -44,12 +44,12 @@ func SetY(y float32) {
 
 //Returns the current position of the mouse.
 func GetPosition() (float32, float32) {
-	return window.GetCurrent().GetMousePosition()
+	return window.GetMousePosition()
 }
 
 //Sets the current position of the mouse.
 func SetPosition(x, y float32) {
-	window.GetCurrent().SetMousePosition(x, y)
+	window.SetMousePosition(x, y)
 }
 
 //Gets whether relative mode is enabled for the mouse.
@@ -64,12 +64,12 @@ func SetRelativeMode(isvisible bool) {
 
 //Checks if the mouse is grabbed.
 func IsGrabbed() bool {
-	return window.GetCurrent().IsMouseGrabbed()
+	return window.IsMouseGrabbed()
 }
 
 //Grabs the mouse and confines it to the window.
 func SetGrabbed(enabled bool) {
-	window.GetCurrent().SetMouseGrab(enabled)
+	window.SetMouseGrab(enabled)
 }
 
 //Checks if the cursor is visible.

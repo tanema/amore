@@ -7,19 +7,21 @@ import (
 )
 
 const (
-	fps_update_frequency = 1
+	fps_update_frequency = 1 //update 1 per second
 )
 
 var (
-	fps                 int
-	frames              int
-	current_time        float32
-	previous_time       float32
-	previous_fps_update float32
-	dt                  float32
-	average_delta       float32
+	fps                 int     // frames per second
+	frames              int     // frames since last update freq
+	current_time        float32 //current frame time
+	previous_time       float32 // last frame time
+	previous_fps_update float32 // last time fps was updated
+	dt                  float32 // change in time since last step
+	average_delta       float32 // average change in time over update frequency
 )
 
+// Step should be called every game loop if rolling your own to keep track of time
+// for the update function. It calculates fps and average fps.
 func Step() {
 	frames++
 	previous_time = current_time
@@ -35,18 +37,22 @@ func Step() {
 	}
 }
 
+// GetTime get the current time from the length that the application has been running.
 func GetTime() float32 {
 	return float32(sdl.GetTicks()) / 1000.0
 }
 
+// GetDelta returns the difference of time between the current frame and the last frame.
 func GetDelta() float32 {
 	return dt
 }
 
+// GetFPS returns the number of frames per second.
 func GetFPS() int {
 	return fps
 }
 
+// GetAverageDelta returns the average time of each frame
 func GetAverageDelta() float32 {
 	return average_delta
 }

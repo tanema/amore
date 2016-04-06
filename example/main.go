@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"image/png"
 	"math"
-	"os"
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/audio"
@@ -14,6 +12,7 @@ import (
 	"github.com/tanema/amore/keyboard"
 	"github.com/tanema/amore/mouse"
 	"github.com/tanema/amore/timer"
+	_ "github.com/tanema/amore/touch"
 	"github.com/tanema/amore/window"
 )
 
@@ -35,7 +34,7 @@ var (
 )
 
 func main() {
-	window.GetCurrent().SetMouseVisible(false)
+	window.SetMouseVisible(false)
 	keyboard.SetKeyReleaseCB(keyUp)
 
 	canvas = gfx.NewCanvas(800, 600)
@@ -118,9 +117,7 @@ func keyUp(key keyboard.Key) {
 			bomb.Play()
 		}
 	case keyboard.Key3:
-		img := gfx.NewScreenshot()
-		out, _ := os.Create("./output.png")
-		png.Encode(out, img)
+		window.ShowMessageBox("title", "message", []string{"okay", "cancel"}, window.MESSAGEBOX_INFO, true)
 	case keyboard.Key4:
 		triangle_mesh.SetVertexMap([]uint32{0, 1, 2})
 	case keyboard.Key5:
@@ -134,7 +131,7 @@ func keyUp(key keyboard.Key) {
 
 func update(deltaTime float32) {
 	mx, my = mouse.GetPosition()
-	mx, my = window.GetCurrent().PixelToWindowCoords(mx, my)
+	mx, my = window.PixelToWindowCoords(mx, my)
 	psystem.Update(deltaTime)
 }
 

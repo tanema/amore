@@ -4,6 +4,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+// PowerState defines the battery connection to the PC
 type PowerState int
 
 const (

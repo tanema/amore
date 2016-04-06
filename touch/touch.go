@@ -5,75 +5,43 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type (
-	touchCB func(x, y, dx, dy, pressure float32)
-	Touch   struct {
-		event *sdl.TouchFingerEvent
-	}
-)
-
-var (
-	touches = make(map[int64]*sdl.TouchFingerEvent)
-
-	press_default   touchCB = func(x, y, dx, dy, pressure float32) {}
-	release_default touchCB = func(x, y, dx, dy, pressure float32) {}
-	move_default    touchCB = func(x, y, dx, dy, pressure float32) {}
-
-	touch_press_cb   = press_default
-	touch_release_cb = release_default
-	touch_move_cb    = move_default
-)
-
-func Delegate(event *sdl.TouchFingerEvent) {
-	switch event.Type {
-	case sdl.FINGERMOTION:
-		touches[int64(event.TouchID)] = event
-		touch_move_cb(event.X, event.Y, event.DX, event.DY, event.Pressure)
-	case sdl.FINGERDOWN:
-		touches[int64(event.TouchID)] = event
-		touch_press_cb(event.X, event.Y, event.DX, event.DY, event.Pressure)
-	case sdl.FINGERUP:
-		delete(touches, int64(event.TouchID))
-		touch_release_cb(event.X, event.Y, event.DX, event.DY, event.Pressure)
-	}
+type Touch struct {
+	ID int64
+	*sdl.TouchFingerEvent
 }
 
-func SetTouchPressCB(cb touchCB) {
-	if cb == nil {
-		touch_press_cb = press_default
-	} else {
-		touch_press_cb = cb
-	}
-}
+var touches = make(map[int64]*sdl.TouchFingerEvent)
 
-func SetTouchReleaseCB(cb touchCB) {
-	if cb == nil {
-		touch_release_cb = release_default
-	} else {
-		touch_release_cb = cb
-	}
-}
-
-func SetTouchMoveCB(cb touchCB) {
-	if cb == nil {
-		touch_move_cb = move_default
-	} else {
-		touch_move_cb = cb
-	}
-}
-
+// GetTouches return a slice of all the current touches
 func GetTouches() []Touch {
 	fingers := []Touch{}
-	for _, touch := range touches {
-		fingers = append(fingers, Touch{event: touch})
+	for id, touch := range touches {
+		fingers = append(fingers, Touch{
+			ID:               id,
+			TouchFingerEvent: touch,
+		})
 	}
 	return fingers
 }
 
-func (touch *Touch) GetPosition() (float32, float32) {
-	return touch.event.X, touch.event.Y
+// GetPosition will return the x, y coordinates of the touch with the provied id
+//This may cause a panic if the id does not exist. Safer to use GetPosition on a given touch.
+func GetPosition(id int32) (float32, float32) {
+	return touches[int64(id)].X, touches[int64(id)].Y
 }
 
-func (touch *Touch) GetPressure(id int64) float32 {
-	return touch.event.Pressure
+// GetPressure will return the pressure for the touch with the given id. This may
+// cause a panic if the id does not exist. Safer to use GetPressure on a given touch.
+func GetPressure(id int32) float32 {
+	return touches[int64(id)].Pressure
+}
+
+// GetPosition will return the x, y coordinates of the touch
+func (touch *Touch) GetPosition() (float32, float32) {
+	return touch.X, touch.Y
+}
+
+// GetPressure will return the pressure for the touch
+func (touch *Touch) GetPressure() float32 {
+	return touch.Pressure
 }

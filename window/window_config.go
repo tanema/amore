@@ -13,7 +13,7 @@ const (
 	config_file_name = "conf.toml"
 )
 
-type WindowConfig struct {
+type windowConfig struct {
 	Identity    string `toml:"identity"` // The name of the save directory (string)
 	Title       string `toml:"title"`    // The window title (string)
 	Icon        string `toml:"icon"`     // Filepath to an image to use as the window's icon (string)
@@ -37,8 +37,8 @@ type WindowConfig struct {
 	Y           int32  `toml:"y"`              // The y-coordinate of the window's position in the specified display (number)
 }
 
-func loadConfig() (*WindowConfig, error) {
-	var config WindowConfig
+func loadConfig() (*windowConfig, error) {
+	var config windowConfig
 	path := path.Join(".", config_file_name)
 
 	if _, err := file.NewFileData(path); os.IsNotExist(err) {

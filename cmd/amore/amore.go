@@ -1,4 +1,4 @@
-// The amore command for bunsling assets and helpers for quick project creation.
+// The amore command for bundling assets and helpers for quick project creation.
 package main
 
 import (

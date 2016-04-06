@@ -18,10 +18,6 @@ import (
 	"github.com/tanema/amore/window"
 )
 
-var (
-	current_window *window.Window
-)
-
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	runtime.LockOSThread() //important SDL and OpenGl Demand it and stamp thier feet if you dont
@@ -31,12 +27,15 @@ func init() {
 // loop. As such this function should be put as the last call in your main function.
 // update and draw will be called synchronously because calls to OpenGL that are
 // not on the main thread will crash your program.
-func Start(update func(float32), draw func()) {
-	current_window = window.GetCurrent()
-	defer current_window.Destroy()
-	gfx.InitContext(current_window.GetWidth(), current_window.GetHeight())
+func Start(update func(float32), draw func()) error {
+	current_window, window_err := window.NewWindow()
+	defer window.Destroy()
+	if window_err != nil {
+		return window_err
+	}
+	gfx.InitContext(current_window.Config.Width, current_window.Config.Height)
 	defer gfx.DeInit()
-	for !current_window.ShouldClose() {
+	for !window.ShouldClose() {
 		timer.Step()
 		update(timer.GetDelta())
 		gfx.ClearC(gfx.GetBackgroundColorC())
@@ -45,11 +44,12 @@ func Start(update func(float32), draw func()) {
 		gfx.Present()
 		event.Poll()
 	}
+	return nil
 }
 
 // Quit will prepare the window to close at the end of the next game loop. This
 // will allow a nice clean destruction of all object that are allocated in OpenGL,
 // SDL, and OpenAl
 func Quit() {
-	current_window.SetShouldClose(true)
+	window.Close(true)
 }
