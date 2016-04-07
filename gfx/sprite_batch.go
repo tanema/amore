@@ -5,7 +5,8 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/goxjs/gl"
+
+	"github.com/tanema/amore/gfx/gl"
 )
 
 type SpriteBatch struct {
@@ -102,7 +103,7 @@ func (sprite_batch *SpriteBatch) SetBufferSize(newsize int) error {
 	}
 
 	sprite_batch.array_buf.Release()
-	sprite_batch.array_buf = newVertexBuffer(newsize*4*8, sprite_batch.array_buf.getData(), sprite_batch.usage)
+	sprite_batch.array_buf = newVertexBuffer(newsize*4*8, sprite_batch.array_buf.data, sprite_batch.usage)
 
 	sprite_batch.quad_indices.Release()
 	sprite_batch.quad_indices = newQuadIndices(newsize)
@@ -181,9 +182,9 @@ func (sprite_batch *SpriteBatch) Draw(args ...float32) {
 	sprite_batch.array_buf.bind()
 	defer sprite_batch.array_buf.unbind()
 
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, 0)
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, 2*4)
-	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, 4*4)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(2*4))
+	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.PtrOffset(4*4))
 
 	min, max := sprite_batch.GetDrawRange()
 	sprite_batch.quad_indices.drawElements(gl.TRIANGLES, min, max-min+1)

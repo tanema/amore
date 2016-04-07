@@ -4,7 +4,8 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/goxjs/gl"
+
+	"github.com/tanema/amore/gfx/gl"
 )
 
 const (
@@ -653,18 +654,15 @@ func (system *ParticleSystem) Draw(args ...float32) {
 
 	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(system.texture.GetHandle())
+
 	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.Ptr(particleVerts))
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[2]))
+	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[4]))
 
-	vbo := gl.CreateBuffer()
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(particleVerts...), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, 0)
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, 2*4)
-	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, 4*4)
-
-	system.quadIndices.drawElements(gl.TRIANGLES, 0, len(system.particles))
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
-	gl.DeleteBuffer(vbo)
+	// We use a client-side index array instead of an Index Buffers, because
+	// at least one graphics driver (the one for Kepler nvidia GPUs in OS X
+	// 10.11) fails to render geometry if an index buffer is used with
+	// client-side vertex arrays.
+	system.quadIndices.drawElementsLocal(gl.TRIANGLES, 0, len(system.particles))
 }

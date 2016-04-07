@@ -1,7 +1,7 @@
 package gfx
 
 import (
-	"github.com/goxjs/gl"
+	"github.com/tanema/amore/gfx/gl"
 )
 
 type (

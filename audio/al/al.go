@@ -22,6 +22,9 @@
 // license file to the open source notices of your application.
 // OpenAL Soft's license file could be found at
 // http://repo.or.cz/w/openal-soft.git/blob/HEAD:/COPYING.
+//
+// Vendored and extended from github.com/golang/mobile for extending functionality
+
 package al
 
 // Capability represents OpenAL extension capabilities.

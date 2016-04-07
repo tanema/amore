@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/goxjs/gl"
 
 	"github.com/tanema/amore/file"
+	"github.com/tanema/amore/gfx/gl"
 )
 
 type BuiltinUniform int

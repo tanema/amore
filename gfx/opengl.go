@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
-	"github.com/goxjs/gl"
 
+	"github.com/tanema/amore/gfx/gl"
 	"github.com/tanema/amore/window"
 )
 
@@ -108,7 +108,8 @@ func createDefaultTexture() {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 
-	gl.TexImage2D(gl.TEXTURE_2D, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, []byte{255, 255, 255, 255})
+	pix := []byte{255, 255, 255, 255}
+	gl.TexImage2D(gl.TEXTURE_2D, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pix))
 }
 
 func prepareDraw(model *mgl32.Mat4) {

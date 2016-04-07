@@ -2,7 +2,8 @@ package gfx
 
 import (
 	"github.com/go-gl/mathgl/mgl32/matstack"
-	"github.com/goxjs/gl"
+
+	"github.com/tanema/amore/gfx/gl"
 )
 
 type displayState struct {

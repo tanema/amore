@@ -1,9 +1,11 @@
 package gfx
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/goxjs/gl"
 	"math"
+
+	"github.com/go-gl/mathgl/mgl32"
+
+	"github.com/tanema/amore/gfx/gl"
 )
 
 type (
@@ -355,38 +357,18 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
 	useVertexAttribArrays(ATTRIBFLAG_POS)
-
-	vbo := gl.CreateBuffer()
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, v2Bytes(polyline.vertices...), gl.STATIC_DRAW)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, 0)
-	indices.drawElements(gl.TRIANGLES, 0, len(polyline.vertices)/4)
-
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
+	gl.DrawElements(gl.TRIANGLES, (len(polyline.vertices)/4)*6, gl.UNSIGNED_SHORT, gl.Ptr(indices))
 	if polyline.overdraw {
 		c := GetColor()
 		colors := polyline.generateColorArray(len(overdraw), c)
 		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
-
-		color_vbo := gl.CreateBuffer()
-		gl.BindBuffer(gl.ARRAY_BUFFER, color_vbo)
-		gl.BufferData(gl.ARRAY_BUFFER, colorBytes(colors...), gl.STATIC_DRAW)
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, true, 0, 0)
-
-		overdraw_vbo := gl.CreateBuffer()
-		gl.BindBuffer(gl.ARRAY_BUFFER, overdraw_vbo)
-		gl.BufferData(gl.ARRAY_BUFFER, v2Bytes(overdraw...), gl.STATIC_DRAW)
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, 0)
-
-		indices.drawElements(gl.TRIANGLES, 0, len(overdraw)/4)
-
+		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
+		gl.DrawElements(gl.TRIANGLES, (len(overdraw)/4)*6, gl.UNSIGNED_SHORT, gl.Ptr(indices))
 		SetColorC(c)
-
-		gl.DeleteBuffer(color_vbo)
-		gl.DeleteBuffer(overdraw_vbo)
 	}
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
-	gl.DeleteBuffer(vbo)
 	indices.Release()
 }
 
@@ -394,38 +376,16 @@ func (polyline *polyLine) drawTriangleStrip(is_looping bool) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
 	useVertexAttribArrays(ATTRIBFLAG_POS)
-
-	vbo := gl.CreateBuffer()
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, v2Bytes(polyline.vertices...), gl.STATIC_DRAW)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, 0)
-
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, len(polyline.vertices))
-
-	if polyline.overdraw {
+	if polyline.overdraw { // prepare colors:
 		c := GetColor()
 		overdraw := polyline.renderOverdraw(is_looping)
 		colors := polyline.generateColorArray(len(overdraw), c)
 		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
-
-		color_vbo := gl.CreateBuffer()
-		gl.BindBuffer(gl.ARRAY_BUFFER, color_vbo)
-		gl.BufferData(gl.ARRAY_BUFFER, colorBytes(colors...), gl.STATIC_DRAW)
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, true, 0, 0)
-
-		overdraw_vbo := gl.CreateBuffer()
-		gl.BindBuffer(gl.ARRAY_BUFFER, overdraw_vbo)
-		gl.BufferData(gl.ARRAY_BUFFER, v2Bytes(overdraw...), gl.STATIC_DRAW)
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, 0)
-
+		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, len(overdraw))
-
 		SetColorC(c)
-
-		gl.DeleteBuffer(color_vbo)
-		gl.DeleteBuffer(overdraw_vbo)
 	}
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
-	gl.DeleteBuffer(vbo)
 }

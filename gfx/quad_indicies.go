@@ -1,7 +1,7 @@
 package gfx
 
 import (
-	"github.com/goxjs/gl"
+	"github.com/tanema/amore/gfx/gl"
 )
 
 /**
@@ -70,4 +70,8 @@ func newAltQuadIndices(size int) *quadIndices {
 
 func (qi *quadIndices) drawElements(mode uint32, offset, size int) {
 	qi.indexBuffer.drawElements(mode, offset*6, size*6)
+}
+
+func (qi *quadIndices) drawElementsLocal(mode uint32, offset, size int) {
+	qi.indexBuffer.drawElementsLocal(mode, offset*6, size*6)
 }

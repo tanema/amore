@@ -8,7 +8,8 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/goxjs/gl"
+
+	"github.com/tanema/amore/gfx/gl"
 )
 
 type (
@@ -99,17 +100,8 @@ func Point(x, y float32) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
 	useVertexAttribArrays(ATTRIBFLAG_POS)
-
-	point := []float32{x, y}
-	vbo := gl.CreateBuffer()
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(point...), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, 0)
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{x, y}))
 	gl.DrawArrays(gl.POINTS, 0, 1)
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
-	gl.DeleteBuffer(vbo)
 }
 
 func Line(args ...float32) {
@@ -132,13 +124,8 @@ func Polygon(mode string, coords []float32) {
 		prepareDraw(nil)
 		bindTexture(gl_state.defaultTexture)
 		useVertexAttribArrays(ATTRIBFLAG_POS)
-		vbo := gl.CreateBuffer()
-		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-		gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(coords...), gl.STATIC_DRAW)
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, 0)
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
-		gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
-		gl.DeleteBuffer(vbo)
 	}
 }
 

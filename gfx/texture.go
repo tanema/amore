@@ -10,7 +10,8 @@ import (
 	"runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/goxjs/gl"
+
+	"github.com/tanema/amore/gfx/gl"
 )
 
 var filters = map[string]int32{"linear": gl.LINEAR, "nearest": gl.NEAREST}
@@ -89,7 +90,7 @@ func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
 	bindTexture(new_texture.GetHandle())
-	gl.TexImage2D(gl.TEXTURE_2D, 0, bounds.Dx(), bounds.Dy(), gl.RGBA, gl.UNSIGNED_BYTE, rgba.Pix)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, bounds.Dx(), bounds.Dy(), gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
 
 	if new_texture.mipmaps {
 		new_texture.generateMipmaps()
@@ -250,14 +251,11 @@ func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	prepareDraw(model)
 	bindTexture(texture.GetHandle())
 	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD)
-	vbo := gl.CreateBuffer()
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(vertices...), gl.STATIC_DRAW)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 4*4, 0)
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 4*4, 2*4)
+
+	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 4*4, gl.Ptr(vertices))
+	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 4*4, gl.Ptr(&vertices[2]))
+
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
-	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer{})
-	gl.DeleteBuffer(vbo)
 }
 
 func (texture *Texture) Draw(args ...float32) {

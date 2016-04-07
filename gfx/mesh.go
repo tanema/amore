@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/goxjs/gl"
+	"github.com/tanema/amore/gfx/gl"
 )
 
 type (
@@ -137,8 +137,7 @@ func (mesh *Mesh) GetVertex(vertindex int) ([]float32, error) {
 	if vertindex >= mesh.vertexCount {
 		return []float32{}, fmt.Errorf("Invalid vertex index: %v", vertindex+1)
 	}
-	data := mesh.vbo.getData()
-	return data[vertindex*mesh.vertexStride : mesh.vertexStride], nil
+	return mesh.vbo.data[vertindex*mesh.vertexStride : mesh.vertexStride], nil
 }
 
 func (mesh *Mesh) GetVertexCount() int {
@@ -169,7 +168,7 @@ func (mesh *Mesh) GetVertexMap() []uint32 {
 	if mesh.ibo == nil {
 		return []uint32{}
 	}
-	return mesh.ibo.getData()
+	return mesh.ibo.data
 }
 
 func (mesh *Mesh) Flush() {
@@ -187,15 +186,15 @@ func (mesh *Mesh) bindEnabledAttributes() {
 
 	offset := 0
 	if (mesh.enabledattribs & ATTRIBFLAG_POS) > 0 {
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
+		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
 		offset += 2 * 4
 	}
 	if (mesh.enabledattribs & ATTRIBFLAG_TEXCOORD) > 0 {
-		gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, mesh.vertexStride*4, offset)
+		gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
 		offset += 2 * 4
 	}
 	if (mesh.enabledattribs & ATTRIBFLAG_COLOR) > 0 {
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, mesh.vertexStride*4, offset)
+		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
 	}
 }
 

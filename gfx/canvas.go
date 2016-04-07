@@ -5,7 +5,8 @@ import (
 	"image"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/goxjs/gl"
+
+	"github.com/tanema/amore/gfx/gl"
 )
 
 type Canvas struct {
