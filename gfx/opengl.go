@@ -51,8 +51,8 @@ func InitContext(w, h int32) {
 	initMaxValues() //check shim code
 
 	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
-	gl.VertexAttrib4fv(ATTRIB_COLOR, glcolor)
-	gl.VertexAttrib4fv(ATTRIB_CONSTANTCOLOR, glcolor)
+	gl.VertexAttrib4fv(attrib_color, glcolor)
+	gl.VertexAttrib4fv(attrib_constantcolor, glcolor)
 	useVertexAttribArrays(0)
 
 	// Enable blending
@@ -150,8 +150,8 @@ func useVertexAttribArrays(arraybits uint32) {
 	// attribute undefined. We rely on the per-vertex color attribute being
 	// white when no per-vertex color is used, so we set it here.
 	// FIXME: Is there a better place to do this?
-	if (diff&ATTRIBFLAG_COLOR) > 0 && (arraybits&ATTRIBFLAG_COLOR) == 0 {
-		gl.VertexAttrib4f(ATTRIB_COLOR, 1.0, 1.0, 1.0, 1.0)
+	if (diff&attribflag_color) > 0 && (arraybits&attribflag_color) == 0 {
+		gl.VertexAttrib4f(attrib_color, 1.0, 1.0, 1.0, 1.0)
 	}
 }
 
@@ -554,7 +554,7 @@ func SetColor(r, g, b, a float32) {
 func SetColorC(c Color) {
 	states.back().color = c
 
-	gl.VertexAttrib4f(ATTRIB_CONSTANTCOLOR, c[0], c[1], c[2], c[3])
+	gl.VertexAttrib4f(attrib_constantcolor, c[0], c[1], c[2], c[3])
 }
 
 func GetColor() Color {

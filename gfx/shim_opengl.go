@@ -43,7 +43,7 @@ func (texture *Texture) SetMipmapSharpness(sharpness float32) {
 	var maxMipmapSharpness float32
 	gl.GetFloatv(gl.MAX_TEXTURE_LOD_BIAS, &maxMipmapSharpness)
 	mipmapSharpness := math.Min(math.Max(float64(sharpness), -float64(maxMipmapSharpness+0.01)), float64(maxMipmapSharpness-0.01))
-	bindTexture(texture.GetHandle())
+	bindTexture(texture.getHandle())
 	//negative bias is sharper
 	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_LOD_BIAS, -float32(mipmapSharpness))
 }
@@ -55,7 +55,7 @@ func (canvas *Canvas) attacheExtra(canvases []*Canvas) {
 		// Attach the canvas textures to the currently bound framebuffer.
 		for i := 0; i < len(canvases); i++ {
 			buf := gl.COLOR_ATTACHMENT1 + uint32(i)
-			gl.FramebufferTexture2D(gl.FRAMEBUFFER, buf, gl.TEXTURE_2D, canvases[i].GetHandle().Value, 0)
+			gl.FramebufferTexture2D(gl.FRAMEBUFFER, buf, gl.TEXTURE_2D, canvases[i].getHandle().Value, 0)
 			drawbuffers = append(drawbuffers, buf)
 		}
 		// set up multiple render targets

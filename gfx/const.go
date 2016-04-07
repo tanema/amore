@@ -5,44 +5,59 @@ import (
 )
 
 type (
-	WrapMode             int
-	FilterMode           int
-	BlendMode            int
-	StencilAction        uint32
-	CompareMode          uint32
-	LineStyle            int
-	LineJoin             int
-	UniformType          int
-	MeshDrawMode         uint32
-	Usage                uint32
+	// WrapMode is used for setting texture/image/canvas wrap
+	WrapMode int
+	// FilterMode is used for setting texture/image/canvas filters
+	FilterMode int
+	// BlendMode specifies different ways to do color blending.
+	BlendMode int
+	// StencilAction is how a stencil function modifies the stencil values of pixels it touches.
+	StencilAction uint32
+	// CompareMode defines different types of per-pixel stencil test comparisons.
+	// The pixels of an object will be drawn if the comparison succeeds, for each
+	// pixel that the object touches.
+	CompareMode uint32
+	// LineStyle specifies if the line drawing is smooth or rough
+	LineStyle int
+	// LineJoin specifies how each lines are joined together
+	LineJoin int
+	// UniformType is the data type of a uniform
+	UniformType int
+	// MeshDrawMode specifies the tesselation of the mesh points
+	MeshDrawMode uint32
+	// Usage is used for sprite batch usage, and specifies if it is static, dynamic, or stream
+	Usage uint32
+	// ParticleDistribution specifies which direction particle will be send in when spawned
 	ParticleDistribution int
-	ParticleInsertion    int
-	AlignMode            int
+	// ParticleInsertion specifies which level a particle will be inserted on spawn.
+	ParticleInsertion int
+	// AlignMode is the normal text align, center, left and right
+	AlignMode int
 )
 
 var (
 	//opengl attribute variables
-	ATTRIB_POS           = gl.Attrib{Value: 0}
-	ATTRIB_TEXCOORD      = gl.Attrib{Value: 1}
-	ATTRIB_COLOR         = gl.Attrib{Value: 2}
-	ATTRIB_CONSTANTCOLOR = gl.Attrib{Value: 3}
+	attrib_pos           = gl.Attrib{Value: 0}
+	attrib_texcoord      = gl.Attrib{Value: 1}
+	attrib_color         = gl.Attrib{Value: 2}
+	attrib_constantcolor = gl.Attrib{Value: 3}
 
-	ATTRIBFLAG_POS           = uint32(1 << ATTRIB_POS.Value)
-	ATTRIBFLAG_TEXCOORD      = uint32(1 << ATTRIB_TEXCOORD.Value)
-	ATTRIBFLAG_COLOR         = uint32(1 << ATTRIB_COLOR.Value)
-	ATTRIBFLAG_CONSTANTCOLOR = uint32(1 << ATTRIB_CONSTANTCOLOR.Value)
+	attribflag_pos           = uint32(1 << attrib_pos.Value)
+	attribflag_texcoord      = uint32(1 << attrib_texcoord.Value)
+	attribflag_color         = uint32(1 << attrib_color.Value)
+	attribflag_constantcolor = uint32(1 << attrib_constantcolor.Value)
 )
 
 const (
 	//texture wrap
-	WRAP_CLAMP           WrapMode = WrapMode(gl.CLAMP_TO_EDGE)
-	WRAP_REPEAT          WrapMode = WrapMode(gl.REPEAT)
-	WRAP_MIRRORED_REPEAT WrapMode = WrapMode(gl.MIRRORED_REPEAT)
+	WRAP_CLAMP           WrapMode = 0x812F
+	WRAP_REPEAT          WrapMode = 0x2901
+	WRAP_MIRRORED_REPEAT WrapMode = 0x8370
 
 	//texture filter
-	FILTER_NONE    FilterMode = FilterMode(gl.NONE)
-	FILTER_LINEAR  FilterMode = FilterMode(gl.LINEAR)
-	FILTER_NEAREST FilterMode = FilterMode(gl.NEAREST)
+	FILTER_NONE    FilterMode = 0
+	FILTER_NEAREST FilterMode = 0x2600
+	FILTER_LINEAR  FilterMode = 0x2601
 
 	//opengl blending constants
 	BLENDMODE_ALPHA BlendMode = iota
@@ -54,12 +69,12 @@ const (
 	BLENDMODE_REPLACE
 
 	//stencil actions
-	STENCIL_REPLACE        StencilAction = StencilAction(gl.REPLACE)
-	STENCIL_INCREMENT      StencilAction = StencilAction(gl.INCR)
-	STENCIL_DECREMENT      StencilAction = StencilAction(gl.DECR)
-	STENCIL_INCREMENT_WRAP StencilAction = StencilAction(gl.INCR_WRAP)
-	STENCIL_DECREMENT_WRAP StencilAction = StencilAction(gl.DECR_WRAP)
-	STENCIL_INVERT         StencilAction = StencilAction(gl.INVERT)
+	STENCIL_REPLACE        StencilAction = 0x1E01
+	STENCIL_INCREMENT      StencilAction = 0x1E02
+	STENCIL_DECREMENT      StencilAction = 0x1E03
+	STENCIL_INCREMENT_WRAP StencilAction = 0x8507
+	STENCIL_DECREMENT_WRAP StencilAction = 0x8508
+	STENCIL_INVERT         StencilAction = 0x150A
 
 	/**
 	 * Q: Why are some of the compare modes inverted (e.g. COMPARE_LESS becomes
@@ -72,19 +87,21 @@ const (
 	 * setStencilTest(COMPARE_GREATER, 4) will make it pass if the stencil
 	 * buffer has a value greater than 4.
 	 **/
-	COMPARE_LESS     CompareMode = CompareMode(gl.GREATER)
-	COMPARE_LEQUAL   CompareMode = CompareMode(gl.GEQUAL)
-	COMPARE_EQUAL    CompareMode = CompareMode(gl.EQUAL)
-	COMPARE_GEQUAL   CompareMode = CompareMode(gl.LEQUAL)
-	COMPARE_GREATER  CompareMode = CompareMode(gl.LESS)
-	COMPARE_NOTEQUAL CompareMode = CompareMode(gl.NOTEQUAL)
-	COMPARE_ALWAYS   CompareMode = CompareMode(gl.ALWAYS)
+	COMPARE_GREATER  CompareMode = 0x0201
+	COMPARE_EQUAL    CompareMode = 0x0202
+	COMPARE_GEQUAL   CompareMode = 0x0203
+	COMPARE_LESS     CompareMode = 0x0204
+	COMPARE_NOTEQUAL CompareMode = 0x0205
+	COMPARE_LEQUAL   CompareMode = 0x0206
+	COMPARE_ALWAYS   CompareMode = 0x0207
 
 	// treat adjacent segments with angles between their directions <5 degree as straight
 	LINES_PARALLEL_EPS float32 = 0.05
+
 	//line styles for overdraw
 	LINE_ROUGH LineStyle = iota
 	LINE_SMOOTH
+
 	//line joins for nicer corners
 	LINE_JOIN_NONE LineJoin = iota
 	LINE_JOIN_MITER
@@ -102,15 +119,15 @@ const (
 	UNIFORM_MAT
 
 	//mesh draw modes
-	DRAWMODE_FAN       MeshDrawMode = MeshDrawMode(gl.TRIANGLE_FAN)
-	DRAWMODE_STRIP     MeshDrawMode = MeshDrawMode(gl.TRIANGLE_STRIP)
-	DRAWMODE_TRIANGLES MeshDrawMode = MeshDrawMode(gl.TRIANGLES)
-	DRAWMODE_POINTS    MeshDrawMode = MeshDrawMode(gl.POINTS)
+	DRAWMODE_POINTS    MeshDrawMode = 0x0000
+	DRAWMODE_TRIANGLES MeshDrawMode = 0x0004
+	DRAWMODE_STRIP     MeshDrawMode = 0x0005
+	DRAWMODE_FAN       MeshDrawMode = 0x0006
 
 	//mesh and spritebatch usage
-	USAGE_STREAM  Usage = Usage(gl.STREAM_DRAW)
-	USAGE_DYNAMIC Usage = Usage(gl.DYNAMIC_DRAW)
-	USAGE_STATIC  Usage = Usage(gl.STATIC_DRAW)
+	USAGE_STREAM  Usage = 0x88E0
+	USAGE_STATIC  Usage = 0x88E4
+	USAGE_DYNAMIC Usage = 0x88E8
 
 	//particle distrobution
 	DISTRIBUTION_NONE ParticleDistribution = iota
@@ -122,6 +139,7 @@ const (
 	INSERT_MODE_BOTTOM
 	INSERT_MODE_RANDOM
 
+	// text align
 	ALIGN_CENTER AlignMode = iota
 	ALIGN_LEFT
 	ALIGN_RIGHT

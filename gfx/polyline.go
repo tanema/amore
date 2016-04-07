@@ -356,15 +356,15 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
-	useVertexAttribArrays(ATTRIBFLAG_POS)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
+	useVertexAttribArrays(attribflag_pos)
+	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
 	gl.DrawElements(gl.TRIANGLES, (len(polyline.vertices)/4)*6, gl.UNSIGNED_SHORT, gl.Ptr(indices))
 	if polyline.overdraw {
 		c := GetColor()
 		colors := polyline.generateColorArray(len(overdraw), c)
-		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
+		useVertexAttribArrays(attribflag_pos | attribflag_color)
+		gl.VertexAttribPointer(attrib_color, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
+		gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
 		gl.DrawElements(gl.TRIANGLES, (len(overdraw)/4)*6, gl.UNSIGNED_SHORT, gl.Ptr(indices))
 		SetColorC(c)
 	}
@@ -375,16 +375,16 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 func (polyline *polyLine) drawTriangleStrip(is_looping bool) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
-	useVertexAttribArrays(ATTRIBFLAG_POS)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
+	useVertexAttribArrays(attribflag_pos)
+	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, len(polyline.vertices))
 	if polyline.overdraw { // prepare colors:
 		c := GetColor()
 		overdraw := polyline.renderOverdraw(is_looping)
 		colors := polyline.generateColorArray(len(overdraw), c)
-		useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_COLOR)
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
+		useVertexAttribArrays(attribflag_pos | attribflag_color)
+		gl.VertexAttribPointer(attrib_color, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
+		gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, len(overdraw))
 		SetColorC(c)
 	}

@@ -55,13 +55,13 @@ func NewMeshExt(vertices []float32, size int, mode MeshDrawMode, usage Usage) (*
 func (mesh *Mesh) generateFlags() error {
 	switch mesh.vertexStride {
 	case 8:
-		mesh.enabledattribs = ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR
+		mesh.enabledattribs = attribflag_pos | attribflag_texcoord | attribflag_color
 	case 6:
-		mesh.enabledattribs = ATTRIBFLAG_POS | ATTRIBFLAG_COLOR
+		mesh.enabledattribs = attribflag_pos | attribflag_color
 	case 4:
-		mesh.enabledattribs = ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD
+		mesh.enabledattribs = attribflag_pos | attribflag_texcoord
 	case 2:
-		mesh.enabledattribs = ATTRIBFLAG_POS
+		mesh.enabledattribs = attribflag_pos
 	default:
 		return fmt.Errorf("invalid mesh verticies format, vertext stride was calculated as %v", mesh.vertexStride)
 	}
@@ -149,7 +149,7 @@ func (mesh *Mesh) GetVertexStride() int {
 }
 
 func (mesh *Mesh) GetVertexFormat() (vertex, text, color bool) {
-	return mesh.enabledattribs&ATTRIBFLAG_POS > 0, mesh.enabledattribs&ATTRIBFLAG_TEXCOORD > 0, mesh.enabledattribs&ATTRIBFLAG_COLOR > 0
+	return mesh.enabledattribs&attribflag_pos > 0, mesh.enabledattribs&attribflag_texcoord > 0, mesh.enabledattribs&attribflag_color > 0
 }
 
 func (mesh *Mesh) SetVertexMap(vertex_map []uint32) {
@@ -185,22 +185,22 @@ func (mesh *Mesh) bindEnabledAttributes() {
 	defer mesh.vbo.unbind()
 
 	offset := 0
-	if (mesh.enabledattribs & ATTRIBFLAG_POS) > 0 {
-		gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
+	if (mesh.enabledattribs & attribflag_pos) > 0 {
+		gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
 		offset += 2 * 4
 	}
-	if (mesh.enabledattribs & ATTRIBFLAG_TEXCOORD) > 0 {
-		gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
+	if (mesh.enabledattribs & attribflag_texcoord) > 0 {
+		gl.VertexAttribPointer(attrib_texcoord, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
 		offset += 2 * 4
 	}
-	if (mesh.enabledattribs & ATTRIBFLAG_COLOR) > 0 {
-		gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
+	if (mesh.enabledattribs & attribflag_color) > 0 {
+		gl.VertexAttribPointer(attrib_color, 4, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
 	}
 }
 
 func (mesh *Mesh) bindTexture() {
 	if mesh.texture != nil {
-		bindTexture(mesh.texture.GetHandle())
+		bindTexture(mesh.texture.getHandle())
 	} else {
 		bindTexture(gl_state.defaultTexture)
 	}

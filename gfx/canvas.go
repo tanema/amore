@@ -9,6 +9,7 @@ import (
 	"github.com/tanema/amore/gfx/gl"
 )
 
+// Canvas is an off-screen render target.
 type Canvas struct {
 	*Texture
 	fbo              gl.Framebuffer
@@ -19,6 +20,7 @@ type Canvas struct {
 	systemViewport   []int32
 }
 
+// NewCanvas creates a pointer to a new canvas with the privided width and height
 func NewCanvas(width, height int32) *Canvas {
 	new_canvas := &Canvas{
 		width:  width,
@@ -28,6 +30,7 @@ func NewCanvas(width, height int32) *Canvas {
 	return new_canvas
 }
 
+// loadVolatile will create the framebuffer and return true if successful
 func (canvas *Canvas) loadVolatile() bool {
 	canvas.status = gl.FRAMEBUFFER_COMPLETE
 
@@ -46,7 +49,7 @@ func (canvas *Canvas) loadVolatile() bool {
 		return false
 	}
 
-	canvas.fbo, canvas.status = newFBO(canvas.GetHandle())
+	canvas.fbo, canvas.status = newFBO(canvas.getHandle())
 
 	if canvas.status != gl.FRAMEBUFFER_COMPLETE {
 		if canvas.fbo.Valid() {
@@ -59,6 +62,7 @@ func (canvas *Canvas) loadVolatile() bool {
 	return true
 }
 
+// unLoadVolatile will release the texture, framebuffer and depth buffer
 func (canvas *Canvas) unLoadVolatile() {
 	if gl_state.currentCanvas == canvas {
 		canvas.stopGrab(false)
@@ -73,15 +77,14 @@ func (canvas *Canvas) unLoadVolatile() {
 	canvas.Texture.Release()
 }
 
+// Release will release all the gl objects associates with the canvas and clean
+// up the memory
 func (canvas *Canvas) Release() {
 	releaseVolatile(canvas)
 }
 
-func (canvas *Canvas) isMultiCanvasSupported() bool {
-	// system must support at least 4 simultaneous active canvases.
-	return GetMaxRenderTargets() >= 4
-}
-
+// startGrab will bind this canvas to grab all drawing operations
+// multiple canvases can only be passed in on non mobile platforms
 func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 	if gl_state.currentCanvas == canvas {
 		return nil // already grabbing
@@ -90,7 +93,7 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 	if canvases != nil && len(canvases) > 0 {
 		// Whether the new canvas list is different from the old one.
 		// A more thorough check is done below.
-		if !canvas.isMultiCanvasSupported() {
+		if GetMaxRenderTargets() < 4 {
 			return fmt.Errorf("Multi-canvas rendering is not supported on this system.")
 		}
 
@@ -128,6 +131,8 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 	return nil
 }
 
+// stopGrab will bind the context back to the default framebuffer and set back
+// all the settings
 func (canvas *Canvas) stopGrab(switchingToOtherCanvas bool) error {
 	// i am not grabbing. leave me alone
 	if gl_state.currentCanvas != canvas {
@@ -143,6 +148,8 @@ func (canvas *Canvas) stopGrab(switchingToOtherCanvas bool) error {
 	return nil
 }
 
+// NewImageData will create an image from the canvas data. It will return an error
+// only if the dimensions given are invalid
 func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
 	if x < 0 || y < 0 || w <= 0 || h <= 0 || (x+w) > canvas.width || (y+h) > canvas.height {
 		return nil, fmt.Errorf("Invalid ImageData rectangle dimensions.")
@@ -167,6 +174,8 @@ func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
 	return screenshot, nil
 }
 
+// checkCreateStencil if a stencil is set on a canvas then we need to create
+// some buffers to handle this.
 func (canvas *Canvas) checkCreateStencil() bool {
 	// Do nothing if we've already created the stencil buffer.
 	if canvas.depth_stencil.Valid() {
@@ -207,10 +216,7 @@ func (canvas *Canvas) checkCreateStencil() bool {
 	return success
 }
 
-func (canvas *Canvas) GetStatus() uint32 {
-	return canvas.status
-}
-
+// newFBO will generate a new Frame Buffer Object for use with the canvas
 func newFBO(texture gl.Texture) (gl.Framebuffer, uint32) {
 	// get currently bound fbo to reset to it later
 	current_fbo := gl.GetBoundFramebuffer()

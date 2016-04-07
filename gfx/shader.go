@@ -42,10 +42,10 @@ func (shader *Shader) loadVolatile() bool {
 	gl.AttachShader(shader.program, vert)
 	gl.AttachShader(shader.program, frag)
 
-	gl.BindAttribLocation(shader.program, ATTRIB_POS, "VertexPosition")
-	gl.BindAttribLocation(shader.program, ATTRIB_TEXCOORD, "VertexTexCoord")
-	gl.BindAttribLocation(shader.program, ATTRIB_COLOR, "VertexColor")
-	gl.BindAttribLocation(shader.program, ATTRIB_CONSTANTCOLOR, "ConstantColor")
+	gl.BindAttribLocation(shader.program, attrib_pos, "VertexPosition")
+	gl.BindAttribLocation(shader.program, attrib_texcoord, "VertexTexCoord")
+	gl.BindAttribLocation(shader.program, attrib_color, "VertexColor")
+	gl.BindAttribLocation(shader.program, attrib_constantcolor, "ConstantColor")
 
 	gl.LinkProgram(shader.program)
 	gl.DeleteShader(vert)
@@ -238,7 +238,7 @@ func (shader *Shader) SendTexture(name string, texture iTexture) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	gltex := texture.GetHandle()
+	gltex := texture.getHandle()
 	texunit := shader.getTextureUnit(name)
 
 	uniform, err := shader.getUniformAndCheck(name, UNIFORM_SAMPLER, 1)
@@ -298,15 +298,15 @@ func createVertexCode(code string) string {
 	codes := struct {
 		Syntax, Header, Uniforms, Code, Footer string
 	}{
-		Syntax:   SYNTAX,
-		Header:   VERTEX_HEADER,
-		Uniforms: UNIFORMS,
+		Syntax:   shader_syntax,
+		Header:   vertex_header,
+		Uniforms: shader_uniforms,
 		Code:     code,
-		Footer:   VERTEX_FOOTER,
+		Footer:   vertex_footer,
 	}
 
 	var template_writer bytes.Buffer
-	err := SHADER_TEMPLATE.Execute(&template_writer, codes)
+	err := shader_template.Execute(&template_writer, codes)
 	if err != nil {
 		panic(err)
 	}
@@ -318,20 +318,20 @@ func createPixelCode(code string, is_multicanvas bool) string {
 	codes := struct {
 		Syntax, Header, Uniforms, Line, Footer, Code string
 	}{
-		Syntax:   SYNTAX,
-		Header:   PIXEL_HEADER,
-		Uniforms: UNIFORMS,
+		Syntax:   shader_syntax,
+		Header:   pixel_header,
+		Uniforms: shader_uniforms,
 		Code:     code,
 	}
 
 	if is_multicanvas {
-		codes.Footer = FOOTER_MULTI_CANVAS
+		codes.Footer = footer_multi_canvas
 	} else {
-		codes.Footer = PIXEL_FOOTER
+		codes.Footer = pixel_footer
 	}
 
 	var template_writer bytes.Buffer
-	err := SHADER_TEMPLATE.Execute(&template_writer, codes)
+	err := shader_template.Execute(&template_writer, codes)
 	if err != nil {
 		panic(err)
 	}
@@ -373,8 +373,8 @@ func pathsToCode(paths ...string) []string {
 }
 
 func shaderCodeToGLSL(code ...string) (string, string) {
-	vertexcode := DEFAULT_VERTEX_SHADER_CODE
-	pixelcode := DEFAULT_PIXEL_SHADER_CODE
+	vertexcode := default_vertex_shader_code
+	pixelcode := default_pixel_shader_code
 	is_multicanvas := false // whether pixel code has "effects" function instead of "effect"
 
 	for _, shader_code := range code {

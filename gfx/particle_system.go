@@ -653,12 +653,12 @@ func (system *ParticleSystem) Draw(args ...float32) {
 	}
 
 	prepareDraw(generateModelMatFromArgs(args))
-	bindTexture(system.texture.GetHandle())
+	bindTexture(system.texture.getHandle())
 
-	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.Ptr(particleVerts))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[2]))
-	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[4]))
+	useVertexAttribArrays(attribflag_pos | attribflag_texcoord | attribflag_color)
+	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 8*4, gl.Ptr(particleVerts))
+	gl.VertexAttribPointer(attrib_texcoord, 2, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[2]))
+	gl.VertexAttribPointer(attrib_color, 4, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[4]))
 
 	// We use a client-side index array instead of an Index Buffers, because
 	// at least one graphics driver (the one for Kepler nvidia GPUs in OS X

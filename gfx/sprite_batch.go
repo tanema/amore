@@ -176,15 +176,15 @@ func (sprite_batch *SpriteBatch) Draw(args ...float32) {
 	}
 
 	prepareDraw(generateModelMatFromArgs(args))
-	bindTexture(sprite_batch.texture.GetHandle())
-	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD | ATTRIBFLAG_COLOR)
+	bindTexture(sprite_batch.texture.getHandle())
+	useVertexAttribArrays(attribflag_pos | attribflag_texcoord | attribflag_color)
 
 	sprite_batch.array_buf.bind()
 	defer sprite_batch.array_buf.unbind()
 
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(2*4))
-	gl.VertexAttribPointer(ATTRIB_COLOR, 4, gl.FLOAT, false, 8*4, gl.PtrOffset(4*4))
+	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
+	gl.VertexAttribPointer(attrib_texcoord, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(2*4))
+	gl.VertexAttribPointer(attrib_color, 4, gl.FLOAT, false, 8*4, gl.PtrOffset(4*4))
 
 	min, max := sprite_batch.GetDrawRange()
 	sprite_batch.quad_indices.drawElements(gl.TRIANGLES, min, max-min+1)

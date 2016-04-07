@@ -34,7 +34,7 @@ type (
 		mipmaps       bool
 	}
 	iTexture interface {
-		GetHandle() gl.Texture
+		getHandle() gl.Texture
 		GetWidth() int32
 		GetHeight() int32
 		getVerticies() []float32
@@ -89,7 +89,7 @@ func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
 	//generate a uniform image and upload to vram
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
-	bindTexture(new_texture.GetHandle())
+	bindTexture(new_texture.getHandle())
 	gl.TexImage2D(gl.TEXTURE_2D, 0, bounds.Dx(), bounds.Dy(), gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
 
 	if new_texture.mipmaps {
@@ -98,7 +98,7 @@ func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
 	return new_texture, nil
 }
 
-func (texture *Texture) GetHandle() gl.Texture {
+func (texture *Texture) getHandle() gl.Texture {
 	return texture.textureId
 }
 
@@ -133,7 +133,7 @@ func (texture *Texture) generateMipmaps() {
 func (texture *Texture) SetWrap(wrap_s, wrap_t WrapMode) {
 	texture.wrap.s = wrap_s
 	texture.wrap.t = wrap_t
-	bindTexture(texture.GetHandle())
+	bindTexture(texture.getHandle())
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, int(wrap_s))
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int(wrap_t))
 }
@@ -159,7 +159,7 @@ func (texture *Texture) SetFilter(min, mag FilterMode) error {
 func (texture *Texture) setTextureFilter() {
 	var gmin, gmag uint32
 
-	bindTexture(texture.GetHandle())
+	bindTexture(texture.getHandle())
 
 	if texture.filter.mipmap == FILTER_NONE {
 		if texture.filter.min == FILTER_NEAREST {
@@ -249,11 +249,11 @@ func (texture *Texture) unloadVolatile() {
 
 func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	prepareDraw(model)
-	bindTexture(texture.GetHandle())
-	useVertexAttribArrays(ATTRIBFLAG_POS | ATTRIBFLAG_TEXCOORD)
+	bindTexture(texture.getHandle())
+	useVertexAttribArrays(attribflag_pos | attribflag_texcoord)
 
-	gl.VertexAttribPointer(ATTRIB_POS, 2, gl.FLOAT, false, 4*4, gl.Ptr(vertices))
-	gl.VertexAttribPointer(ATTRIB_TEXCOORD, 2, gl.FLOAT, false, 4*4, gl.Ptr(&vertices[2]))
+	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 4*4, gl.Ptr(vertices))
+	gl.VertexAttribPointer(attrib_texcoord, 2, gl.FLOAT, false, 4*4, gl.Ptr(&vertices[2]))
 
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 }

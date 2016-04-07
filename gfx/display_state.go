@@ -6,6 +6,7 @@ import (
 	"github.com/tanema/amore/gfx/gl"
 )
 
+// displayState track a certain point in transformations
 type displayState struct {
 	color                  Color
 	background_color       Color
@@ -29,6 +30,7 @@ type displayState struct {
 	defaultMipmapSharpness float32
 }
 
+// glState keeps track of the context attributes
 type glState struct {
 	initialized            bool
 	active                 bool
@@ -47,6 +49,7 @@ type glState struct {
 	enabledAttribArrays    uint32
 }
 
+// newDisplayState initializes a display states default values
 func newDisplayState() displayState {
 	return displayState{
 		blend_mode:             BLENDMODE_ALPHA,
@@ -65,18 +68,22 @@ func newDisplayState() displayState {
 	}
 }
 
+// displayStateStack is a simple stack for keeping track of display state.
 type displayStateStack []displayState
 
+// push a new element onto the top of the stack
 func (stack *displayStateStack) push(state displayState) {
 	*stack = append(*stack, state)
 }
 
+// take the top element off the stack
 func (stack *displayStateStack) pop() displayState {
 	var state displayState
 	state, *stack = (*stack)[len(*stack)-1], (*stack)[:len(*stack)-1]
 	return state
 }
 
+// get the top element in the stack
 func (stack *displayStateStack) back() *displayState {
 	return &(*stack)[len(*stack)-1]
 }
