@@ -37,7 +37,7 @@ func (shader *Shader) loadVolatile() bool {
 	frag := compileCode(gl.FRAGMENT_SHADER, shader.pixel_code)
 	shader.program = gl.CreateProgram()
 	shader.texUnitPool = make(map[string]int)
-	shader.activeTexUnits = make([]gl.Texture, GetMaxTextureUnits())
+	shader.activeTexUnits = make([]gl.Texture, maxTextureUnits)
 
 	gl.AttachShader(shader.program, vert)
 	gl.AttachShader(shader.program, frag)

@@ -1,10 +1,14 @@
 package gfx
 
 import (
+	"math"
+
 	"github.com/tanema/amore/gfx/gl"
 )
 
 type (
+	// DrawMode is used to specify line or fill draws on primitives
+	DrawMode int
 	// WrapMode is used for setting texture/image/canvas wrap
 	WrapMode int
 	// FilterMode is used for setting texture/image/canvas filters
@@ -49,6 +53,9 @@ var (
 )
 
 const (
+	LINE DrawMode = iota
+	FILL
+
 	//texture wrap
 	WRAP_CLAMP           WrapMode = 0x812F
 	WRAP_REPEAT          WrapMode = 0x2901
@@ -60,12 +67,24 @@ const (
 	FILTER_LINEAR  FilterMode = 0x2601
 
 	//opengl blending constants
+	// Alpha blending (normal). The alpha of what's drawn determines its opacity.
 	BLENDMODE_ALPHA BlendMode = iota
+	// The pixel colors of what's drawn are multiplied with the pixel colors
+	// already on the screen (darkening them). The alpha of drawn objects is
+	// multiplied with the alpha of the screen rather than determining how much
+	// the colors on the screen are affected.
 	BLENDMODE_MULTIPLICATIVE
 	BLENDMODE_PREMULTIPLIED
+	// The pixel colors of what's drawn are subtracted from the pixel colors
+	// already on the screen. The alpha of the screen is not modified.
 	BLENDMODE_SUBTRACTIVE
+	// The pixel colors of what's drawn are added to the pixel colors already on
+	// the screen. The alpha of the screen is not modified.
 	BLENDMODE_ADDITIVE
+	// screen blending
 	BLENDMODE_SCREEN
+	// The colors of what's drawn completely replace what was on the screen, with
+	// no additional blending.
 	BLENDMODE_REPLACE
 
 	//stencil actions
@@ -76,17 +95,7 @@ const (
 	STENCIL_DECREMENT_WRAP StencilAction = 0x8508
 	STENCIL_INVERT         StencilAction = 0x150A
 
-	/**
-	 * Q: Why are some of the compare modes inverted (e.g. COMPARE_LESS becomes
-	 * GL_GREATER)?
-	 *
-	 * A: OpenGL / GPUs do the comparison in the opposite way that makes sense
-	 * for this API. For example, if the compare function is GL_GREATER then the
-	 * stencil test will pass if the reference value is greater than the value
-	 * in the stencil buffer. With our API it's more intuitive to assume that
-	 * setStencilTest(COMPARE_GREATER, 4) will make it pass if the stencil
-	 * buffer has a value greater than 4.
-	 **/
+	// stenicl test modes
 	COMPARE_GREATER  CompareMode = 0x0201
 	COMPARE_EQUAL    CompareMode = 0x0202
 	COMPARE_GEQUAL   CompareMode = 0x0203
@@ -119,15 +128,22 @@ const (
 	UNIFORM_MAT
 
 	//mesh draw modes
-	DRAWMODE_POINTS    MeshDrawMode = 0x0000
+	// DRAWMODE_POINTS will draw a point at every point provided
+	DRAWMODE_POINTS MeshDrawMode = 0x0000
+	// DRAWMODE_TRIANGLES will connect the points in triangles
 	DRAWMODE_TRIANGLES MeshDrawMode = 0x0004
-	DRAWMODE_STRIP     MeshDrawMode = 0x0005
-	DRAWMODE_FAN       MeshDrawMode = 0x0006
+	// DRAWMODE_STRIP will connect the points in a triangle strip, reusing points.
+	DRAWMODE_STRIP MeshDrawMode = 0x0005
+	// DRAWMODE_FAN will fan out from a start point
+	DRAWMODE_FAN MeshDrawMode = 0x0006
 
 	//mesh and spritebatch usage
 	USAGE_STREAM  Usage = 0x88E0
 	USAGE_STATIC  Usage = 0x88E4
 	USAGE_DYNAMIC Usage = 0x88E8
+
+	// upper limit of particles that can be created
+	MAX_PARTICLES = math.MaxInt32 / 4
 
 	//particle distrobution
 	DISTRIBUTION_NONE ParticleDistribution = iota

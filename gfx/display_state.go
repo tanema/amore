@@ -8,8 +8,8 @@ import (
 
 // displayState track a certain point in transformations
 type displayState struct {
-	color                  Color
-	background_color       Color
+	color                  *Color
+	background_color       *Color
 	blend_mode             BlendMode
 	line_width             float32
 	line_style             LineStyle

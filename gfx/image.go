@@ -9,12 +9,15 @@ import (
 	"github.com/tanema/amore/file"
 )
 
+// Image is an image that is drawable to the screen
 type Image struct {
 	*Texture
 	filePath string
 	mipmaps  bool
 }
 
+// NewImage will create a new texture for this image and return the *Image. If the
+// file does not exist or cannot be decoded it will return an error.
 func NewImage(path string) (*Image, error) {
 	//we do this first time to check the image before volitile load
 	imgFile, new_err := file.NewFile(path)
@@ -42,6 +45,7 @@ func NewImage(path string) (*Image, error) {
 	return new_image, nil
 }
 
+// NewMipmappedImage is like NewImage but the image is mipmapped
 func NewMipmappedImage(path string) *Image {
 	new_image := &Image{
 		filePath: path,
@@ -51,6 +55,7 @@ func NewMipmappedImage(path string) *Image {
 	return new_image
 }
 
+// loadVolatile will create the volatile objects
 func (img *Image) loadVolatile() bool {
 	imgFile, new_err := file.NewFile(img.filePath)
 	defer imgFile.Close()

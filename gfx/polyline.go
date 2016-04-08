@@ -321,10 +321,10 @@ func (polyline *polyLine) renderTrianglesOverdraw() []mgl32.Vec2 {
 	return overdraw
 }
 
-func (polyline *polyLine) generateColorArray(count int, c Color) []Color {
+func (polyline *polyLine) generateColorArray(count int, c *Color) []Color {
 	colors := make([]Color, count)
 	for i := 0; i < count; i++ {
-		colors[i] = c
+		colors[i] = *c
 		if i%2 == 1 || (polyline.join == LINE_JOIN_NONE && (i%4 == 2 || i%4 == 1)) {
 			colors[i][3] = 0
 		}

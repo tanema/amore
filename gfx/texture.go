@@ -14,17 +14,18 @@ import (
 	"github.com/tanema/amore/gfx/gl"
 )
 
-var filters = map[string]int32{"linear": gl.LINEAR, "nearest": gl.NEAREST}
-var wraps = map[string]int32{"clamp": gl.CLAMP_TO_EDGE, "repeat": gl.REPEAT}
-
 type (
+	// Filter is a representation of texture filtering that contains both min and
+	// mag filter modes
 	Filter struct {
 		min, mag, mipmap FilterMode
 		anisotropy       float32
 	}
+	// Wrap is a representation of texture rapping containing both s and t wrap
 	Wrap struct {
 		s, t WrapMode
 	}
+	// Texture is a struct to wrap the opengl texture object
 	Texture struct {
 		textureId     gl.Texture
 		Width, Height int32
@@ -33,6 +34,7 @@ type (
 		wrap          Wrap
 		mipmaps       bool
 	}
+	// iTexture is an interface for any object that can be used like a texture.
 	iTexture interface {
 		getHandle() gl.Texture
 		GetWidth() int32
@@ -42,6 +44,7 @@ type (
 	}
 )
 
+// newFilter will create a Filter with default values
 func newFilter() Filter {
 	return Filter{
 		min:        FILTER_LINEAR,
@@ -51,16 +54,13 @@ func newFilter() Filter {
 	}
 }
 
-func newWrap() Wrap {
-	return Wrap{s: WRAP_CLAMP, t: WRAP_CLAMP}
-}
-
+// newTexture will return a new generated texture will not data uploaded to it.
 func newTexture(width, height int32, mipmaps bool) *Texture {
 	new_texture := &Texture{
 		textureId: gl.CreateTexture(),
 		Width:     width,
 		Height:    height,
-		wrap:      newWrap(),
+		wrap:      Wrap{s: WRAP_CLAMP, t: WRAP_CLAMP},
 		filter:    newFilter(),
 		mipmaps:   mipmaps,
 	}
@@ -83,6 +83,8 @@ func newTexture(width, height int32, mipmaps bool) *Texture {
 	return new_texture
 }
 
+// newImageTexture will generate a texture from an image. It will automatically
+// upload the image data to the texture.
 func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
 	bounds := img.Bounds()
 	new_texture := newTexture(int32(bounds.Dx()), int32(bounds.Dy()), mipmaps)
@@ -98,10 +100,12 @@ func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
 	return new_texture, nil
 }
 
+// getHandle will return the gl texutre handle
 func (texture *Texture) getHandle() gl.Texture {
 	return texture.textureId
 }
 
+// generate both the x, y coords at origin and the uv coords.
 func (texture *Texture) generateVerticies() {
 	w := float32(texture.GetWidth())
 	h := float32(texture.GetHeight())
@@ -113,10 +117,12 @@ func (texture *Texture) generateVerticies() {
 	}
 }
 
+// getVerticies will return the verticies generated when this texture was created.
 func (texture *Texture) getVerticies() []float32 {
 	return texture.vertices
 }
 
+// generateMipmaps will generate mipmaps for the gl texture
 func (texture *Texture) generateMipmaps() {
 	// The GL_GENERATE_MIPMAP texparameter is set in loadVolatile if we don't
 	// have support for glGenerateMipmap.
@@ -130,6 +136,8 @@ func (texture *Texture) generateMipmaps() {
 	}
 }
 
+// SetWrap will set how the texture behaves when applies to a plane that is larger
+// than itself.
 func (texture *Texture) SetWrap(wrap_s, wrap_t WrapMode) {
 	texture.wrap.s = wrap_s
 	texture.wrap.t = wrap_t
@@ -138,10 +146,13 @@ func (texture *Texture) SetWrap(wrap_s, wrap_t WrapMode) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int(wrap_t))
 }
 
+// GetWrap will return the wrapping for how the texture behaves on a plane that
+// is larger than itself
 func (texture *Texture) GetWrap() Wrap {
 	return texture.wrap
 }
 
+// SetFilter will set the min, mag filters for the texture filtering.
 func (texture *Texture) SetFilter(min, mag FilterMode) error {
 	if !texture.validateFilter() {
 		if texture.filter.mipmap != FILTER_NONE && !texture.mipmaps {
@@ -156,6 +167,8 @@ func (texture *Texture) SetFilter(min, mag FilterMode) error {
 	return nil
 }
 
+// setTextureFilter will set the texture filter on the actual gl texture. It will
+// not reach this state if the filter is not valid.
 func (texture *Texture) setTextureFilter() {
 	var gmin, gmag uint32
 
@@ -195,10 +208,12 @@ func (texture *Texture) setTextureFilter() {
 	//gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAX_ANISOTROPY_EXT, texture.filter.anisotropy)
 }
 
+// GetFilter will return the filter set on this texture.
 func (texture *Texture) GetFilter() Filter {
 	return texture.filter
 }
 
+// validateFilter will the the near and far filters and makes sure that it is possible
 func (texture *Texture) validateFilter() bool {
 	if !texture.mipmaps && texture.filter.mipmap != FILTER_NONE {
 		return false
@@ -219,26 +234,27 @@ func (texture *Texture) validateFilter() bool {
 	return true
 }
 
+// GetWidth will return the width of the texture.
 func (texture *Texture) GetWidth() int32 {
 	return texture.Width
 }
 
+// GetHeight will return the height of the texture.
 func (texture *Texture) GetHeight() int32 {
 	return texture.Height
 }
 
+// GetDimensions will return the width and height of the texture.
 func (texture *Texture) GetDimensions() (int32, int32) {
 	return texture.Width, texture.Height
 }
 
-func (texture *Texture) Release() {
-	releaseVolatile(texture)
-}
-
+// loadVolatile satisfies the volatile interface, so that it can be unloaded
 func (texture *Texture) loadVolatile() bool {
 	return false
 }
 
+// unloadVolatile release the texture data
 func (texture *Texture) unloadVolatile() {
 	if texture != nil {
 		return
@@ -247,6 +263,13 @@ func (texture *Texture) unloadVolatile() {
 	texture = nil
 }
 
+// Release will release the texture data and clean up the memory
+func (texture *Texture) Release() {
+	releaseVolatile(texture)
+}
+
+// drawv will take in verticies from the public draw calls and draw the texture
+// with the verticies and the model matrix
 func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	prepareDraw(model)
 	bindTexture(texture.getHandle())
@@ -258,10 +281,26 @@ func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 }
 
+// Draw satisfies the Drawable interface. Inputs are as follows
+// x, y, r, sx, sy, ox, oy, kx, ky
+// x, y are position
+// r is rotation
+// sx, sy is the scale, if sy is not given sy will equal sx
+// ox, oy are offset
+// kx, ky are the shear. If ky is not given ky will equal kx
 func (texture *Texture) Draw(args ...float32) {
 	texture.drawv(generateModelMatFromArgs(args), texture.vertices)
 }
 
+// Drawq satisfies the QuadDrawable interface.
+// Inputs are as follows
+// quad is the quad to crop the texture
+// x, y, r, sx, sy, ox, oy, kx, ky
+// x, y are position
+// r is rotation
+// sx, sy is the scale, if sy is not given sy will equal sx
+// ox, oy are offset
+// kx, ky are the shear. If ky is not given ky will equal kx
 func (texture *Texture) Drawq(quad *Quad, args ...float32) {
 	texture.drawv(generateModelMatFromArgs(args), quad.getVertices())
 }

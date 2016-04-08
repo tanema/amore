@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 )
 
+// SetWireframe sets whether wireframe lines will be used when drawing.
 func SetWireframe(enable bool) {
 	if enable {
 		gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)

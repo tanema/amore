@@ -280,6 +280,13 @@ func (text *Text) Setc(strs []string, colors []*Color) {
 	text.generate()
 }
 
+// Draw satisfies the Drawable interface. Inputs are as follows
+// x, y, r, sx, sy, ox, oy, kx, ky
+// x, y are position
+// r is rotation
+// sx, sy is the scale, if sy is not given sy will equal sx
+// ox, oy are offset
+// kx, ky are the shear. If ky is not given ky will equal kx
 func (text *Text) Draw(args ...float32) {
 	for _, batch := range text.batches {
 		if batch.GetCount() > 0 {

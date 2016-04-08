@@ -13,29 +13,60 @@ import (
 )
 
 type (
+	// Drawable interface defines all objects that can be drawn. Inputs are as follows
+	// x, y, r, sx, sy, ox, oy, kx, ky
+	// x, y are position
+	// r is rotation
+	// sx, sy is the scale, if sy is not given sy will equal sx
+	// ox, oy are offset
+	// kx, ky are the shear. If ky is not given ky will equal kx
 	Drawable interface {
 		Draw(args ...float32)
 	}
+	// QuadDrawable interface defines all objects that can be drawn with a quad.
+	// Inputs are as follows
+	// quad is the quad to crop the texture
+	// x, y, r, sx, sy, ox, oy, kx, ky
+	// x, y are position
+	// r is rotation
+	// sx, sy is the scale, if sy is not given sy will equal sx
+	// ox, oy are offset
+	// kx, ky are the shear. If ky is not given ky will equal kx
 	QuadDrawable interface {
 		Drawq(quad *Quad, args ...float32)
 	}
 )
 
+// this is the default amount of points to allow a circle or arc to use when
+// generating points
 const defaultPointCount = 30
 
-func Circle(mode string, x, y, radius float32) {
+// Circle will draw a circle at x, y with a radius as specified.
+// The drawmode specifies either a fill or line draw
+func Circle(mode DrawMode, x, y, radius float32) {
 	Circlep(mode, x, y, radius, defaultPointCount)
 }
 
-func Circlep(mode string, x, y, radius float32, points int) {
+// Circlep will draw a circle at x, y with a radius as specified.
+// points specifies how many points should be generated in the arc.
+// If it is lower it will look jagged. If it is higher it will hit performace.
+// The drawmode specifies either a fill or line draw
+func Circlep(mode DrawMode, x, y, radius float32, points int) {
 	Ellipsep(mode, x, y, radius, radius, points)
 }
 
-func Arc(mode string, x, y, radius, angle1, angle2 float32) {
+// Arc will draw a part of a circle at the point x, y with the radius provied.
+// The arc will start at angle1 (radians) and end at angle2 (radians)
+// The drawmode specifies either a fill or line draw
+func Arc(mode DrawMode, x, y, radius, angle1, angle2 float32) {
 	Arcp(mode, x, y, radius, angle1, angle2, defaultPointCount)
 }
 
-func Arcp(mode string, x, y, radius, angle1, angle2 float32, points int) {
+// Arcp is like Arc except that you can define how many points you want to generate
+// the arc.
+// If it is lower it will look jagged. If it is higher it will hit performace.
+// The drawmode specifies either a fill or line draw
+func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 	// Nothing to display with no points or equal angles. (Or is there with line mode?)
 	if points <= 0 || angle1 == angle2 {
 		return
@@ -70,11 +101,20 @@ func Arcp(mode string, x, y, radius, angle1, angle2 float32, points int) {
 	Polygon(mode, coords)
 }
 
-func Ellipse(mode string, x, y, a, b float32) {
-	Ellipsep(mode, x, y, a, b, defaultPointCount)
+// Ellipse will draw a circle at x, y with a radius as specified.
+// radiusx and radiusy will specify how much the width will be along those axis
+// If it is lower it will look jagged. If it is higher it will hit performace.
+// The drawmode specifies either a fill or line draw
+func Ellipse(mode DrawMode, x, y, radiusx, radiusy float32) {
+	Ellipsep(mode, x, y, radiusx, radiusy, defaultPointCount)
 }
 
-func Ellipsep(mode string, x, y, a, b float32, points int) {
+// Circlep will draw a circle at x, y with a radius as specified.
+// radiusx and radiusy will specify how much the width will be along those axis
+// points specifies how many points should be generated in the arc.
+// If it is lower it will look jagged. If it is higher it will hit performace.
+// The drawmode specifies either a fill or line draw
+func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 	two_pi := math.Pi * 2.0
 	if points <= 0 {
 		points = 1
@@ -86,8 +126,8 @@ func Ellipsep(mode string, x, y, a, b float32, points int) {
 	coords := make([]float32, 2*(points+1))
 	for i := 0; i < points; i++ {
 		phi += angle_shift
-		coords[2*i+0] = x + a*float32(math.Cos(float64(phi)))
-		coords[2*i+1] = y + b*float32(math.Sin(float64(phi)))
+		coords[2*i+0] = x + radiusx*float32(math.Cos(float64(phi)))
+		coords[2*i+1] = y + radiusy*float32(math.Sin(float64(phi)))
 	}
 
 	coords[2*points+0] = coords[0]
@@ -96,6 +136,8 @@ func Ellipsep(mode string, x, y, a, b float32, points int) {
 	Polygon(mode, coords)
 }
 
+// Point will draw a point on the screen at x, y position. The size of the point
+// is dependant on the point size set with SetPointSize.
 func Point(x, y float32) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
@@ -104,21 +146,28 @@ func Point(x, y float32) {
 	gl.DrawArrays(gl.POINTS, 0, 1)
 }
 
+// Line is a short form of Polyline so you can enter your params not in an array
 func Line(args ...float32) {
 	PolyLine(args)
 }
 
+// PolyLine will draw a line with an array in the form of x1, y1, x2, y2, x3, y3, ..... xn, yn
 func PolyLine(coords []float32) {
 	polyline := newPolyLine(states.back().line_join, states.back().line_style, states.back().line_width, states.back().pixelSize)
 	polyline.render(coords)
 }
 
-func Rect(mode string, x, y, w, h float32) {
-	Polygon(mode, []float32{x, y, x, y + h, x + w, y + h, x + w, y, x, y})
+// Rect draws a rectangle with the top left corner at x, y with the specified width
+// and height
+// The drawmode specifies either a fill or line draw
+func Rect(mode DrawMode, x, y, width, height float32) {
+	Polygon(mode, []float32{x, y, x, y + height, x + width, y + height, x + width, y, x, y})
 }
 
-func Polygon(mode string, coords []float32) {
-	if mode == "line" {
+// Polygon will draw a closed polygon with an array in the form of x1, y1, x2, y2, x3, y3, ..... xn, yn
+// The drawmode specifies either a fill or line draw
+func Polygon(mode DrawMode, coords []float32) {
+	if mode == LINE {
 		PolyLine(coords)
 	} else {
 		prepareDraw(nil)
@@ -129,6 +178,7 @@ func Polygon(mode string, coords []float32) {
 	}
 }
 
+// NewScreenshot will take a screenshot of the screen and convert it to an image.Image
 func NewScreenshot() image.Image {
 	// Temporarily unbind the currently active canvas (glReadPixels reads the active framebuffer, not the main one.)
 	canvases := GetCanvas()
@@ -152,28 +202,43 @@ func NewScreenshot() image.Image {
 	return screenshot
 }
 
+// Draw calls draw on any drawable object with the inputs
+// Inputs are as follows
+// x, y, r, sx, sy, ox, oy, kx, ky
+// x, y are position
+// r is rotation
+// sx, sy is the scale, if sy is not given sy will equal sx
+// ox, oy are offset
+// kx, ky are the shear. If ky is not given ky will equal kx
 func Draw(drawable Drawable, args ...float32) {
 	drawable.Draw(args...)
 }
 
+// Drawq will draw any object that can have a quad applied to it
+// Inputs are as follows
+// quad is the quad to crop the texture
+// x, y, r, sx, sy, ox, oy, kx, ky
+// x, y are position
+// r is rotation
+// sx, sy is the scale, if sy is not given sy will equal sx
+// ox, oy are offset
+// kx, ky are the shear. If ky is not given ky will equal kx
 func Drawq(drawable QuadDrawable, quad *Quad, args ...float32) {
 	drawable.Drawq(quad, args...)
 }
 
+// Normalized an array of floats into these params if they exist
+// if they are not present then thier default values are returned
+// x The position of the object along the x-axis.
+// y The position of the object along the y-axis.
+// angle The angle of the object (in radians).
+// sx The scale factor along the x-axis.
+// sy The scale factor along the y-axis.
+// ox The origin offset along the x-axis.
+// oy The origin offset along the y-axis.
+// kx Shear along the x-axis.
+// ky Shear along the y-axis.
 func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, float32, float32, float32, float32, float32) {
-	/**
-	 * Normalized an array of floats into these params if they exist
-	 * if they are not present then thier default values are returned
-	 * x The position of the object along the x-axis.
-	 * y The position of the object along the y-axis.
-	 * angle The angle of the object (in radians).
-	 * sx The scale factor along the x-axis.
-	 * sy The scale factor along the y-axis.
-	 * ox The origin offset along the x-axis.
-	 * oy The origin offset along the y-axis.
-	 * kx Shear along the x-axis.
-	 * ky Shear along the y-axis.
-	 **/
 	var x, y, angle, sx, sy, ox, oy, kx, ky float32
 	sx = 1
 	sy = 1
@@ -223,7 +288,9 @@ func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, 
 	return x, y, angle, sx, sy, ox, oy, kx, ky
 }
 
-//did manually to save computation
+// generateModelMatFromArgs will take in the arguments
+// x, y, r, sx, sy, ox, oy, kx, ky
+// and generate a matrix to be applied to the model transformation.
 func generateModelMatFromArgs(args []float32) *mgl32.Mat4 {
 	x, y, angle, sx, sy, ox, oy, kx, ky := normalizeDrawCallArgs(args)
 	mat := mgl32.Ident4()

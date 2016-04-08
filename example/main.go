@@ -148,7 +148,7 @@ func draw() {
 	//text
 	gfx.SetColor(255, 255, 255, 255)
 	gfx.Draw(text, 0, 300)
-	gfx.Rect("line", 0, 300, 500, text.GetHeight())
+	gfx.Rect(gfx.LINE, 0, 300, 500, text.GetHeight())
 
 	gfx.SetLineWidth(10)
 
@@ -156,29 +156,29 @@ func draw() {
 	gfx.Draw(batch, 50, 150)
 
 	//stencil
-	gfx.Stencil(func() { gfx.Rect("fill", 426, 240, 426, 240) })
+	gfx.Stencil(func() { gfx.Rect(gfx.FILL, 426, 240, 426, 240) })
 	gfx.SetStencilTest(gfx.COMPARE_EQUAL, 0)
 	gfx.SetColor(239, 96, 17, 255)
-	gfx.Rect("fill", 400, 200, 826, 440)
+	gfx.Rect(gfx.FILL, 400, 200, 826, 440)
 	gfx.ClearStencilTest()
 
 	// rectangle
 	gfx.SetCanvas(canvas)
 	gfx.SetColor(0, 170, 0, 155)
-	gfx.Rect("fill", 20.0, 20.0, 200.0, 200.0)
-	gfx.Rect("line", 250.0, 20.0, 200.0, 200.0)
+	gfx.Rect(gfx.FILL, 20.0, 20.0, 200.0, 200.0)
+	gfx.Rect(gfx.LINE, 250.0, 20.0, 200.0, 200.0)
 	gfx.SetCanvas()
 	gfx.SetColor(255, 255, 255, 255)
 	gfx.Draw(canvas, 300, 100)
 
 	// circle
 	gfx.SetColor(170, 0, 0, 255)
-	gfx.Circle("fill", 100.0, 500.0, 50.0)
-	gfx.Arc("fill", 200.0, 500.0, 50.0, 0, math.Pi)
-	gfx.Ellipse("fill", 300.0, 500.0, 50.0, 20.0)
-	gfx.Circle("line", 100.0, 600.0, 50.0)
-	gfx.Arc("line", 200.0, 550.0, 50.0, 0, math.Pi)
-	gfx.Ellipse("line", 300.0, 550.0, 50.0, 20.0)
+	gfx.Circle(gfx.FILL, 100.0, 500.0, 50.0)
+	gfx.Arc(gfx.FILL, 200.0, 500.0, 50.0, 0, math.Pi)
+	gfx.Ellipse(gfx.FILL, 300.0, 500.0, 50.0, 20.0)
+	gfx.Circle(gfx.LINE, 100.0, 600.0, 50.0)
+	gfx.Arc(gfx.LINE, 200.0, 550.0, 50.0, 0, math.Pi)
+	gfx.Ellipse(gfx.LINE, 300.0, 550.0, 50.0, 20.0)
 
 	// line
 	gfx.SetColor(0, 0, 170, 255)
@@ -211,7 +211,7 @@ func draw() {
 	gfx.Draw(triangle_mesh, 50, 50)
 
 	//mouse position
-	gfx.Circle("fill", mx, my, 20.0)
+	gfx.Circle(gfx.FILL, mx, my, 20.0)
 
 	gfx.Draw(amore_text, 500, 400, 0, 3, 3)
 }

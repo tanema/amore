@@ -8,6 +8,7 @@ import (
 )
 
 type (
+	// Mesh is a collection of points that a texture can be applied to.
 	Mesh struct {
 		mode           MeshDrawMode
 		texture        iTexture
@@ -26,10 +27,13 @@ type (
 	}
 )
 
+// NewMesh will generate a mesh with the verticies and it with a max size of the size
+// provided. MeshDrawMode is default to DRAWMODE_FAN and Usage is USAGE_DYNAMIC
 func NewMesh(verticies []float32, size int) (*Mesh, error) {
 	return NewMeshExt(verticies, size, DRAWMODE_FAN, USAGE_DYNAMIC)
 }
 
+// NewMeshExt is like NewMesh but with access to setting the MeshDrawMode and Usage.
 func NewMeshExt(vertices []float32, size int, mode MeshDrawMode, usage Usage) (*Mesh, error) {
 	count := len(vertices)
 	stride := count / size
@@ -52,6 +56,8 @@ func NewMeshExt(vertices []float32, size int, mode MeshDrawMode, usage Usage) (*
 	return new_mesh, nil
 }
 
+// generateFlags will generate a attribs flag setting with the vertex stride. It
+// will guess which components it was provided and enable that functionality.
 func (mesh *Mesh) generateFlags() error {
 	switch mesh.vertexStride {
 	case 8:
@@ -68,26 +74,35 @@ func (mesh *Mesh) generateFlags() error {
 	return nil
 }
 
+// SetDrawMode sets the MeshDrawMode. Please see the constant definitions for explanation.
 func (mesh *Mesh) SetDrawMode(mode MeshDrawMode) {
 	mesh.mode = mode
 }
 
+// GetDrawMode will return the current draw mode for the mesh
 func (mesh *Mesh) GetDrawMode() MeshDrawMode {
 	return mesh.mode
 }
 
+// SetTexture will apply a texture to the mesh. This will go a lot better if uv coords
+// were provided to the mesh.
 func (mesh *Mesh) SetTexture(text iTexture) {
 	mesh.texture = text
 }
 
+// ClearTexture will unbind the texture of the mesh
 func (mesh *Mesh) ClearTexture() {
 	mesh.texture = nil
 }
 
+// GetTexture will return an interface iTexture if there is a texture bound, and
+// nil if there isnt
 func (mesh *Mesh) GetTexture() iTexture {
 	return mesh.texture
 }
 
+// SetDrawRange will set a range in the points to draw. This is useful if you only
+// need to render a portion of the mesh.
 func (mesh *Mesh) SetDrawRange(min, max int) error {
 	if min < 0 || max < 0 || min > max {
 		return fmt.Errorf("Invalid draw range.")
@@ -97,11 +112,14 @@ func (mesh *Mesh) SetDrawRange(min, max int) error {
 	return nil
 }
 
+// ClearDrawRange will reset the draw range if you want to draw the whole mesh again.
 func (mesh *Mesh) ClearDrawRange() {
 	mesh.rangeMin = -1
 	mesh.rangeMax = -1
 }
 
+// GetDrawRange will return the min, max range set on the mesh. If no range is set
+// the range will return -1, -1
 func (mesh *Mesh) GetDrawRange() (int, int) {
 	var min, max int
 	if mesh.ibo != nil && mesh.elementCount > 0 {
@@ -118,6 +136,8 @@ func (mesh *Mesh) GetDrawRange() (int, int) {
 	return min, max
 }
 
+// SetVertex will replace vertex data at the specified index. The index specifies
+// the point and not the index in the array provided to the mesh.
 func (mesh *Mesh) SetVertex(vertindex int, data []float32) error {
 	if vertindex >= mesh.vertexCount {
 		return fmt.Errorf("Invalid vertex index: %v", vertindex+1)
@@ -128,11 +148,13 @@ func (mesh *Mesh) SetVertex(vertindex int, data []float32) error {
 	return nil
 }
 
-// set vertext handles both because of how free form it is and its general checking
+// SetVertices is like SetVertex but will do more than one point
 func (mesh *Mesh) SetVertices(startindex int, data []float32) error {
+	// set vertext handles both because of how free form it is and its general checking
 	return mesh.SetVertex(startindex, data)
 }
 
+// GetVertex will return all the data for that vertex at the given index.
 func (mesh *Mesh) GetVertex(vertindex int) ([]float32, error) {
 	if vertindex >= mesh.vertexCount {
 		return []float32{}, fmt.Errorf("Invalid vertex index: %v", vertindex+1)
@@ -140,18 +162,23 @@ func (mesh *Mesh) GetVertex(vertindex int) ([]float32, error) {
 	return mesh.vbo.data[vertindex*mesh.vertexStride : mesh.vertexStride], nil
 }
 
+// GetVertexCount will return how many vertexes there are in the provided data.
 func (mesh *Mesh) GetVertexCount() int {
 	return mesh.vertexCount
 }
 
+// GetVertexStride will return the number of components in each vertex. i.e.
+// x, y, u, v, r, g, b, a
 func (mesh *Mesh) GetVertexStride() int {
 	return mesh.vertexStride
 }
 
+// GetVertexFormat will return true for each attribute that is enabled.
 func (mesh *Mesh) GetVertexFormat() (vertex, text, color bool) {
 	return mesh.enabledattribs&attribflag_pos > 0, mesh.enabledattribs&attribflag_texcoord > 0, mesh.enabledattribs&attribflag_color > 0
 }
 
+// SetVertexMap will allow to set indexes of verticies that should be drawn.
 func (mesh *Mesh) SetVertexMap(vertex_map []uint32) {
 	if len(vertex_map) > 0 {
 		mesh.ibo = newIndexBuffer(len(vertex_map), vertex_map, mesh.vbo.usage)
@@ -159,11 +186,14 @@ func (mesh *Mesh) SetVertexMap(vertex_map []uint32) {
 	}
 }
 
+// ClearVertexMap disabled the vertex map and re-enabled drawing the whole mesh again.
 func (mesh *Mesh) ClearVertexMap() {
 	mesh.ibo = nil
 	mesh.elementCount = 0
 }
 
+// GetVertexMap returns the currently set vertex map and an empty slice if there
+// is not one set.
 func (mesh *Mesh) GetVertexMap() []uint32 {
 	if mesh.ibo == nil {
 		return []uint32{}
@@ -171,6 +201,11 @@ func (mesh *Mesh) GetVertexMap() []uint32 {
 	return mesh.ibo.data
 }
 
+// Flush immediately sends all modified vertex data in the Mesh to the graphics card.
+// Normally it isn't necessary to call this method as Draw(mesh, ...) will do it
+// automatically if needed, but explicitly using Flush gives more control over when
+// the work happens. If this method is used, it generally shouldn't be called more
+// than once (at most) between draw(mesh, ...) calls.
 func (mesh *Mesh) Flush() {
 	mesh.vbo.bufferData()
 	if mesh.ibo != nil {
@@ -178,6 +213,8 @@ func (mesh *Mesh) Flush() {
 	}
 }
 
+// bindEnabledAttributes will take the enabled attrib flags and use them to enable
+// all the attributes that we need.
 func (mesh *Mesh) bindEnabledAttributes() {
 	useVertexAttribArrays(mesh.enabledattribs)
 
@@ -198,6 +235,8 @@ func (mesh *Mesh) bindEnabledAttributes() {
 	}
 }
 
+// bindTexture will bind our current texture if we have one or the framework default
+// if there wan't a texture provided.
 func (mesh *Mesh) bindTexture() {
 	if mesh.texture != nil {
 		bindTexture(mesh.texture.getHandle())
@@ -206,6 +245,13 @@ func (mesh *Mesh) bindTexture() {
 	}
 }
 
+// Draw satisfies the Drawable interface. Inputs are as follows
+// x, y, r, sx, sy, ox, oy, kx, ky
+// x, y are position
+// r is rotation
+// sx, sy is the scale, if sy is not given sy will equal sx
+// ox, oy are offset
+// kx, ky are the shear. If ky is not given ky will equal kx
 func (mesh *Mesh) Draw(args ...float32) {
 	prepareDraw(generateModelMatFromArgs(args))
 	mesh.bindTexture()

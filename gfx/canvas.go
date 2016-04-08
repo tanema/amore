@@ -93,11 +93,11 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 	if canvases != nil && len(canvases) > 0 {
 		// Whether the new canvas list is different from the old one.
 		// A more thorough check is done below.
-		if GetMaxRenderTargets() < 4 {
+		if maxRenderTargets < 4 {
 			return fmt.Errorf("Multi-canvas rendering is not supported on this system.")
 		}
 
-		if int32(len(canvases)+1) > GetMaxRenderTargets() {
+		if int32(len(canvases)+1) > maxRenderTargets {
 			return fmt.Errorf("This system can't simultaneously render to %v canvases.", len(canvases)+1)
 		}
 
