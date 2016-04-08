@@ -18,12 +18,7 @@ func IsDown(key Key) bool {
 // IsScancodeDown checks whether a certain scancode is down.
 func IsScancodeDown(scancode Scancode) bool {
 	state := sdl.GetKeyboardState()
-	for _, code := range state {
-		if code == uint8(scancode) {
-			return true
-		}
-	}
-	return false
+	return state[int(scancode)] == 1
 }
 
 // GetKeyFromScancode translates a scancode to key.

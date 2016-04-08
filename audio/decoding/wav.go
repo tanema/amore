@@ -4,67 +4,112 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
+	"io"
+	"os"
 	"time"
 )
 
 type waveDecoder struct {
 	decoderBase
-	dataSize int32
+	header         *riffHeader
+	info           *riffChunkFmt
+	firstSamplePos uint32
 }
 
-// constant header size in wav files
-const WAV_HEADER_SIZE = 44
+type riffHeader struct {
+	Ftype       [4]byte
+	ChunkSize   uint32
+	ChunkFormat [4]byte
+}
 
-// read will decode the file
+type riffChunkFmt struct {
+	LengthOfHeader uint32
+	AudioFormat    uint16 // 1 = PCM not compressed
+	NumChannels    uint16
+	SampleRate     uint32
+	BytesPerSec    uint32
+	BytesPerBloc   uint16
+	BitsPerSample  uint16
+}
+
 func (decoder *waveDecoder) read() error {
-	var riffMarker, waveMarker, fmtMarker, dataMarker [4]byte
-	var fmtChunkSize, fileSize, byteRate int32
-	var audioFormat, blockAlign int16
+	var err error
 
-	//descriptor
-	binary.Read(decoder.src, binary.BigEndian, &riffMarker)
-	binary.Read(decoder.src, binary.LittleEndian, &fileSize)
-	binary.Read(decoder.src, binary.BigEndian, &waveMarker)
+	decoder.header = &riffHeader{}
+	if err = binary.Read(decoder.src, binary.LittleEndian, decoder.header); err != nil {
+		return err
+	}
 
-	//fmt chunk
-	binary.Read(decoder.src, binary.BigEndian, &fmtMarker)
-	binary.Read(decoder.src, binary.LittleEndian, &fmtChunkSize)
-	binary.Read(decoder.src, binary.LittleEndian, &audioFormat)
-	binary.Read(decoder.src, binary.LittleEndian, &decoder.channels)
-	binary.Read(decoder.src, binary.LittleEndian, &decoder.sampleRate)
-	binary.Read(decoder.src, binary.LittleEndian, &byteRate)
-	binary.Read(decoder.src, binary.LittleEndian, &blockAlign)
-	binary.Read(decoder.src, binary.LittleEndian, &decoder.bitDepth)
-
-	decoder.format = getFormat(decoder.channels, decoder.bitDepth)
-
-	//data chunk
-	binary.Read(decoder.src, binary.BigEndian, &dataMarker)
-	//verify we have correct header data if we have the data marker we
-	//definitely made it through, which is nice
-	if !bytes.Equal(riffMarker[:], []byte("RIFF")) || //RIFF marker
-		!bytes.Equal(waveMarker[:], []byte("WAVE")) || //WAVE marker
-		!bytes.Equal(fmtMarker[:], []byte("fmt ")) || //fmt block
-		fmtChunkSize != 16 || //fmt chunk size unknown bail out
-		!bytes.Equal(dataMarker[:], []byte("data")) { //didnt find the data marker
+	if !bytes.Equal(decoder.header.Ftype[:], []byte("RIFF")) ||
+		!bytes.Equal(decoder.header.ChunkFormat[:], []byte("WAVE")) {
 		return errors.New("Not a RIFF/WAVE file.")
 	}
-	decoder.dataSize = fileSize - WAV_HEADER_SIZE
-	//we could read file the file like this
-	//binary.Read(decoder.src, binary.LittleEndian, &decoder.dataSize)
-	//and subtract 8 for the data marker and the data size but why read and calculate
-	//when we can just calculate
 
-	//extra
-	//calculate the duration form the data size and samplerate
-	decoder.duration = time.Duration((float32(decoder.dataSize) / float32(decoder.sampleRate)) * float32(time.Second))
+	var chunk [4]byte
+	var chunkSize uint32
+	for {
+		// Read next chunkID
+		err = binary.Read(decoder.src, binary.BigEndian, &chunk)
+		if err == io.EOF {
+			return io.ErrUnexpectedEOF
+		} else if err != nil {
+			return err
+		}
+
+		// and it's size in bytes
+		err = binary.Read(decoder.src, binary.LittleEndian, &chunkSize)
+		if err == io.EOF {
+			return io.ErrUnexpectedEOF
+		} else if err != nil {
+			return err
+		}
+
+		if bytes.Equal(chunk[:], []byte("fmt ")) {
+			// seek 4 bytes back because riffChunkFmt reads the chunkSize again
+			if _, err = decoder.src.Seek(-4, os.SEEK_CUR); err != nil {
+				return err
+			}
+
+			decoder.info = &riffChunkFmt{}
+			if err = binary.Read(decoder.src, binary.LittleEndian, decoder.info); err != nil {
+				return err
+			}
+			if decoder.info.LengthOfHeader > 16 { // canonical format if chunklen == 16
+				// Skip extra params
+				if _, err = decoder.src.Seek(int64(decoder.info.LengthOfHeader-16), os.SEEK_CUR); err != nil {
+					return err
+				}
+			}
+
+			// Is audio supported ?
+			if decoder.info.AudioFormat != 1 {
+				return fmt.Errorf("Audio Format not supported")
+			}
+		} else if bytes.Equal(chunk[:], []byte("data")) {
+			size, _ := decoder.src.Seek(0, os.SEEK_CUR)
+			decoder.firstSamplePos = uint32(size)
+			decoder.dataSize = int32(chunkSize)
+			break
+		} else {
+			if _, err = decoder.src.Seek(int64(chunkSize), os.SEEK_CUR); err != nil {
+				return err
+			}
+		}
+	}
+
+	if decoder.info == nil {
+		return fmt.Errorf("unable to read the wav file format")
+	}
+
+	bytesPerSample := int32(decoder.info.BitsPerSample / 8)
+	numSamples := decoder.dataSize / bytesPerSample
+
+	decoder.channels = int16(decoder.info.NumChannels)
+	decoder.sampleRate = int32(decoder.info.SampleRate)
+	decoder.bitDepth = int16(decoder.info.BitsPerSample)
+	decoder.format = getFormat(decoder.channels, decoder.bitDepth)
+	decoder.duration = time.Duration(float64(numSamples)/float64(decoder.info.SampleRate)) * time.Second
 
 	return nil
-}
-
-func (decoder *waveDecoder) GetData() []byte {
-	data := make([]byte, decoder.dataSize)
-	decoder.Seek(0)
-	decoder.src.Read(data)
-	return data
 }

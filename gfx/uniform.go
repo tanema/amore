@@ -4,7 +4,8 @@ import (
 	"github.com/tanema/amore/gfx/gl"
 )
 
-type Uniform struct {
+// uniform represents a uniform in the shaders
+type uniform struct {
 	Location   gl.Uniform
 	Type       gl.Enum
 	BaseType   UniformType
@@ -14,13 +15,13 @@ type Uniform struct {
 	Name       string
 }
 
-func (u *Uniform) CalculateTypeInfo() {
+func (u *uniform) CalculateTypeInfo() {
 	u.BaseType = u.getBaseType()
 	u.SecondType = u.getSecondType()
 	u.TypeSize = u.getTypeSize()
 }
 
-func (u *Uniform) getTypeSize() int {
+func (u *uniform) getTypeSize() int {
 	switch u.Type {
 	case gl.INT, gl.FLOAT, gl.BOOL, gl.SAMPLER_2D, gl.SAMPLER_CUBE:
 		return 1
@@ -34,7 +35,7 @@ func (u *Uniform) getTypeSize() int {
 	return 1
 }
 
-func (u *Uniform) getBaseType() UniformType {
+func (u *uniform) getBaseType() UniformType {
 	switch u.Type {
 	case gl.INT, gl.INT_VEC2, gl.INT_VEC3, gl.INT_VEC4:
 		return UNIFORM_INT
@@ -49,7 +50,7 @@ func (u *Uniform) getBaseType() UniformType {
 	return UNIFORM_UNKNOWN
 }
 
-func (u Uniform) getSecondType() UniformType {
+func (u uniform) getSecondType() UniformType {
 	switch u.Type {
 	case gl.INT_VEC2, gl.INT_VEC3, gl.INT_VEC4, gl.FLOAT_VEC2,
 		gl.FLOAT_VEC3, gl.FLOAT_VEC4, gl.BOOL_VEC2, gl.BOOL_VEC3, gl.BOOL_VEC4:

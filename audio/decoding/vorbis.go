@@ -31,18 +31,19 @@ func (decoder *vorbisDecoder) read() error {
 	decoder.bitDepth = 16
 	decoder.format = getFormat(decoder.channels, decoder.bitDepth)
 
-	decoder.data = []byte{}
+	data := []byte{}
 	for {
 		tmp_buffer := make([]byte, 4097)
 		n, err := reader.Read(tmp_buffer)
 		if err == io.EOF {
 			break
 		}
-		decoder.data = append(decoder.data, tmp_buffer[:n]...)
+		data = append(data, tmp_buffer[:n]...)
 	}
 
-	decoder.src = bytes.NewReader(decoder.data)
-	decoder.duration = decoder.ByteOffsetToDur(int32(len(decoder.data)) / formatBytes[decoder.GetFormat()])
+	decoder.dataSize = int32(len(data))
+	decoder.src = bytes.NewReader(data)
+	decoder.duration = decoder.ByteOffsetToDur(int32(len(data)) / formatBytes[decoder.GetFormat()])
 
 	return err
 }

@@ -22,10 +22,8 @@ func (decoder *flacDecoder) read() error {
 	decoder.sampleRate = int32(d.SampleRate)
 	decoder.bitDepth = int16(d.BitsPerSample)
 	decoder.format = getFormat(decoder.channels, decoder.bitDepth)
-
-	dataSize := d.TotalSamples * int64(d.NChannels) * int64(d.BitsPerSample/8)
-
-	decoder.data = make([]byte, 0, dataSize)
+	decoder.dataSize = int32(d.TotalSamples * int64(d.NChannels) * int64(d.BitsPerSample/8))
+	data := make([]byte, 0, decoder.dataSize)
 	for {
 		frame, err := d.Next()
 		if err == io.EOF {
@@ -33,11 +31,11 @@ func (decoder *flacDecoder) read() error {
 		} else if err != nil {
 			return err
 		}
-		decoder.data = append(decoder.data, frame...)
+		data = append(data, frame...)
 	}
 
-	decoder.src = bytes.NewReader(decoder.data)
-	decoder.duration = decoder.ByteOffsetToDur(int32(len(decoder.data)) / formatBytes[decoder.GetFormat()])
+	decoder.src = bytes.NewReader(data)
+	decoder.duration = decoder.ByteOffsetToDur(int32(len(data)) / formatBytes[decoder.GetFormat()])
 
 	return err
 }

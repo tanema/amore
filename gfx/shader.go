@@ -13,13 +13,11 @@ import (
 	"github.com/tanema/amore/gfx/gl"
 )
 
-type BuiltinUniform int
-
 type Shader struct {
 	vertex_code    string
 	pixel_code     string
 	program        gl.Program
-	uniforms       map[string]Uniform // Uniform location buffer map
+	uniforms       map[string]uniform // uniform location buffer map
 	texUnitPool    map[string]int
 	activeTexUnits []gl.Texture
 }
@@ -79,10 +77,10 @@ func (shader *Shader) Release() {
 
 func (shader *Shader) mapUniforms() {
 	// Built-in uniform locations default to -1 (nonexistent.)
-	shader.uniforms = map[string]Uniform{}
+	shader.uniforms = map[string]uniform{}
 
 	for i := 0; i < gl.GetProgrami(shader.program, gl.ACTIVE_UNIFORMS); i++ {
-		u := Uniform{}
+		u := uniform{}
 
 		u.Name, u.Count, u.Type = gl.GetActiveUniform(shader.program, uint32(i))
 		u.Location = gl.GetUniformLocation(shader.program, u.Name)
@@ -120,41 +118,41 @@ func (shader *Shader) attach(temporary bool) {
 	}
 }
 
-func (shader *Shader) getUniformAndCheck(name string, expected_type UniformType, value_count int) (Uniform, error) {
-	uniform, ok := shader.uniforms[name]
+func (shader *Shader) getUniformAndCheck(name string, expected_type UniformType, value_count int) (uniform, error) {
+	u, ok := shader.uniforms[name]
 	if !ok {
-		return uniform, errors.New(fmt.Sprintf("No uniform with the name %v", name))
+		return u, errors.New(fmt.Sprintf("No uniform with the name %v", name))
 	}
-	if uniform.BaseType != expected_type {
-		return uniform, errors.New("Invalid type for uniform " + name + ". expected " + translateUniformBaseType(uniform.BaseType) + " and got " + translateUniformBaseType(expected_type))
+	if u.BaseType != expected_type {
+		return u, errors.New("Invalid type for uniform " + name + ". expected " + translateUniformBaseType(u.BaseType) + " and got " + translateUniformBaseType(expected_type))
 	}
-	if value_count != uniform.Count*uniform.TypeSize {
-		return uniform, errors.New(fmt.Sprintf("Invalid number of arguments for uniform  %v expected %v and got %v", name, (uniform.Count * uniform.TypeSize), value_count))
+	if value_count != u.Count*u.TypeSize {
+		return u, errors.New(fmt.Sprintf("Invalid number of arguments for uniform  %v expected %v and got %v", name, (u.Count * u.TypeSize), value_count))
 	}
-	return uniform, nil
+	return u, nil
 }
 
 func (shader *Shader) SendInt(name string, values ...int32) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	uniform, err := shader.getUniformAndCheck(name, UNIFORM_INT, len(values))
+	u, err := shader.getUniformAndCheck(name, UNIFORM_INT, len(values))
 	if err != nil {
 		return err
 	}
 
-	switch uniform.TypeSize {
+	switch u.TypeSize {
 	case 4:
-		gl.Uniform4iv(uniform.Location, values)
+		gl.Uniform4iv(u.Location, values)
 		return nil
 	case 3:
-		gl.Uniform3iv(uniform.Location, values)
+		gl.Uniform3iv(u.Location, values)
 		return nil
 	case 2:
-		gl.Uniform2iv(uniform.Location, values)
+		gl.Uniform2iv(u.Location, values)
 		return nil
 	case 1:
-		gl.Uniform1iv(uniform.Location, values)
+		gl.Uniform1iv(u.Location, values)
 		return nil
 	}
 	return errors.New("Invalid type size for uniform: " + name)
@@ -164,23 +162,23 @@ func (shader *Shader) SendFloat(name string, values ...float32) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	uniform, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, len(values))
+	u, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, len(values))
 	if err != nil {
 		return err
 	}
 
-	switch uniform.TypeSize {
+	switch u.TypeSize {
 	case 4:
-		gl.Uniform4fv(uniform.Location, values)
+		gl.Uniform4fv(u.Location, values)
 		return nil
 	case 3:
-		gl.Uniform3fv(uniform.Location, values)
+		gl.Uniform3fv(u.Location, values)
 		return nil
 	case 2:
-		gl.Uniform2fv(uniform.Location, values)
+		gl.Uniform2fv(u.Location, values)
 		return nil
 	case 1:
-		gl.Uniform1fv(uniform.Location, values)
+		gl.Uniform1fv(u.Location, values)
 		return nil
 	}
 	return errors.New("Invalid type size for uniform: " + name)
@@ -190,11 +188,11 @@ func (shader *Shader) SendMat4(name string, mat mgl32.Mat4) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	uniform, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 4)
+	u, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 4)
 	if err != nil {
 		return err
 	}
-	gl.UniformMatrix4fv(uniform.Location, []float32{
+	gl.UniformMatrix4fv(u.Location, []float32{
 		mat[0], mat[1], mat[2], mat[3],
 		mat[4], mat[5], mat[6], mat[7],
 		mat[8], mat[9], mat[10], mat[11],
@@ -207,11 +205,11 @@ func (shader *Shader) SendMat3(name string, mat mgl32.Mat3) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	uniform, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 3)
+	u, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 3)
 	if err != nil {
 		return err
 	}
-	gl.UniformMatrix3fv(uniform.Location, []float32{
+	gl.UniformMatrix3fv(u.Location, []float32{
 		mat[0], mat[1], mat[2],
 		mat[3], mat[4], mat[5],
 		mat[6], mat[7], mat[8],
@@ -223,11 +221,11 @@ func (shader *Shader) SendMat2(name string, mat mgl32.Mat2) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	uniform, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 3)
+	u, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 3)
 	if err != nil {
 		return err
 	}
-	gl.UniformMatrix2fv(uniform.Location, []float32{
+	gl.UniformMatrix2fv(u.Location, []float32{
 		mat[0], mat[1],
 		mat[2], mat[3],
 	})
@@ -241,14 +239,14 @@ func (shader *Shader) SendTexture(name string, texture iTexture) error {
 	gltex := texture.getHandle()
 	texunit := shader.getTextureUnit(name)
 
-	uniform, err := shader.getUniformAndCheck(name, UNIFORM_SAMPLER, 1)
+	u, err := shader.getUniformAndCheck(name, UNIFORM_SAMPLER, 1)
 	if err != nil {
 		return err
 	}
 
 	bindTextureToUnit(gltex, texunit, true)
 
-	gl.Uniform1i(uniform.Location, int(texunit))
+	gl.Uniform1i(u.Location, int(texunit))
 
 	// increment global shader texture id counter for this texture unit, if we haven't already
 	if !shader.activeTexUnits[texunit-1].Valid() {

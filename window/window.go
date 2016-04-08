@@ -351,6 +351,7 @@ func PixelToWindowCoords(x, y float32) (float32, float32) {
 
 // GetMousePosition return the current position of the mouse
 func GetMousePosition() (float32, float32) {
+	getCurrent() // must call getCurrent to ensure there is a window
 	mx, my, _ := sdl.GetMouseState()
 	return WindowToPixelCoords(float32(mx), float32(my))
 }
@@ -379,6 +380,7 @@ func IsVisible() bool {
 // SetMouseVisible will hide the mouse if passed false, and show the mouse cursor
 // if passed true
 func SetMouseVisible(visible bool) {
+	getCurrent() // must call getCurrent to ensure there is a window
 	if visible {
 		sdl.ShowCursor(sdl.ENABLE)
 	} else {
@@ -389,6 +391,7 @@ func SetMouseVisible(visible bool) {
 // GetMouseVisible will return true if the mouse is not hidden and will return
 // false otherwise
 func GetMouseVisible() bool {
+	getCurrent() // must call getCurrent to ensure there is a window
 	return sdl.ShowCursor(sdl.QUERY) == sdl.ENABLE
 }
 
@@ -456,6 +459,7 @@ func HasFocus() bool {
 // RequestAttention makes the application flash for attention to the user. If
 // continuous is true, it will continue to do so until the user focuses the program.
 func RequestAttention(continuous bool) {
+	getCurrent() // must call getCurrent to ensure there is a window
 	if HasFocus() {
 		return
 	}

@@ -5,6 +5,7 @@ package decoding
 import (
 	"errors"
 	"io"
+	"os"
 	"time"
 
 	"github.com/tanema/amore/audio/al"
@@ -30,15 +31,18 @@ type (
 	}
 	// decoderBase is a base implementation of a few methods to keep tryings DRY
 	decoderBase struct {
-		src        io.ReadSeeker
-		channels   int16
-		sampleRate int32
-		bitDepth   int16
-		duration   time.Duration
-		eof        bool
-		buffer     []byte
-		data       []byte
-		format     uint32
+		src_path       string
+		src            io.ReadSeeker
+		channels       int16
+		sampleRate     int32
+		bitDepth       int16
+		duration       time.Duration
+		eof            bool
+		buffer         []byte
+		format         uint32
+		dataSize       int32
+		currentPos     int64
+		firstSamplePos uint32
 	}
 )
 
@@ -63,14 +67,19 @@ func Decode(filepath string) (Decoder, error) {
 		return nil, err
 	}
 
+	base := decoderBase{
+		src:      src,
+		src_path: filepath,
+	}
+
 	var decoder Decoder
 	switch file.Ext(filepath) {
 	case ".wav":
-		decoder = &waveDecoder{decoderBase: decoderBase{src: src}}
+		decoder = &waveDecoder{decoderBase: base}
 	case ".ogg":
-		decoder = &vorbisDecoder{decoderBase: decoderBase{src: src}}
+		decoder = &vorbisDecoder{decoderBase: base}
 	case ".flac":
-		decoder = &flacDecoder{decoderBase: decoderBase{src: src}}
+		decoder = &flacDecoder{decoderBase: base}
 	default:
 		src.Close()
 		return nil, errors.New("unsupported audio file extention")
@@ -108,7 +117,13 @@ func (decoder *decoderBase) GetChannels() int16         { return decoder.channel
 func (decoder *decoderBase) GetBitDepth() int16         { return decoder.bitDepth }
 func (decoder *decoderBase) GetDuration() time.Duration { return decoder.duration }
 func (decoder *decoderBase) GetFormat() uint32          { return decoder.format }
-func (decoder *decoderBase) GetData() []byte            { return decoder.data }
+
+func (decoder *decoderBase) GetData() []byte {
+	data := make([]byte, decoder.dataSize)
+	decoder.Seek(0)
+	decoder.src.Read(data)
+	return data
+}
 
 // ByteOffsetToDur will translate byte count to time duration
 func (decoder *decoderBase) ByteOffsetToDur(offset int32) time.Duration {
@@ -124,6 +139,11 @@ func (decoder *decoderBase) DurToByteOffset(dur time.Duration) int32 {
 func (decoder *decoderBase) Decode() int {
 	buffer := make([]byte, BUFFER_SIZE)
 	n, err := decoder.src.Read(buffer)
+	decoder.currentPos += int64(n)
+	if n > 0 && decoder.currentPos >= int64(decoder.dataSize) { // protect against tail data
+		n -= int(decoder.currentPos - int64(decoder.dataSize))
+		err = io.EOF
+	}
 	decoder.eof = (err == io.EOF)
 	decoder.buffer = buffer[:n]
 	return n
@@ -131,7 +151,8 @@ func (decoder *decoderBase) Decode() int {
 
 // Seek will seek in the source data by count of bytes
 func (decoder *decoderBase) Seek(s int64) bool {
-	_, err := decoder.src.Seek(s, 0)
+	decoder.currentPos = s
+	_, err := decoder.src.Seek(int64(decoder.firstSamplePos)+decoder.currentPos, os.SEEK_SET)
 	decoder.eof = (err == io.EOF)
 	return err == nil || decoder.eof
 }

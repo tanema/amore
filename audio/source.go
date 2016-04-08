@@ -473,11 +473,11 @@ func (s *Source) Seek(offset time.Duration) {
 
 // Stop stops a playing source.
 func (s *Source) Stop() {
-	if !s.IsStopped() && s.isValid() {
+	if s.isValid() {
 		pool.mutex.Lock()
-		queued := s.source.BuffersQueued()
 		al.StopSources(s.source)
 		if !s.isStatic {
+			queued := s.source.BuffersQueued()
 			for i := queued; i > 0; i-- {
 				buffer := s.source.UnqueueBuffer()
 				al.DeleteBuffers(buffer)

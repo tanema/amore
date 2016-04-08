@@ -74,8 +74,7 @@ vec4 effect(vec4 vcolor, Image tex, vec2 texcoord, vec2 pixcoord) {
 )
 
 var (
-	shader_template, _ = template.New("shader").Parse(
-		`{{.Syntax}}
+	shader_template, _ = template.New("shader").Parse(`{{.Syntax}}
 {{.Header}}
 {{.Uniforms}}
 #line 1

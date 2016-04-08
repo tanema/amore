@@ -51,6 +51,8 @@ _Note: Ubuntu 14.04 currently has broken header file in the SDL2 package that di
 Example
 =======
 
+See more examples at [github.com/tanema/amore-examples](https://github.com/tanema/amore-examples)
+
 ```golang
 package main
 
@@ -71,7 +73,7 @@ func draw() {
 }
 ```
 
-Lack of Physics package
+Physics package
 =======================
 
 I suggest that you used an port of box-2d here: [github.com/neguse/go-box2d-lite](https://github.com/neguse/go-box2d-lite)
