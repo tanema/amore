@@ -52,7 +52,9 @@ const (
 // NewSource creates a new Source from a file at the path provided. If you
 // specify a static source it will all be buffered into a single buffer. If
 // false then it will create many buffers a cycle through them with data chunks.
-// This allows a smaller memory footprint while playing bigger music files.
+// This allows a smaller memory footprint while playing bigger music files. You
+// may want a static file if the sound is less than 2 seconds. It allows for faster
+// cleaning playing of shorter sounds like footsteps.
 func NewSource(filepath string, static bool) (*Source, error) {
 	if pool == nil {
 		createPool()
