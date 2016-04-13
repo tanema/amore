@@ -1,4 +1,6 @@
 // The keyboard Pacakge handles the keyboard events on the gl context
+// To capture events as they happen you can use the callbacks OnKeyDown, OnKeyUp,
+// OnTextInput, and OnTextEdit. Define them by calling keyboard.OnKeyDown = [callback]
 package keyboard
 
 import (

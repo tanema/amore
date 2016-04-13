@@ -18,6 +18,11 @@ import (
 	"github.com/tanema/amore/window"
 )
 
+// OnLoad will be called after the context is all setup but before the game loop
+// has started. This is a good time to get information like screen size from
+// the window and setup environment. Set this variable with amore.OnLoad = func() {}
+var OnLoad func()
+
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	runtime.LockOSThread() //important SDL and OpenGl Demand it and stamp thier feet if you dont
@@ -35,6 +40,9 @@ func Start(update func(float32), draw func()) error {
 	}
 	gfx.InitContext(current_window.Config.Width, current_window.Config.Height)
 	defer gfx.DeInit()
+	if OnLoad != nil {
+		OnLoad()
+	}
 	for !window.ShouldClose() {
 		timer.Step()
 		update(timer.GetDelta())
