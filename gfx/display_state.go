@@ -63,8 +63,9 @@ func newDisplayState() displayState {
 		defaultFilter:          newFilter(),
 		defaultMipmapFilter:    FILTER_NEAREST,
 		defaultMipmapSharpness: 0.0,
-		colorMask:              ColorMask{r: true, g: true, b: true, a: true},
-		scissorBox:             make([]int32, 4),
+		color:      NewColor(255, 255, 255, 255),
+		colorMask:  ColorMask{r: true, g: true, b: true, a: true},
+		scissorBox: make([]int32, 4),
 	}
 }
 
