@@ -4,14 +4,13 @@
 
 A game framework for Go, inspired by Love 2D. Currently in Beta.
  
-Objectives
-==========
+## Objectives
+
 * Enable making games easy, fast and fun
 * Making games portable
 * Single executable deployment strategy.
  
-Aimed Platform Support:
-======================
+## Aimed Platform Support:
 
 - **OS X**
 - **Linux**
@@ -20,8 +19,7 @@ Aimed Platform Support:
 - **Android**
 
  
-Installation
-============
+## Installation
 
 Install the amore package by running the go get command
 
@@ -45,8 +43,7 @@ __Windows__, via [Msys2](https://msys2.github.io): `pacman -S mingw-w64-x86_64-g
 
 _Note: Ubuntu 14.04 currently has broken header file in the SDL2 package that disables people from compiling against it. It will be needed to either patch the header file or install SDL2 from source._
 
-Amore Command
-=======
+## Amore Command
 
 Install the command line helper with the go install tool
 
@@ -58,8 +55,7 @@ go install github.com/tanema/amore/cmd
 * `amore bundle` will generate a file called `asset_bundle.go` with all the assets and config in ziped byte array to be included in the binary
  
 
-Example
-=======
+## Example
 
 See more examples at [github.com/tanema/amore-examples](https://github.com/tanema/amore-examples)
 
