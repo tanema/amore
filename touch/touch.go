@@ -1,7 +1,7 @@
 // The touch Pacakge handles touch events in the gl context
 // To capture events as they happen you can use the callbacks OnTouchPress,
 // OnTouchRelease, and OnTouchMove. Define them by calling touch.OnTouchPress =
-// func(x, y, dx, dy, pressure float32){}
+// func(x, y, dx, dy, pressure float32){}.
 package touch
 
 import (

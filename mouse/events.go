@@ -13,6 +13,8 @@ var (
 	OnMove func(x, y, dx, dy float32)
 	// OnFocus is called when the program has mouse focus or loses mouse focus.
 	OnFocus func(has_focus bool)
+	// OnWheelMove is called when the mouse wheel is changed
+	OnWheelMove func(x, y float32)
 )
 
 // Delegate is used by amore/event to pass events to the mouse package. It may
@@ -39,5 +41,8 @@ func Delegate(event sdl.Event) {
 			OnFocus(e.Type == sdl.WINDOWEVENT_ENTER)
 		}
 	case *sdl.MouseWheelEvent:
+		if OnWheelMove != nil {
+			OnWheelMove(float32(e.X), float32(e.Y))
+		}
 	}
 }

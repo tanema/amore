@@ -1,5 +1,9 @@
 package gfx
 
+import (
+	"math"
+)
+
 // Color represents an rgba color
 type Color [4]float32
 
@@ -57,4 +61,35 @@ func (color *Color) Div(s float32) *Color {
 		color[2] / (s / 255.0),
 		color[3] / (s / 255.0),
 	}
+}
+
+// Darken will darken the color by the percent given
+func (color *Color) Darken(percent float32) *Color {
+	return color.changeShade(percent)
+}
+
+// Lighten will lighten the color by the percent given
+func (color *Color) Lighten(percent float32) *Color {
+	return color.changeShade(-percent)
+}
+
+func (color *Color) changeShade(percent float32) *Color {
+	if percent > 100 || percent < -100 {
+		return color
+	}
+
+	percent = percent * 0.01
+	new_color := &Color{
+		color[0] - (color[0] * percent),
+		color[1] - (color[1] * percent),
+		color[2] - (color[2] * percent),
+		color[3],
+	}
+
+	//clamp colors between 0 and 1
+	for i, c := range new_color {
+		new_color[i] = float32(math.Max(0, math.Min(1, float64(c))))
+	}
+
+	return new_color
 }

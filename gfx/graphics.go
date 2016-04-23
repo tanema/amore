@@ -98,7 +98,15 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 		coords[2*(i+1)+1] = y + radius*float32(math.Sin(float64(phi)))
 	}
 
-	Polygon(mode, coords)
+	if mode == LINE {
+		PolyLine(coords)
+	} else {
+		prepareDraw(nil)
+		bindTexture(gl_state.defaultTexture)
+		useVertexAttribArrays(attribflag_pos)
+		gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
+	}
 }
 
 // Ellipse will draw a circle at x, y with a radius as specified.
@@ -133,7 +141,15 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 	coords[2*points+0] = coords[0]
 	coords[2*points+1] = coords[1]
 
-	Polygon(mode, coords)
+	if mode == LINE {
+		PolyLine(coords)
+	} else {
+		prepareDraw(nil)
+		bindTexture(gl_state.defaultTexture)
+		useVertexAttribArrays(attribflag_pos)
+		gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
+	}
 }
 
 // Point will draw a point on the screen at x, y position. The size of the point
@@ -161,12 +177,13 @@ func PolyLine(coords []float32) {
 // and height
 // The drawmode specifies either a fill or line draw
 func Rect(mode DrawMode, x, y, width, height float32) {
-	Polygon(mode, []float32{x, y, x, y + height, x + width, y + height, x + width, y, x, y})
+	Polygon(mode, []float32{x, y, x, y + height, x + width, y + height, x + width, y})
 }
 
 // Polygon will draw a closed polygon with an array in the form of x1, y1, x2, y2, x3, y3, ..... xn, yn
 // The drawmode specifies either a fill or line draw
 func Polygon(mode DrawMode, coords []float32) {
+	coords = append(coords, coords[0], coords[1])
 	if mode == LINE {
 		PolyLine(coords)
 	} else {
