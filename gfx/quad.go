@@ -46,15 +46,25 @@ func (quad *Quad) getVertices() []float32 {
 }
 
 // SetViewport sets the texture coordinates according to a viewport.
-func (quad *Quad) SetViewport(x, y, w, h float32) {
-	quad.x = x
-	quad.y = y
-	quad.w = w
-	quad.h = h
+func (quad *Quad) SetViewport(x, y, w, h int32) {
+	quad.x = float32(x)
+	quad.y = float32(y)
+	quad.w = float32(w)
+	quad.h = float32(h)
 	quad.generateVertices()
 }
 
+// GetWidth gets the width of the quad
+func (quad *Quad) GetWidth() float32 {
+	return quad.w
+}
+
+// GetHeight gets the height of the quad
+func (quad *Quad) GetHeight() float32 {
+	return quad.h
+}
+
 // GetViewport gets the current viewport of this Quad.
-func (quad *Quad) GetViewport() (x, y, w, h float32) {
-	return quad.x, quad.y, quad.w, quad.h
+func (quad *Quad) GetViewport() (x, y, w, h int32) {
+	return int32(quad.x), int32(quad.y), int32(quad.w), int32(quad.h)
 }

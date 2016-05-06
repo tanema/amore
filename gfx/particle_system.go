@@ -122,7 +122,7 @@ func (system *ParticleSystem) resetOffset() {
 		system.offset = mgl32.Vec2{float32(system.texture.GetWidth()) * 0.5, float32(system.texture.GetHeight()) * 0.5}
 	} else {
 		x, y, _, _ := system.quads[0].GetViewport()
-		system.offset = mgl32.Vec2{x * 0.5, y * 0.5}
+		system.offset = mgl32.Vec2{float32(x) * 0.5, float32(y) * 0.5}
 	}
 }
 
