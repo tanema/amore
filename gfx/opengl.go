@@ -73,7 +73,7 @@ func InitContext(w, h int32) {
 	gl_state.viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
 
 	SetViewportSize(w, h)
-	SetBackgroundColor(0, 0, 0, 1)
+	SetBackgroundColor(0, 0, 0, 255)
 
 	gl_state.boundTextures = make([]gl.Texture, maxTextureUnits)
 	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
@@ -275,14 +275,14 @@ func GetHeight() float32 {
 // Clear will clear everything already rendered to the screen and set is all to
 // the r, g, b, a provided.
 func Clear(r, g, b, a float32) {
-	gl.ClearColor(r/255.0, g/255.0, b/255.0, a/255.0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	ClearC(NewColor(r, g, b, a))
 }
 
 // Clear will clear everything already rendered to the screen and set is all to
 // the *Color provided.
 func ClearC(c *Color) {
-	Clear(c[0], c[1], c[2], c[3])
+	gl.ClearColor(c[0], c[1], c[2], c[3])
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
 // Preset is used at the end of the game loop to swap the frame buffers and display
@@ -624,14 +624,12 @@ func SetShader(shader *Shader) {
 
 // SetBackgroundColor sets the background color.
 func SetBackgroundColor(r, g, b, a float32) {
-	states.back().background_color = &Color{r / 255.0, g / 255.0, b / 255.0, a / 255.0}
-	gl.ClearColor(r/255.0, g/255.0, b/255.0, a/255.0)
+	states.back().background_color = NewColor(r, g, b, a)
 }
 
 // SetBackgroundColorC sets the background color.
 func SetBackgroundColorC(c *Color) {
 	states.back().background_color = c
-	gl.ClearColor(c[0], c[1], c[2], c[3])
 }
 
 // GetBackgroundColor gets the background color.
