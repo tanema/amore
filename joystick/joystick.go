@@ -33,7 +33,7 @@ type Joystick struct {
 func (joystick *Joystick) open() bool {
 	joystick.close()
 
-	joystick.stick = sdl.JoystickOpen(joystick.id)
+	joystick.stick = sdl.JoystickOpen(sdl.JoystickID(joystick.id))
 
 	if joystick.stick != nil && sdl.IsGameController(joystick.id) {
 		joystick.controller = sdl.GameControllerOpen(joystick.id)
