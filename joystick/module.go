@@ -1,9 +1,9 @@
 package joystick
 
 import (
-	"math"
-
 	"github.com/veandco/go-sdl2/sdl"
+
+	"github.com/tanema/amore/mth"
 )
 
 var (
@@ -120,7 +120,7 @@ func getJoystickFromID(id int) *Joystick {
 // value, as can happen with gamepads and joysticks. It will also clamp the values
 // to the absolute -1, 1 values because sometimes joysticks wont reach all the way.
 func clampval(x float32) float32 {
-	if math.Abs(float64(x)) < 0.01 {
+	if mth.Abs(x) < 0.01 {
 		return 0.0
 	}
 

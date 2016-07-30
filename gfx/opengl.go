@@ -2,12 +2,12 @@ package gfx
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
 
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/mth"
 	"github.com/tanema/amore/window"
 )
 
@@ -381,7 +381,7 @@ func Scale(args ...float32) {
 // Shear shears the coordinate system.
 func Shear(args ...float32) {
 	if args == nil || len(args) == 0 {
-		panic("not enough params passed to scale call")
+		panic("not enough params passed to shear call")
 	}
 	var kx, ky float32
 	kx = args[0]
@@ -450,16 +450,16 @@ func IntersectScissor(x, y, width, height int32) {
 	if !states.back().scissor {
 		rect[0] = 0
 		rect[1] = 0
-		rect[2] = math.MaxInt32
-		rect[3] = math.MaxInt32
+		rect[2] = mth.MaxInt32
+		rect[3] = mth.MaxInt32
 	}
 
-	x1 := int32(math.Max(float64(rect[0]), float64(x)))
-	y1 := int32(math.Max(float64(rect[1]), float64(y)))
-	x2 := int32(math.Min(float64(rect[0]+rect[2]), float64(x+width)))
-	y2 := int32(math.Min(float64(rect[1]+rect[3]), float64(y+height)))
+	x1 := mth.Maxi32(rect[0], x)
+	y1 := mth.Maxi32(rect[1], y)
+	x2 := mth.Mini32(rect[0]+rect[2], x+width)
+	y2 := mth.Mini32(rect[1]+rect[3], y+height)
 
-	SetScissor(x1, y1, int32(math.Max(0, float64(x2-x1))), int32(math.Max(0, float64(y2-y1))))
+	SetScissor(x1, y1, mth.Maxi32(0, x2-x1), mth.Maxi32(0, y2-y1))
 }
 
 // ClearScissor will disable all set scissors.
@@ -757,7 +757,7 @@ func SetDefaultFilter(min, mag FilterMode, anisotropy float32) {
 	states.back().defaultFilter = Filter{
 		min:        min,
 		mag:        mag,
-		anisotropy: float32(math.Min(math.Max(float64(anisotropy), 1.0), float64(maxAnisotropy))),
+		anisotropy: mth.Min(mth.Max(anisotropy, 1.0), maxAnisotropy),
 	}
 }
 

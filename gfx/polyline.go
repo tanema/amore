@@ -1,11 +1,10 @@
 package gfx
 
 import (
-	"math"
-
 	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/mth"
 )
 
 type (
@@ -351,7 +350,7 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 		overdraw = polyline.renderOverdraw(is_looping)
 	}
 
-	numindices := int(math.Max(float64(len(polyline.vertices)/4), float64(len(overdraw)/4)))
+	numindices := mth.Maxi(len(polyline.vertices)/4, len(overdraw)/4)
 	indices := newAltQuadIndices(numindices)
 
 	prepareDraw(nil)

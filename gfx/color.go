@@ -1,7 +1,7 @@
 package gfx
 
 import (
-	"math"
+	"github.com/tanema/amore/mth"
 )
 
 // Color represents an rgba color
@@ -88,7 +88,7 @@ func (color *Color) changeShade(percent float32) *Color {
 
 	//clamp colors between 0 and 1
 	for i, c := range new_color {
-		new_color[i] = float32(math.Max(0, math.Min(1, float64(c))))
+		new_color[i] = mth.Max(0, mth.Min(1, c))
 	}
 
 	return new_color

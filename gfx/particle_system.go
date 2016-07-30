@@ -1,11 +1,11 @@
 package gfx
 
 import (
-	"math"
-
 	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/mth"
+	"github.com/tanema/amore/mth/rand"
 )
 
 type (
@@ -86,7 +86,7 @@ func (system *ParticleSystem) Release() {
 func calculate_variation(inner, outer, v float32) float32 {
 	low := inner - (outer/2.0)*v
 	high := inner + (outer/2.0)*v
-	r := rng.Rand()
+	r := rand.Rand()
 	return low*(1-r) + high*r
 }
 
@@ -162,7 +162,7 @@ func (system *ParticleSystem) addParticle(t float32) {
 	case INSERT_MODE_BOTTOM:
 		system.particles = append(system.particles, p)
 	case INSERT_MODE_RANDOM:
-		i := int(rng.RandMax(float32(system.maxParticles - 1)))
+		i := int(rand.RandMax(float32(system.maxParticles - 1)))
 		system.particles = append(system.particles[:i], append([]*particle{p}, system.particles[i:]...)...)
 	}
 }
@@ -180,43 +180,43 @@ func (system *ParticleSystem) initParticle(t float32) *particle {
 	if system.particleLifeMin == system.particleLifeMax {
 		p.life = system.particleLifeMin
 	} else {
-		p.life = rng.RandRange(system.particleLifeMin, system.particleLifeMax)
+		p.life = rand.RandRange(system.particleLifeMin, system.particleLifeMax)
 	}
 	p.lifetime = p.life
 
 	switch system.areaSpreadDistribution {
 	case DISTRIBUTION_UNIFORM:
-		p.position[0] += rng.RandRange(-system.areaSpread[0], system.areaSpread[0])
-		p.position[1] += rng.RandRange(-system.areaSpread[1], system.areaSpread[1])
+		p.position[0] += rand.RandRange(-system.areaSpread[0], system.areaSpread[0])
+		p.position[1] += rand.RandRange(-system.areaSpread[1], system.areaSpread[1])
 	case DISTRIBUTION_NORMAL:
-		p.position[0] += rng.RandomNormal(system.areaSpread[0])
-		p.position[1] += rng.RandomNormal(system.areaSpread[1])
+		p.position[0] += rand.RandomNormal(system.areaSpread[0])
+		p.position[1] += rand.RandomNormal(system.areaSpread[1])
 	case DISTRIBUTION_NONE:
 		//done
 	}
 
 	p.origin = pos
 
-	speed := rng.RandRange(system.speedMin, system.speedMax)
-	dir := float64(rng.RandRange(system.direction-system.spread/2.0, system.direction+system.spread/2.0))
-	p.velocity = mgl32.Vec2{float32(math.Cos(dir)), float32(math.Sin(dir))}.Mul(speed)
+	speed := rand.RandRange(system.speedMin, system.speedMax)
+	dir := rand.RandRange(system.direction-system.spread/2.0, system.direction+system.spread/2.0)
+	p.velocity = mgl32.Vec2{mth.Cos(dir), mth.Sin(dir)}.Mul(speed)
 
-	p.linearAcceleration[0] = rng.RandRange(system.linearAccelerationMin[0], system.linearAccelerationMax[0])
-	p.linearAcceleration[1] = rng.RandRange(system.linearAccelerationMin[1], system.linearAccelerationMax[1])
+	p.linearAcceleration[0] = rand.RandRange(system.linearAccelerationMin[0], system.linearAccelerationMax[0])
+	p.linearAcceleration[1] = rand.RandRange(system.linearAccelerationMin[1], system.linearAccelerationMax[1])
 
-	p.radialAcceleration = rng.RandRange(system.radialAccelerationMin, system.radialAccelerationMax)
-	p.tangentialAcceleration = rng.RandRange(system.tangentialAccelerationMin, system.tangentialAccelerationMax)
-	p.linearDamping = rng.RandRange(system.linearDampingMin, system.linearDampingMax)
-	p.sizeOffset = rng.RandMax(system.sizeVariation) // time offset for size change
-	p.sizeIntervalSize = (1.0 - rng.RandMax(system.sizeVariation)) - p.sizeOffset
+	p.radialAcceleration = rand.RandRange(system.radialAccelerationMin, system.radialAccelerationMax)
+	p.tangentialAcceleration = rand.RandRange(system.tangentialAccelerationMin, system.tangentialAccelerationMax)
+	p.linearDamping = rand.RandRange(system.linearDampingMin, system.linearDampingMax)
+	p.sizeOffset = rand.RandMax(system.sizeVariation) // time offset for size change
+	p.sizeIntervalSize = (1.0 - rand.RandMax(system.sizeVariation)) - p.sizeOffset
 	p.size = system.sizes[int(p.sizeOffset-0.5)*(len(system.sizes)-1)]
 	p.spinStart = calculate_variation(system.spinStart, system.spinEnd, system.spinVariation)
 	p.spinEnd = calculate_variation(system.spinEnd, system.spinStart, system.spinVariation)
-	p.rotation = rng.RandRange(system.rotationMin, system.rotationMax)
+	p.rotation = rand.RandRange(system.rotationMin, system.rotationMax)
 	p.angle = p.rotation
 
 	if system.relativeRotation {
-		p.angle += float32(math.Atan2(float64(p.velocity[1]), float64(p.velocity[0])))
+		p.angle += mth.Atan2(p.velocity[1], p.velocity[0])
 	}
 	p.color = system.colors[0]
 	p.quadIndex = 0
@@ -564,7 +564,7 @@ func (system *ParticleSystem) Emit(num int) {
 		return
 	}
 
-	num = int(math.Min(float64(num), float64(system.maxParticles-len(system.particles))))
+	num = mth.Mini(num, system.maxParticles-len(system.particles))
 
 	for ; num > 0; num-- {
 		system.addParticle(1.0)
@@ -658,7 +658,7 @@ func (system *ParticleSystem) Update(dt float32) {
 
 		p.angle = p.rotation
 		if system.relativeRotation {
-			p.angle += float32(math.Atan2(float64(p.velocity[1]), float64(p.velocity[0])))
+			p.angle += mth.Atan2(p.velocity[1], p.velocity[0])
 		}
 
 		// Change size according to given intervals:

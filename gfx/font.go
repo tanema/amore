@@ -1,8 +1,9 @@
 package gfx
 
 import (
-	"math"
 	"strings"
+
+	"github.com/tanema/amore/mth"
 )
 
 // Font is a rasterized font data
@@ -165,7 +166,7 @@ func (font *Font) GetWidth(text string) float32 {
 			}
 			prevChar = char
 		}
-		max_width = float32(math.Max(float64(max_width), float64(width)))
+		max_width = mth.Max(max_width, width)
 	}
 
 	return max_width
@@ -183,7 +184,7 @@ func (font *Font) GetWrap(text string, wrapLimit float32) (float32, []string) {
 		if currentWidth+wordWidth > wrapLimit {
 			if len(currentLine) > 0 {
 				lines = append(lines, strings.Join(currentLine, " "))
-				width = float32(math.Max(float64(currentWidth), float64(width)))
+				width = mth.Max(currentWidth, width)
 			}
 			currentLine = []string{word}
 			currentWidth = wordWidth
@@ -194,7 +195,7 @@ func (font *Font) GetWrap(text string, wrapLimit float32) (float32, []string) {
 	}
 
 	lines = append(lines, strings.Join(currentLine, " "))
-	width = float32(math.Max(float64(currentWidth), float64(width)))
+	width = mth.Max(currentWidth, width)
 
 	return width, lines
 }

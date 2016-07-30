@@ -186,8 +186,6 @@ import (
 	"errors"
 	"log"
 	"unsafe"
-
-	"golang.org/x/mobile/internal/mobileinit"
 )
 
 var (
@@ -240,15 +238,9 @@ var (
 )
 
 func initAL() {
-	err := mobileinit.RunOnJVM(func(vm, env, ctx uintptr) error {
-		C.al_init(C.uintptr_t(vm), C.uintptr_t(env), C.jobject(ctx), &alHandle)
-		if alHandle == nil {
-			return errors.New("al: cannot load libopenal.so")
-		}
-		return nil
-	})
-	if err != nil {
-		log.Fatalf("al: %v", err)
+	C.al_init(C.uintptr_t(vm), C.uintptr_t(env), C.jobject(ctx), &alHandle)
+	if alHandle == nil {
+		return errors.New("al: cannot load libopenal.so")
 	}
 
 	alEnableFunc = C.LPALENABLE(fn("alEnable"))

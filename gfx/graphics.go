@@ -5,11 +5,11 @@ package gfx
 
 import (
 	"image"
-	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/mth"
 )
 
 type (
@@ -73,7 +73,7 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 	}
 
 	// Oh, you want to draw a circle?
-	if math.Abs(float64(angle1-angle2)) >= (2.0 * math.Pi) {
+	if mth.Abs(angle1-angle2) >= (2.0 * mth.Pi) {
 		Circlep(mode, x, y, radius, points)
 		return
 	}
@@ -94,8 +94,8 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 
 	for i := 0; i <= points; i++ {
 		phi = phi + angle_shift
-		coords[2*(i+1)] = x + radius*float32(math.Cos(float64(phi)))
-		coords[2*(i+1)+1] = y + radius*float32(math.Sin(float64(phi)))
+		coords[2*(i+1)] = x + radius*mth.Cos(phi)
+		coords[2*(i+1)+1] = y + radius*mth.Sin(phi)
 	}
 
 	if mode == LINE {
@@ -123,7 +123,7 @@ func Ellipse(mode DrawMode, x, y, radiusx, radiusy float32) {
 // If it is lower it will look jagged. If it is higher it will hit performace.
 // The drawmode specifies either a fill or line draw
 func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
-	two_pi := math.Pi * 2.0
+	two_pi := mth.Pi * 2.0
 	if points <= 0 {
 		points = 1
 	}
@@ -134,8 +134,8 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 	coords := make([]float32, 2*(points+1))
 	for i := 0; i < points; i++ {
 		phi += angle_shift
-		coords[2*i+0] = x + radiusx*float32(math.Cos(float64(phi)))
-		coords[2*i+1] = y + radiusy*float32(math.Sin(float64(phi)))
+		coords[2*i+0] = x + radiusx*mth.Cos(phi)
+		coords[2*i+1] = y + radiusy*mth.Sin(phi)
 	}
 
 	coords[2*points+0] = coords[0]
@@ -311,8 +311,8 @@ func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, 
 func generateModelMatFromArgs(args []float32) *mgl32.Mat4 {
 	x, y, angle, sx, sy, ox, oy, kx, ky := normalizeDrawCallArgs(args)
 	mat := mgl32.Ident4()
-	c := float32(math.Cos(float64(angle)))
-	s := float32(math.Sin(float64(angle)))
+	c := mth.Cos(angle)
+	s := mth.Sin(angle)
 	// matrix multiplication carried out on paper:
 	// |1     x| |c -s    | |sx       | | 1 ky    | |1     -ox|
 	// |  1   y| |s  c    | |   sy    | |kx  1    | |  1   -oy|

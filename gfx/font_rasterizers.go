@@ -6,9 +6,9 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"math"
 
 	"github.com/tanema/amore/file"
+	"github.com/tanema/amore/mth"
 	"github.com/tanema/freetype-go/freetype"
 	"github.com/tanema/freetype-go/freetype/truetype"
 )
@@ -190,8 +190,8 @@ func (rast *ttfFontRasterizer) loadVolatile() bool {
 	}
 
 	for _, g := range rast.glyphs {
-		rast.ascent = int(math.Max(float64(rast.ascent), float64(g.ascent)))
-		rast.descent = int(math.Max(float64(rast.descent), float64(g.descent)))
+		rast.ascent = mth.Maxi(rast.ascent, g.ascent)
+		rast.descent = mth.Maxi(rast.descent, g.descent)
 	}
 
 	rast.Texture, err = newImageTexture(rgba, false)

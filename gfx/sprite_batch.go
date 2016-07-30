@@ -2,11 +2,11 @@ package gfx
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/mth"
 )
 
 // SpriteBatch is a collection of images/quads/textures all drawn with a single draw call
@@ -194,10 +194,10 @@ func (sprite_batch *SpriteBatch) GetDrawRange() (int, int) {
 	min := 0
 	max := sprite_batch.count - 1
 	if sprite_batch.rangeMax >= 0 {
-		max = int(math.Min(float64(sprite_batch.rangeMax), float64(max)))
+		max = mth.Mini(sprite_batch.rangeMax, max)
 	}
 	if sprite_batch.rangeMin >= 0 {
-		min = int(math.Min(float64(sprite_batch.rangeMin), float64(max)))
+		min = mth.Mini(sprite_batch.rangeMin, max)
 	}
 	return min, max
 }
