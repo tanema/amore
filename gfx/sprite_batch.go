@@ -3,10 +3,8 @@ package gfx
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl32"
-
 	"github.com/tanema/amore/gfx/gl"
-	"github.com/tanema/amore/mth"
+	"github.com/tanema/amore/gfx/mat"
 )
 
 // SpriteBatch is a collection of images/quads/textures all drawn with a single draw call
@@ -55,22 +53,22 @@ func (sprite_batch *SpriteBatch) Release() {
 // ox, oy offset of the object
 // kx, ky shear of the object
 func (sprite_batch *SpriteBatch) Add(args ...float32) error {
-	return sprite_batch.addv(sprite_batch.texture.getVerticies(), generateModelMatFromArgs(args), -1)
+	return sprite_batch.addv(sprite_batch.texture.getVerticies(), -1, args...)
 }
 
 // Adds a Quad to the batch. This is very useful for something like a tilemap.
 func (sprite_batch *SpriteBatch) Addq(quad *Quad, args ...float32) error {
-	return sprite_batch.addv(quad.getVertices(), generateModelMatFromArgs(args), -1)
+	return sprite_batch.addv(quad.getVertices(), -1, args...)
 }
 
 // Set changes a sprite in the batch with the same arguments as add
 func (sprite_batch *SpriteBatch) Set(index int, args ...float32) error {
-	return sprite_batch.addv(sprite_batch.texture.getVerticies(), generateModelMatFromArgs(args), index)
+	return sprite_batch.addv(sprite_batch.texture.getVerticies(), index, args...)
 }
 
 // Set changes a sprite in the batch with the same arguments as addq
 func (sprite_batch *SpriteBatch) Setq(index int, quad *Quad, args ...float32) error {
-	return sprite_batch.addv(quad.getVertices(), generateModelMatFromArgs(args), index)
+	return sprite_batch.addv(quad.getVertices(), index, args...)
 }
 
 // Clear will remove all the sprites from the batch
@@ -143,16 +141,18 @@ func (sprite_batch *SpriteBatch) GetBufferSize() int {
 
 // addv will add a sprite to the batch using the verts, a transform and an index to
 // place it
-func (sprite_batch *SpriteBatch) addv(verts []float32, mat *mgl32.Mat4, index int) error {
+func (sprite_batch *SpriteBatch) addv(verts []float32, index int, args ...float32) error {
 	if index == -1 && sprite_batch.count >= sprite_batch.size {
 		return fmt.Errorf("Sprite Batch Buffer Full")
 	}
 
+	m := mat.New4(args...)
+
 	sprite := make([]float32, 8*4)
 	for i := 0; i < 32; i += 8 {
 		j := (i / 2)
-		sprite[i+0] = (mat[0] * verts[j+0]) + (mat[4] * verts[j+1]) + mat[12]
-		sprite[i+1] = (mat[1] * verts[j+0]) + (mat[5] * verts[j+1]) + mat[13]
+		sprite[i+0] = (m[0] * verts[j+0]) + (m[4] * verts[j+1]) + m[12]
+		sprite[i+1] = (m[1] * verts[j+0]) + (m[5] * verts[j+1]) + m[13]
 		sprite[i+2] = verts[j+2]
 		sprite[i+3] = verts[j+3]
 		sprite[i+4] = sprite_batch.color[0]
@@ -194,10 +194,10 @@ func (sprite_batch *SpriteBatch) GetDrawRange() (int, int) {
 	min := 0
 	max := sprite_batch.count - 1
 	if sprite_batch.rangeMax >= 0 {
-		max = mth.Mini(sprite_batch.rangeMax, max)
+		max = Mini(sprite_batch.rangeMax, max)
 	}
 	if sprite_batch.rangeMin >= 0 {
-		min = mth.Mini(sprite_batch.rangeMin, max)
+		min = Mini(sprite_batch.rangeMin, max)
 	}
 	return min, max
 }

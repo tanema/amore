@@ -2,8 +2,6 @@ package gfx
 
 import (
 	"github.com/go-gl/gl/v2.1/gl"
-
-	"github.com/tanema/amore/mth"
 )
 
 // SetWireframe sets whether wireframe lines will be used when drawing.
@@ -43,7 +41,7 @@ func setTexMipMap() {
 func (texture *Texture) SetMipmapSharpness(sharpness float32) {
 	var maxMipmapSharpness float32
 	gl.GetFloatv(gl.MAX_TEXTURE_LOD_BIAS, &maxMipmapSharpness)
-	mipmapSharpness := mth.Min(mth.Max(sharpness, -(maxMipmapSharpness+0.01)), maxMipmapSharpness-0.01)
+	mipmapSharpness := Min(Max(sharpness, -(maxMipmapSharpness+0.01)), maxMipmapSharpness-0.01)
 	bindTexture(texture.getHandle())
 	//negative bias is sharper
 	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_LOD_BIAS, -float32(mipmapSharpness))

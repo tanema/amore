@@ -6,10 +6,7 @@ package gfx
 import (
 	"image"
 
-	"github.com/go-gl/mathgl/mgl32"
-
 	"github.com/tanema/amore/gfx/gl"
-	"github.com/tanema/amore/mth"
 )
 
 type (
@@ -73,7 +70,7 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 	}
 
 	// Oh, you want to draw a circle?
-	if mth.Abs(angle1-angle2) >= (2.0 * mth.Pi) {
+	if Abs(angle1-angle2) >= (2.0 * Pi) {
 		Circlep(mode, x, y, radius, points)
 		return
 	}
@@ -94,8 +91,8 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 
 	for i := 0; i <= points; i++ {
 		phi = phi + angle_shift
-		coords[2*(i+1)] = x + radius*mth.Cos(phi)
-		coords[2*(i+1)+1] = y + radius*mth.Sin(phi)
+		coords[2*(i+1)] = x + radius*Cos(phi)
+		coords[2*(i+1)+1] = y + radius*Sin(phi)
 	}
 
 	if mode == LINE {
@@ -123,7 +120,7 @@ func Ellipse(mode DrawMode, x, y, radiusx, radiusy float32) {
 // If it is lower it will look jagged. If it is higher it will hit performace.
 // The drawmode specifies either a fill or line draw
 func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
-	two_pi := mth.Pi * 2.0
+	two_pi := Pi * 2.0
 	if points <= 0 {
 		points = 1
 	}
@@ -134,8 +131,8 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 	coords := make([]float32, 2*(points+1))
 	for i := 0; i < points; i++ {
 		phi += angle_shift
-		coords[2*i+0] = x + radiusx*mth.Cos(phi)
-		coords[2*i+1] = y + radiusy*mth.Sin(phi)
+		coords[2*i+0] = x + radiusx*Cos(phi)
+		coords[2*i+1] = y + radiusy*Sin(phi)
 	}
 
 	coords[2*points+0] = coords[0]
@@ -242,91 +239,4 @@ func Draw(drawable Drawable, args ...float32) {
 // kx, ky are the shear. If ky is not given ky will equal kx
 func Drawq(drawable QuadDrawable, quad *Quad, args ...float32) {
 	drawable.Drawq(quad, args...)
-}
-
-// Normalized an array of floats into these params if they exist
-// if they are not present then thier default values are returned
-// x The position of the object along the x-axis.
-// y The position of the object along the y-axis.
-// angle The angle of the object (in radians).
-// sx The scale factor along the x-axis.
-// sy The scale factor along the y-axis.
-// ox The origin offset along the x-axis.
-// oy The origin offset along the y-axis.
-// kx Shear along the x-axis.
-// ky Shear along the y-axis.
-func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, float32, float32, float32, float32, float32) {
-	var x, y, angle, sx, sy, ox, oy, kx, ky float32
-	sx = 1
-	sy = 1
-
-	if args == nil || len(args) < 2 {
-		return x, y, angle, sx, sy, ox, oy, kx, ky
-	}
-
-	args_length := len(args)
-
-	switch args_length {
-	case 9:
-		ky = args[8]
-		fallthrough
-	case 8:
-		kx = args[7]
-		if args_length == 8 {
-			ky = kx
-		}
-		fallthrough
-	case 7:
-		oy = args[6]
-		fallthrough
-	case 6:
-		ox = args[5]
-		if args_length == 6 {
-			oy = ox
-		}
-		fallthrough
-	case 5:
-		sy = args[4]
-		fallthrough
-	case 4:
-		sx = args[3]
-		if args_length == 4 {
-			sy = sx
-		}
-		fallthrough
-	case 3:
-		angle = args[2]
-		fallthrough
-	case 2:
-		x = args[0]
-		y = args[1]
-	}
-
-	return x, y, angle, sx, sy, ox, oy, kx, ky
-}
-
-// generateModelMatFromArgs will take in the arguments
-// x, y, r, sx, sy, ox, oy, kx, ky
-// and generate a matrix to be applied to the model transformation.
-func generateModelMatFromArgs(args []float32) *mgl32.Mat4 {
-	x, y, angle, sx, sy, ox, oy, kx, ky := normalizeDrawCallArgs(args)
-	mat := mgl32.Ident4()
-	c := mth.Cos(angle)
-	s := mth.Sin(angle)
-	// matrix multiplication carried out on paper:
-	// |1     x| |c -s    | |sx       | | 1 ky    | |1     -ox|
-	// |  1   y| |s  c    | |   sy    | |kx  1    | |  1   -oy|
-	// |    1  | |     1  | |      1  | |      1  | |    1    |
-	// |      1| |       1| |        1| |        1| |       1 |
-	//   move      rotate      scale       skew       origin
-	mat[10] = 1
-	mat[15] = 1
-	mat[0] = c*sx - ky*s*sy // = a
-	mat[1] = s*sx + ky*c*sy // = b
-	mat[4] = kx*c*sx - s*sy // = c
-	mat[5] = kx*s*sx + c*sy // = d
-	mat[12] = x - ox*mat[0] - oy*mat[4]
-	mat[13] = y - ox*mat[1] - oy*mat[5]
-
-	return &mat
 }

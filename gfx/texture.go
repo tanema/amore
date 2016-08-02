@@ -9,9 +9,8 @@ import (
 	_ "image/png"
 	"runtime"
 
-	"github.com/go-gl/mathgl/mgl32"
-
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/gfx/mat"
 )
 
 type (
@@ -270,7 +269,7 @@ func (texture *Texture) Release() {
 
 // drawv will take in verticies from the public draw calls and draw the texture
 // with the verticies and the model matrix
-func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
+func (texture *Texture) drawv(model *mat.Mat4, vertices []float32) {
 	prepareDraw(model)
 	bindTexture(texture.getHandle())
 	useVertexAttribArrays(attribflag_pos | attribflag_texcoord)

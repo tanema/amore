@@ -2,11 +2,11 @@
 package window
 
 import (
+	"math"
 	"os"
 
 	"github.com/veandco/go-sdl2/sdl"
 
-	"github.com/tanema/amore/mth"
 	"github.com/tanema/amore/window/surface"
 )
 
@@ -55,9 +55,9 @@ func NewWindow() (*window, error) {
 		panic(err)
 	}
 
-	config.Minwidth = mth.Maxi32(config.Minwidth, 1.0)
-	config.Minheight = mth.Maxi32(config.Minheight, 1.0)
-	config.Display = mth.Mini(mth.Maxi(config.Display, 0.0), GetDisplayCount()-1)
+	config.Minwidth = maxi32(config.Minwidth, 1.0)
+	config.Minheight = maxi32(config.Minheight, 1.0)
+	config.Display = mini(maxi(config.Display, 0.0), GetDisplayCount()-1)
 
 	if config.Width == 0 || config.Height == 0 {
 		var mode sdl.DisplayMode
@@ -537,4 +537,16 @@ func ShowMessageBox(title, message string, buttons []string, box_type MessageBox
 
 	var _, buttonid = sdl.ShowMessageBox(&messageboxdata)
 	return buttons[buttonid]
+}
+
+func maxi32(x, y int32) int32 {
+	return int32(math.Max(float64(x), float64(y)))
+}
+
+func maxi(x, y int) int {
+	return int(math.Max(float64(x), float64(y)))
+}
+
+func mini(x, y int) int {
+	return int(math.Min(float64(x), float64(y)))
 }

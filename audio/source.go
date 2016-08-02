@@ -3,10 +3,9 @@ package audio
 import (
 	"time"
 
-	"github.com/go-gl/mathgl/mgl32"
-
 	"github.com/tanema/amore/audio/al"
 	"github.com/tanema/amore/audio/decoding"
+	"github.com/tanema/amore/gfx"
 )
 
 const (
@@ -174,9 +173,9 @@ func (s *Source) GetDuration() time.Duration {
 func (s *Source) GetCone() (float32, float32, float32) {
 	if s.isValid() {
 		c := s.source.Cone()
-		return mgl32.DegToRad(float32(c.InnerAngle)), mgl32.DegToRad(float32(c.OuterAngle)), c.OuterVolume
+		return gfx.DegToRad(float32(c.InnerAngle)), gfx.DegToRad(float32(c.OuterAngle)), c.OuterVolume
 	}
-	return mgl32.DegToRad(float32(s.cone.InnerAngle)), mgl32.DegToRad(float32(s.cone.OuterAngle)), s.cone.OuterVolume
+	return gfx.DegToRad(float32(s.cone.InnerAngle)), gfx.DegToRad(float32(s.cone.OuterAngle)), s.cone.OuterVolume
 }
 
 // GetDirection returns the direction of the Source with a vector of x, y, z
@@ -298,8 +297,8 @@ func (s *Source) SetAttenuationDistances(ref, max float32) {
 // angle, and outer volume
 func (s *Source) SetCone(innerAngle, outerAngle, outerVolume float32) {
 	s.cone = al.Cone{
-		InnerAngle:  int32(mgl32.RadToDeg(innerAngle)),
-		OuterAngle:  int32(mgl32.RadToDeg(outerAngle)),
+		InnerAngle:  int32(gfx.RadToDeg(innerAngle)),
+		OuterAngle:  int32(gfx.RadToDeg(outerAngle)),
 		OuterVolume: outerVolume,
 	}
 	s.reset()

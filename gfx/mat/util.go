@@ -1,5 +1,9 @@
 package mat
 
+import (
+	"math"
+)
+
 // Normalized an array of floats into these params if they exist
 // if they are not present then thier default values are returned
 // x The position of the object along the x-axis.
@@ -59,4 +63,12 @@ func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, 
 	}
 
 	return x, y, angle, sx, sy, ox, oy, kx, ky
+}
+
+func cos(x float32) float32 {
+	return float32(math.Cos(float64(x)))
+}
+
+func sin(x float32) float32 {
+	return float32(math.Sin(float64(x)))
 }

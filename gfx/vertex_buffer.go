@@ -2,7 +2,6 @@ package gfx
 
 import (
 	"github.com/tanema/amore/gfx/gl"
-	"github.com/tanema/amore/mth"
 )
 
 type vertexBuffer struct {
@@ -43,8 +42,8 @@ func (buffer *vertexBuffer) bufferStream() {
 
 func (buffer *vertexBuffer) bufferData() {
 	if buffer.modified_size != 0 { //if there is no modified size might as well do the whole buffer
-		buffer.modified_offset = mth.Mini(buffer.modified_offset, len(buffer.data)-1)
-		buffer.modified_size = mth.Mini(buffer.modified_size, len(buffer.data)-buffer.modified_offset)
+		buffer.modified_offset = Mini(buffer.modified_offset, len(buffer.data)-1)
+		buffer.modified_size = Mini(buffer.modified_size, len(buffer.data)-buffer.modified_offset)
 	} else {
 		buffer.modified_offset = 0
 		buffer.modified_size = len(buffer.data)
@@ -92,8 +91,8 @@ func (buffer *vertexBuffer) fill(offset int, data []float32) {
 	// from the start of section a to the end of section b as modified if both
 	// a and b are marked as modified.
 	old_range_end := buffer.modified_offset + buffer.modified_size
-	buffer.modified_offset = mth.Mini(buffer.modified_offset, offset)
-	new_range_end := mth.Maxi(offset+len(data), old_range_end)
+	buffer.modified_offset = Mini(buffer.modified_offset, offset)
+	new_range_end := Maxi(offset+len(data), old_range_end)
 	buffer.modified_size = new_range_end - buffer.modified_offset
 	buffer.bufferData()
 }

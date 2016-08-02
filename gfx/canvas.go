@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/go-gl/mathgl/mgl32"
-
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/gfx/mat"
 )
 
 // Canvas is an off-screen render target.
@@ -123,7 +122,7 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 	SetViewport(0, 0, canvas.width, canvas.height)
 	// Set up the projection matrix
 	gl_state.projectionStack.Push()
-	gl_state.projectionStack.Load(mgl32.Ortho(0.0, float32(screen_width), 0.0, float32(screen_height), -1, 1))
+	gl_state.projectionStack.Load(mat.Ortho(0.0, float32(screen_width), 0.0, float32(screen_height)))
 
 	canvas.attacheExtra(canvases)
 	canvas.attachedCanvases = canvases

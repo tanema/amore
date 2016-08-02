@@ -1,11 +1,9 @@
 package gfx
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
-
 	"github.com/tanema/amore/gfx/gl"
-	"github.com/tanema/amore/mth"
-	"github.com/tanema/amore/mth/rand"
+	"github.com/tanema/amore/gfx/rand"
+	"github.com/tanema/amore/gfx/vec"
 )
 
 type (
@@ -13,10 +11,10 @@ type (
 	particle struct {
 		lifetime               float32
 		life                   float32
-		position               mgl32.Vec2
-		origin                 mgl32.Vec2
-		velocity               mgl32.Vec2
-		linearAcceleration     mgl32.Vec2
+		position               vec.Vec2
+		origin                 vec.Vec2
+		velocity               vec.Vec2
+		linearAcceleration     vec.Vec2
 		radialAcceleration     float32
 		tangentialAcceleration float32
 		linearDamping          float32
@@ -40,9 +38,9 @@ type (
 		maxParticles              int
 		emissionRate              float32
 		emitCounter               float32
-		position                  mgl32.Vec2
-		prevPosition              mgl32.Vec2
-		areaSpread                mgl32.Vec2
+		position                  vec.Vec2
+		prevPosition              vec.Vec2
+		areaSpread                vec.Vec2
 		lifetime                  float32
 		life                      float32
 		particleLifeMin           float32
@@ -51,8 +49,8 @@ type (
 		spread                    float32
 		speedMin                  float32
 		speedMax                  float32
-		linearAccelerationMin     mgl32.Vec2
-		linearAccelerationMax     mgl32.Vec2
+		linearAccelerationMin     vec.Vec2
+		linearAccelerationMax     vec.Vec2
 		radialAccelerationMin     float32
 		radialAccelerationMax     float32
 		tangentialAccelerationMin float32
@@ -66,7 +64,7 @@ type (
 		spinStart                 float32
 		spinEnd                   float32
 		spinVariation             float32
-		offset                    mgl32.Vec2
+		offset                    vec.Vec2
 		defaultOffset             bool
 		colors                    []*Color
 		quads                     []Quad
@@ -103,7 +101,7 @@ func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
 		insertMode:             INSERT_MODE_TOP,
 		areaSpreadDistribution: DISTRIBUTION_NONE,
 		lifetime:               -1,
-		offset:                 mgl32.Vec2{float32(texture.GetWidth()) * 0.5, float32(texture.GetHeight()) * 0.5},
+		offset:                 vec.Vec2{float32(texture.GetWidth()) * 0.5, float32(texture.GetHeight()) * 0.5},
 		defaultOffset:          true,
 		colors:                 []*Color{&Color{1.0, 1.0, 1.0, 1.0}},
 		sizes:                  []float32{1.0},
@@ -119,10 +117,10 @@ func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
 // particle offset is coming from the proper position.
 func (system *ParticleSystem) resetOffset() {
 	if len(system.quads) == 0 {
-		system.offset = mgl32.Vec2{float32(system.texture.GetWidth()) * 0.5, float32(system.texture.GetHeight()) * 0.5}
+		system.offset = vec.Vec2{float32(system.texture.GetWidth()) * 0.5, float32(system.texture.GetHeight()) * 0.5}
 	} else {
 		x, y, _, _ := system.quads[0].GetViewport()
-		system.offset = mgl32.Vec2{float32(x) * 0.5, float32(y) * 0.5}
+		system.offset = vec.Vec2{float32(x) * 0.5, float32(y) * 0.5}
 	}
 }
 
@@ -199,7 +197,7 @@ func (system *ParticleSystem) initParticle(t float32) *particle {
 
 	speed := rand.RandRange(system.speedMin, system.speedMax)
 	dir := rand.RandRange(system.direction-system.spread/2.0, system.direction+system.spread/2.0)
-	p.velocity = mgl32.Vec2{mth.Cos(dir), mth.Sin(dir)}.Mul(speed)
+	p.velocity = vec.Vec2{Cos(dir), Sin(dir)}.Mul(speed)
 
 	p.linearAcceleration[0] = rand.RandRange(system.linearAccelerationMin[0], system.linearAccelerationMax[0])
 	p.linearAcceleration[1] = rand.RandRange(system.linearAccelerationMin[1], system.linearAccelerationMax[1])
@@ -216,7 +214,7 @@ func (system *ParticleSystem) initParticle(t float32) *particle {
 	p.angle = p.rotation
 
 	if system.relativeRotation {
-		p.angle += mth.Atan2(p.velocity[1], p.velocity[0])
+		p.angle += Atan2(p.velocity[1], p.velocity[0])
 	}
 	p.color = system.colors[0]
 	p.quadIndex = 0
@@ -294,7 +292,7 @@ func (system *ParticleSystem) GetParticleLifetime() (float32, float32) {
 // particles. This is why you can use the system position insteam of drawing
 // at this position.
 func (system *ParticleSystem) SetPosition(x, y float32) {
-	system.position = mgl32.Vec2{x, y}
+	system.position = vec.Vec2{x, y}
 	system.prevPosition = system.position
 }
 
@@ -306,7 +304,7 @@ func (system *ParticleSystem) GetPosition() (float32, float32) {
 // MoveTo moves the position of the emitter. This results in smoother particle
 // spawning behaviour than if SetPosition is used every frame.
 func (system *ParticleSystem) MoveTo(x, y float32) {
-	system.position = mgl32.Vec2{x, y}
+	system.position = vec.Vec2{x, y}
 }
 
 // SetAreaSpread sets area-based spawn parameters for the particles. Newly created
@@ -314,7 +312,7 @@ func (system *ParticleSystem) MoveTo(x, y float32) {
 // this function. x and y are the maximum spawn distance from the center of the
 // emitter
 func (system *ParticleSystem) SetAreaSpread(distribution ParticleDistribution, x, y float32) {
-	system.areaSpread = mgl32.Vec2{x, y}
+	system.areaSpread = vec.Vec2{x, y}
 	system.areaSpreadDistribution = distribution
 }
 
@@ -366,8 +364,8 @@ func (system *ParticleSystem) GetSpeed() (float32, float32) {
 //particles.  Every particle created will accelerate along the x and y axes between
 // xmin,ymin and xmax,ymax.
 func (system *ParticleSystem) SetLinearAcceleration(xmin, ymin, xmax, ymax float32) {
-	system.linearAccelerationMin = mgl32.Vec2{xmin, ymin}
-	system.linearAccelerationMax = mgl32.Vec2{xmax, ymax}
+	system.linearAccelerationMin = vec.Vec2{xmin, ymin}
+	system.linearAccelerationMax = vec.Vec2{xmax, ymax}
 }
 
 // GetLinearAcceleration will return the min and max ranges od linear acceleration
@@ -476,7 +474,7 @@ func (system *ParticleSystem) GetSpinVariation() float32 {
 // SetOffset set the offset position which the particle sprite is rotated around.
 // If this function is not used, the particles rotate around their center.
 func (system *ParticleSystem) SetOffset(x, y float32) {
-	system.offset = mgl32.Vec2{x, y}
+	system.offset = vec.Vec2{x, y}
 	system.defaultOffset = false
 }
 
@@ -564,7 +562,7 @@ func (system *ParticleSystem) Emit(num int) {
 		return
 	}
 
-	num = mth.Mini(num, system.maxParticles-len(system.particles))
+	num = Mini(num, system.maxParticles-len(system.particles))
 
 	for ; num > 0; num-- {
 		system.addParticle(1.0)
@@ -658,7 +656,7 @@ func (system *ParticleSystem) Update(dt float32) {
 
 		p.angle = p.rotation
 		if system.relativeRotation {
-			p.angle += mth.Atan2(p.velocity[1], p.velocity[0])
+			p.angle += Atan2(p.velocity[1], p.velocity[0])
 		}
 
 		// Change size according to given intervals:

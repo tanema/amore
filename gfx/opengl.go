@@ -7,7 +7,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32/matstack"
 
 	"github.com/tanema/amore/gfx/gl"
-	"github.com/tanema/amore/mth"
 	"github.com/tanema/amore/window"
 )
 
@@ -450,16 +449,16 @@ func IntersectScissor(x, y, width, height int32) {
 	if !states.back().scissor {
 		rect[0] = 0
 		rect[1] = 0
-		rect[2] = mth.MaxInt32
-		rect[3] = mth.MaxInt32
+		rect[2] = MaxInt32
+		rect[3] = MaxInt32
 	}
 
-	x1 := mth.Maxi32(rect[0], x)
-	y1 := mth.Maxi32(rect[1], y)
-	x2 := mth.Mini32(rect[0]+rect[2], x+width)
-	y2 := mth.Mini32(rect[1]+rect[3], y+height)
+	x1 := Maxi32(rect[0], x)
+	y1 := Maxi32(rect[1], y)
+	x2 := Mini32(rect[0]+rect[2], x+width)
+	y2 := Mini32(rect[1]+rect[3], y+height)
 
-	SetScissor(x1, y1, mth.Maxi32(0, x2-x1), mth.Maxi32(0, y2-y1))
+	SetScissor(x1, y1, Maxi32(0, x2-x1), Maxi32(0, y2-y1))
 }
 
 // ClearScissor will disable all set scissors.
@@ -757,7 +756,7 @@ func SetDefaultFilter(min, mag FilterMode, anisotropy float32) {
 	states.back().defaultFilter = Filter{
 		min:        min,
 		mag:        mag,
-		anisotropy: mth.Min(mth.Max(anisotropy, 1.0), maxAnisotropy),
+		anisotropy: Min(Max(anisotropy, 1.0), maxAnisotropy),
 	}
 }
 

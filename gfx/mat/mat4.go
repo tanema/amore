@@ -1,13 +1,9 @@
 package mat
 
-import (
-	"github.com/tanema/amore/mth"
-)
-
 type Mat4 [16]float32
 
 func New4(args ...float32) *Mat4 {
-	var mat *Mat4
+	mat := &Mat4{}
 	mat.SetIdentity()
 	if args != nil && len(args) > 0 {
 		mat.SetTransformation(args...)
@@ -29,7 +25,7 @@ func Ortho(left, right, bottom, top float32) *Mat4 {
 }
 
 func (mat *Mat4) SetIdentity() {
-	mat = new(Mat4)
+	*mat = Mat4{}
 	mat[0] = 1
 	mat[5] = 1
 	mat[10] = 1
@@ -44,8 +40,8 @@ func (mat *Mat4) SetTranslation(x, y float32) {
 
 func (mat *Mat4) SetRotation(rad float32) {
 	mat.SetIdentity()
-	c := mth.Cos(rad)
-	s := mth.Sin(rad)
+	c := cos(rad)
+	s := sin(rad)
 	mat[0] = c
 	mat[4] = -s
 	mat[1] = s
@@ -67,8 +63,8 @@ func (mat *Mat4) SetShear(kx, ky float32) {
 func (mat *Mat4) SetTransformation(args ...float32) {
 	x, y, angle, sx, sy, ox, oy, kx, ky := normalizeDrawCallArgs(args)
 	mat.SetIdentity()
-	c := mth.Cos(angle)
-	s := mth.Sin(angle)
+	c := cos(angle)
+	s := sin(angle)
 	mat[10] = 1
 	mat[15] = 1
 	mat[0] = c*sx - ky*s*sy // = a

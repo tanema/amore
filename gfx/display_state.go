@@ -1,9 +1,8 @@
 package gfx
 
 import (
-	"github.com/go-gl/mathgl/mgl32/matstack"
-
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/gfx/gl/mat"
 )
 
 // displayState track a certain point in transformations
@@ -40,8 +39,8 @@ type glState struct {
 	framebufferSRGBEnabled bool
 	defaultTexture         gl.Texture
 	defaultFBO             gl.Framebuffer
-	projectionStack        *matstack.MatStack
-	viewStack              *matstack.MatStack
+	projectionStack        *mat.Stack
+	viewStack              *mat.Stack
 	currentCanvas          *Canvas
 	currentShader          *Shader
 	textureCounters        []int

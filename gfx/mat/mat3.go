@@ -1,13 +1,9 @@
 package mat
 
-import (
-	"github.com/tanema/amore/mth"
-)
-
 type Mat3 [9]float32
 
 func New3(args ...float32) *Mat3 {
-	var mat *Mat3
+	mat := &Mat3{}
 	mat.SetIdentity()
 	if args != nil && len(args) > 0 {
 		mat.SetTransformation(args...)
@@ -16,7 +12,7 @@ func New3(args ...float32) *Mat3 {
 }
 
 func (mat *Mat3) SetIdentity() {
-	mat = new(Mat3)
+	*mat = Mat3{}
 	mat[0] = 1
 	mat[4] = 1
 	mat[8] = 1
@@ -61,8 +57,8 @@ func (mat *Mat3) TransposedInverse() *Mat3 {
 func (mat *Mat3) SetTransformation(args ...float32) {
 	x, y, angle, sx, sy, ox, oy, kx, ky := normalizeDrawCallArgs(args)
 	mat.SetIdentity()
-	c := mth.Cos(angle)
-	s := mth.Sin(angle)
+	c := cos(angle)
+	s := sin(angle)
 
 	mat[0] = c*sx - ky*s*sy // = a
 	mat[1] = s*sx + ky*c*sy // = b

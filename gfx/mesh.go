@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/tanema/amore/gfx/gl"
-	"github.com/tanema/amore/mth"
 )
 
 type (
@@ -128,10 +127,10 @@ func (mesh *Mesh) GetDrawRange() (int, int) {
 		max = mesh.vertexCount - 1
 	}
 	if mesh.rangeMax >= 0 {
-		max = mth.Mini(mesh.rangeMax, max)
+		max = Mini(mesh.rangeMax, max)
 	}
 	if mesh.rangeMin >= 0 {
-		min = mth.Mini(mesh.rangeMin, max)
+		min = Mini(mesh.rangeMin, max)
 	}
 	return min, max
 }
