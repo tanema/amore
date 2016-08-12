@@ -2,7 +2,7 @@ package gfx
 
 import (
 	"github.com/tanema/amore/gfx/gl"
-	"github.com/tanema/amore/gfx/gl/mat"
+	"github.com/tanema/amore/gfx/mat"
 )
 
 // displayState track a certain point in transformations

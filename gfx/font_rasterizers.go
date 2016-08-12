@@ -189,8 +189,8 @@ func (rast *ttfFontRasterizer) loadVolatile() bool {
 	}
 
 	for _, g := range rast.glyphs {
-		rast.ascent = Maxi(rast.ascent, g.ascent)
-		rast.descent = Maxi(rast.descent, g.descent)
+		rast.ascent = maxi(rast.ascent, g.ascent)
+		rast.descent = maxi(rast.descent, g.descent)
 	}
 
 	rast.Texture, err = newImageTexture(rgba, false)

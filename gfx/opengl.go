@@ -3,10 +3,8 @@ package gfx
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/go-gl/mathgl/mgl32/matstack"
-
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/gfx/mat"
 	"github.com/tanema/amore/window"
 )
 
@@ -20,7 +18,7 @@ var (
 	maxTextureUnits        int32
 	screen_width           = int32(0)
 	screen_height          = int32(0)
-	modelIdent             = mgl32.Ident4()
+	modelIdent             = mat.New4()
 	defaultShader          *Shader
 
 	gl_state = glState{
@@ -68,8 +66,8 @@ func InitContext(w, h int32) {
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
 	//default matricies
-	gl_state.projectionStack = matstack.NewMatStack()
-	gl_state.viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
+	gl_state.projectionStack = mat.NewStack()
+	gl_state.viewStack = mat.NewStack() //stacks are initialized with ident matricies on top
 
 	SetViewportSize(w, h)
 	SetBackgroundColor(0, 0, 0, 255)
@@ -115,14 +113,14 @@ func createDefaultTexture() {
 }
 
 // prepareDraw will upload all the transformations to the current shader
-func prepareDraw(model *mgl32.Mat4) {
+func prepareDraw(model *mat.Mat4) {
 	if model == nil {
-		model = &modelIdent
+		model = modelIdent
 	}
 
-	gl_state.currentShader.SendMat4("ProjectionMat", gl_state.projectionStack.Peek())
-	gl_state.currentShader.SendMat4("ViewMat", gl_state.viewStack.Peek())
-	gl_state.currentShader.SendMat4("ModelMat", *model)
+	gl_state.currentShader.SendMat4("ProjectionMat", gl_state.projectionStack.Peek().Array()...)
+	gl_state.currentShader.SendMat4("ViewMat", gl_state.viewStack.Peek().Array()...)
+	gl_state.currentShader.SendMat4("ModelMat", model.Array()...)
 	gl_state.currentShader.SendFloat("ScreenSize", float32(screen_width), float32(screen_height), 0, 0)
 	gl_state.currentShader.SendFloat("PointSize", states.back().pointSize)
 }
@@ -257,7 +255,7 @@ func SetViewport(x, y, w, h int32) {
 	// Set the viewport to top-left corner.
 	gl.Viewport(int(y), int(x), int(screen_width), int(screen_height))
 	gl_state.viewport = []int32{y, x, screen_width, screen_height}
-	gl_state.projectionStack.Load(mgl32.Ortho(float32(x), float32(screen_width), float32(screen_height), float32(y), -1, 1))
+	(*gl_state.projectionStack.Peek()) = *mat.Ortho(float32(x), float32(screen_width), float32(screen_height), float32(y))
 	SetScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
 }
 
@@ -329,7 +327,7 @@ func IsCreated() bool {
 // This function is always used to reverse any previous calls to Rotate, Scale,
 // Shear or Translate.
 func Origin() {
-	gl_state.viewStack.LoadIdent()
+	(*gl_state.projectionStack.Peek()) = *mat.New4()
 	states.back().pixelSize = 1.0
 }
 
@@ -341,14 +339,14 @@ func Origin() {
 // or else a Pop reverts to a previous graphics state. Translating using whole
 // numbers will prevent tearing/blurring of images and fonts draw after translating.
 func Translate(x, y float32) {
-	gl_state.viewStack.LeftMul(mgl32.Translate3D(x, y, 0))
+	gl_state.viewStack.Peek().Translate(x, y)
 }
 
 // Rotate rotates the coordinate system in two dimensions. Calling this function
 // affects all future drawing operations by rotating the coordinate system around
 // the origin by the given amount of radians. This change lasts until drawing completes
 func Rotate(angle float32) {
-	gl_state.viewStack.LeftMul(mgl32.HomogRotate3D(angle, mgl32.Vec3{0, 0, 1}))
+	gl_state.viewStack.Peek().Rotate(angle)
 }
 
 // Scale scales the coordinate system in two dimensions. By default the coordinate system
@@ -372,9 +370,9 @@ func Scale(args ...float32) {
 		sy = sx
 	}
 
-	gl_state.viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
+	gl_state.viewStack.Peek().Scale(sx, sy)
 
-	states.back().pixelSize *= (2.0 / (mgl32.Abs(sx) + mgl32.Abs(sy)))
+	states.back().pixelSize *= (2.0 / (abs(sx) + abs(sy)))
 }
 
 // Shear shears the coordinate system.
@@ -389,8 +387,7 @@ func Shear(args ...float32) {
 	} else {
 		ky = kx
 	}
-
-	gl_state.viewStack.LeftMul(mgl32.ShearX3D(kx, ky))
+	gl_state.viewStack.Peek().Shear(kx, ky)
 }
 
 // Push copies and pushes the current coordinate transformation to the transformation
@@ -400,7 +397,7 @@ func Shear(args ...float32) {
 // using the pop operation, which returns the coordinate transform to the state
 // it was in before calling push.
 func Push() {
-	gl_state.viewStack.Push()
+	gl_state.viewStack.Push(mat.New4())
 	states.push(*states.back())
 }
 
@@ -449,16 +446,16 @@ func IntersectScissor(x, y, width, height int32) {
 	if !states.back().scissor {
 		rect[0] = 0
 		rect[1] = 0
-		rect[2] = MaxInt32
-		rect[3] = MaxInt32
+		rect[2] = maxInt32
+		rect[3] = maxInt32
 	}
 
-	x1 := Maxi32(rect[0], x)
-	y1 := Maxi32(rect[1], y)
-	x2 := Mini32(rect[0]+rect[2], x+width)
-	y2 := Mini32(rect[1]+rect[3], y+height)
+	x1 := maxi32(rect[0], x)
+	y1 := maxi32(rect[1], y)
+	x2 := mini32(rect[0]+rect[2], x+width)
+	y2 := mini32(rect[1]+rect[3], y+height)
 
-	SetScissor(x1, y1, Maxi32(0, x2-x1), Maxi32(0, y2-y1))
+	SetScissor(x1, y1, maxi32(0, x2-x1), maxi32(0, y2-y1))
 }
 
 // ClearScissor will disable all set scissors.
@@ -756,7 +753,7 @@ func SetDefaultFilter(min, mag FilterMode, anisotropy float32) {
 	states.back().defaultFilter = Filter{
 		min:        min,
 		mag:        mag,
-		anisotropy: Min(Max(anisotropy, 1.0), maxAnisotropy),
+		anisotropy: clamp(anisotropy, 1.0, maxAnisotropy),
 	}
 }
 

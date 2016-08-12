@@ -9,7 +9,6 @@ import (
 
 	"github.com/tanema/amore/file"
 	"github.com/tanema/amore/gfx/gl"
-	"github.com/tanema/amore/gfx/mat"
 )
 
 type Shader struct {
@@ -183,7 +182,7 @@ func (shader *Shader) SendFloat(name string, values ...float32) error {
 	return errors.New("Invalid type size for uniform: " + name)
 }
 
-func (shader *Shader) SendMat4(name string, mat mat.Mat4) error {
+func (shader *Shader) SendMat4(name string, mat ...float32) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
@@ -200,7 +199,7 @@ func (shader *Shader) SendMat4(name string, mat mat.Mat4) error {
 	return nil
 }
 
-func (shader *Shader) SendMat3(name string, mat mat.Mat3) error {
+func (shader *Shader) SendMat3(name string, mat ...float32) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
@@ -216,7 +215,7 @@ func (shader *Shader) SendMat3(name string, mat mat.Mat3) error {
 	return nil
 }
 
-func (shader *Shader) SendMat2(name string, mat mat.Mat2) error {
+func (shader *Shader) SendMat2(name string, mat ...float32) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 

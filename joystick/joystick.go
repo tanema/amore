@@ -4,8 +4,6 @@ package joystick
 
 import (
 	"github.com/veandco/go-sdl2/sdl"
-
-	"github.com/tanema/amore/gfx"
 )
 
 // vibration is a struct that keeps track of vibration patterns and lengths for
@@ -273,11 +271,11 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 		return joystick.stopVibration()
 	}
 
-	left := gfx.Min(gfx.Max(args[0], 0.0), 1.0)
+	left := min(max(args[0], 0.0), 1.0)
 	right := left
 
 	if len(args) > 1 {
-		right = gfx.Min(gfx.Max(right, 0.0), 1.0)
+		right = min(max(right, 0.0), 1.0)
 	}
 
 	if left == 0.0 && right == 0.0 {
@@ -286,8 +284,8 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 
 	length := sdl.HAPTIC_INFINITY
 	if len(args) > 2 && args[2] >= 0.0 {
-		maxduration := gfx.MaxUint32 / 1000.0
-		length = gfx.Mini(int(args[2]), int(maxduration)) * 1000
+		maxduration := maxUint32 / 1000.0
+		length = mini(int(args[2]), int(maxduration)) * 1000
 	}
 
 	success := false
@@ -298,8 +296,8 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 		joystick.vibration.Effect.SetType(sdl.HAPTIC_LEFTRIGHT)
 		lr := joystick.vibration.Effect.LeftRight()
 		lr.Length = uint32(length)
-		lr.LargeMagnitude = uint16(left * gfx.MaxUint16)
-		lr.SmallMagnitude = uint16(right * gfx.MaxUint16)
+		lr.LargeMagnitude = uint16(left * maxUint16)
+		lr.SmallMagnitude = uint16(right * maxUint16)
 		success = joystick.runVibrationEffect()
 	}
 
@@ -333,7 +331,7 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 		periodic := joystick.vibration.Effect.Periodic()
 		periodic.Length = uint32(length)
 		periodic.Period = 10
-		strength := gfx.Max(left, right)
+		strength := max(left, right)
 		periodic.Magnitude = int16(strength * 0x7FFF)
 		success = joystick.runVibrationEffect()
 	}

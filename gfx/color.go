@@ -82,9 +82,8 @@ func (color *Color) changeShade(percent float32) *Color {
 		color[3],
 	}
 
-	//clamp colors between 0 and 1
 	for i, c := range new_color {
-		new_color[i] = Max(0, Min(1, c))
+		new_color[i] = clamp(c, 0, 1)
 	}
 
 	return new_color

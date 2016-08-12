@@ -1,11 +1,11 @@
 package audio
 
 import (
+	"math"
 	"time"
 
 	"github.com/tanema/amore/audio/al"
 	"github.com/tanema/amore/audio/decoding"
-	"github.com/tanema/amore/gfx"
 )
 
 const (
@@ -173,9 +173,9 @@ func (s *Source) GetDuration() time.Duration {
 func (s *Source) GetCone() (float32, float32, float32) {
 	if s.isValid() {
 		c := s.source.Cone()
-		return gfx.DegToRad(float32(c.InnerAngle)), gfx.DegToRad(float32(c.OuterAngle)), c.OuterVolume
+		return degToRad(float32(c.InnerAngle)), degToRad(float32(c.OuterAngle)), c.OuterVolume
 	}
-	return gfx.DegToRad(float32(s.cone.InnerAngle)), gfx.DegToRad(float32(s.cone.OuterAngle)), s.cone.OuterVolume
+	return degToRad(float32(s.cone.InnerAngle)), degToRad(float32(s.cone.OuterAngle)), s.cone.OuterVolume
 }
 
 // GetDirection returns the direction of the Source with a vector of x, y, z
@@ -297,8 +297,8 @@ func (s *Source) SetAttenuationDistances(ref, max float32) {
 // angle, and outer volume
 func (s *Source) SetCone(innerAngle, outerAngle, outerVolume float32) {
 	s.cone = al.Cone{
-		InnerAngle:  int32(gfx.RadToDeg(innerAngle)),
-		OuterAngle:  int32(gfx.RadToDeg(outerAngle)),
+		InnerAngle:  int32(radToDeg(innerAngle)),
+		OuterAngle:  int32(radToDeg(outerAngle)),
 		OuterVolume: outerVolume,
 	}
 	s.reset()
@@ -499,4 +499,14 @@ func (s *Source) Tell() time.Duration {
 		return s.decoder.ByteOffsetToDur(s.source.OffsetByte())
 	}
 	return time.Duration(0.0)
+}
+
+// Converts degrees to radians
+func degToRad(angle float32) float32 {
+	return angle * float32(math.Pi) / 180
+}
+
+// Converts radians to degrees
+func radToDeg(angle float32) float32 {
+	return angle * 180 / float32(math.Pi)
 }

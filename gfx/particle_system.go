@@ -2,6 +2,7 @@ package gfx
 
 import (
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/gfx/mat"
 	"github.com/tanema/amore/gfx/rand"
 	"github.com/tanema/amore/gfx/vec"
 )
@@ -197,7 +198,7 @@ func (system *ParticleSystem) initParticle(t float32) *particle {
 
 	speed := rand.RandRange(system.speedMin, system.speedMax)
 	dir := rand.RandRange(system.direction-system.spread/2.0, system.direction+system.spread/2.0)
-	p.velocity = vec.Vec2{Cos(dir), Sin(dir)}.Mul(speed)
+	p.velocity = vec.Vec2{cos(dir), sin(dir)}.Mul(speed)
 
 	p.linearAcceleration[0] = rand.RandRange(system.linearAccelerationMin[0], system.linearAccelerationMax[0])
 	p.linearAcceleration[1] = rand.RandRange(system.linearAccelerationMin[1], system.linearAccelerationMax[1])
@@ -214,7 +215,7 @@ func (system *ParticleSystem) initParticle(t float32) *particle {
 	p.angle = p.rotation
 
 	if system.relativeRotation {
-		p.angle += Atan2(p.velocity[1], p.velocity[0])
+		p.angle += atan2(p.velocity[1], p.velocity[0])
 	}
 	p.color = system.colors[0]
 	p.quadIndex = 0
@@ -562,7 +563,7 @@ func (system *ParticleSystem) Emit(num int) {
 		return
 	}
 
-	num = Mini(num, system.maxParticles-len(system.particles))
+	num = mini(num, system.maxParticles-len(system.particles))
 
 	for ; num > 0; num-- {
 		system.addParticle(1.0)
@@ -656,7 +657,7 @@ func (system *ParticleSystem) Update(dt float32) {
 
 		p.angle = p.rotation
 		if system.relativeRotation {
-			p.angle += Atan2(p.velocity[1], p.velocity[0])
+			p.angle += atan2(p.velocity[1], p.velocity[0])
 		}
 
 		// Change size according to given intervals:
@@ -744,12 +745,12 @@ func (system *ParticleSystem) Draw(args ...float32) {
 		}
 
 		// particle vertices are image vertices transformed by particle info
-		mat := generateModelMatFromArgs([]float32{
+		mat := mat.New4(
 			p.position[0], p.position[1],
 			p.angle,
 			p.size, p.size,
 			system.offset[0], system.offset[1],
-		})
+		)
 
 		pvi := 32 * particle_index
 		for i := 0; i < 32; i += 8 {
@@ -765,7 +766,7 @@ func (system *ParticleSystem) Draw(args ...float32) {
 		}
 	}
 
-	prepareDraw(generateModelMatFromArgs(args))
+	prepareDraw(mat.New4(args...))
 	bindTexture(system.texture.getHandle())
 
 	useVertexAttribArrays(attribflag_pos | attribflag_texcoord | attribflag_color)

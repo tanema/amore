@@ -141,7 +141,7 @@ const (
 	USAGE_DYNAMIC Usage = 0x88E8
 
 	// upper limit of particles that can be created
-	MAX_PARTICLES = MaxInt32 / 4
+	MAX_PARTICLES = maxInt32 / 4
 
 	//particle distrobution
 	DISTRIBUTION_NONE ParticleDistribution = iota

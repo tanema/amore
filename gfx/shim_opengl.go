@@ -41,7 +41,7 @@ func setTexMipMap() {
 func (texture *Texture) SetMipmapSharpness(sharpness float32) {
 	var maxMipmapSharpness float32
 	gl.GetFloatv(gl.MAX_TEXTURE_LOD_BIAS, &maxMipmapSharpness)
-	mipmapSharpness := Min(Max(sharpness, -(maxMipmapSharpness+0.01)), maxMipmapSharpness-0.01)
+	mipmapSharpness := clamp(sharpness, -(maxMipmapSharpness + 0.01), maxMipmapSharpness-0.01)
 	bindTexture(texture.getHandle())
 	//negative bias is sharper
 	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_LOD_BIAS, -float32(mipmapSharpness))

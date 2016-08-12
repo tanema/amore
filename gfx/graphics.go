@@ -70,7 +70,7 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 	}
 
 	// Oh, you want to draw a circle?
-	if Abs(angle1-angle2) >= (2.0 * Pi) {
+	if abs(angle1-angle2) >= (2.0 * pi) {
 		Circlep(mode, x, y, radius, points)
 		return
 	}
@@ -91,8 +91,8 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 
 	for i := 0; i <= points; i++ {
 		phi = phi + angle_shift
-		coords[2*(i+1)] = x + radius*Cos(phi)
-		coords[2*(i+1)+1] = y + radius*Sin(phi)
+		coords[2*(i+1)] = x + radius*cos(phi)
+		coords[2*(i+1)+1] = y + radius*sin(phi)
 	}
 
 	if mode == LINE {
@@ -120,7 +120,7 @@ func Ellipse(mode DrawMode, x, y, radiusx, radiusy float32) {
 // If it is lower it will look jagged. If it is higher it will hit performace.
 // The drawmode specifies either a fill or line draw
 func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
-	two_pi := Pi * 2.0
+	two_pi := pi * 2.0
 	if points <= 0 {
 		points = 1
 	}
@@ -131,8 +131,8 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 	coords := make([]float32, 2*(points+1))
 	for i := 0; i < points; i++ {
 		phi += angle_shift
-		coords[2*i+0] = x + radiusx*Cos(phi)
-		coords[2*i+1] = y + radiusy*Sin(phi)
+		coords[2*i+0] = x + radiusx*cos(phi)
+		coords[2*i+1] = y + radiusy*sin(phi)
 	}
 
 	coords[2*points+0] = coords[0]

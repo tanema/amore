@@ -194,10 +194,10 @@ func (sprite_batch *SpriteBatch) GetDrawRange() (int, int) {
 	min := 0
 	max := sprite_batch.count - 1
 	if sprite_batch.rangeMax >= 0 {
-		max = Mini(sprite_batch.rangeMax, max)
+		max = mini(sprite_batch.rangeMax, max)
 	}
 	if sprite_batch.rangeMin >= 0 {
-		min = Mini(sprite_batch.rangeMin, max)
+		min = mini(sprite_batch.rangeMin, max)
 	}
 	return min, max
 }
@@ -214,7 +214,7 @@ func (sprite_batch *SpriteBatch) Draw(args ...float32) {
 		return
 	}
 
-	prepareDraw(generateModelMatFromArgs(args))
+	prepareDraw(mat.New4(args...))
 	bindTexture(sprite_batch.texture.getHandle())
 	useVertexAttribArrays(attribflag_pos | attribflag_texcoord | attribflag_color)
 

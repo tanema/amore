@@ -11,6 +11,14 @@ func New3(args ...float32) *Mat3 {
 	return mat
 }
 
+func (mat *Mat3) Array() []float32 {
+	return []float32{
+		mat[0], mat[1], mat[2],
+		mat[3], mat[4], mat[5],
+		mat[6], mat[7], mat[8],
+	}
+}
+
 func (mat *Mat3) SetIdentity() {
 	*mat = Mat3{}
 	mat[0] = 1

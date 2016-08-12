@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/tanema/amore/gfx/gl"
+	"github.com/tanema/amore/gfx/mat"
 )
 
 type (
@@ -127,10 +128,10 @@ func (mesh *Mesh) GetDrawRange() (int, int) {
 		max = mesh.vertexCount - 1
 	}
 	if mesh.rangeMax >= 0 {
-		max = Mini(mesh.rangeMax, max)
+		max = mini(mesh.rangeMax, max)
 	}
 	if mesh.rangeMin >= 0 {
-		min = Mini(mesh.rangeMin, max)
+		min = mini(mesh.rangeMin, max)
 	}
 	return min, max
 }
@@ -252,7 +253,7 @@ func (mesh *Mesh) bindTexture() {
 // ox, oy are offset
 // kx, ky are the shear. If ky is not given ky will equal kx
 func (mesh *Mesh) Draw(args ...float32) {
-	prepareDraw(generateModelMatFromArgs(args))
+	prepareDraw(mat.New4(args...))
 	mesh.bindTexture()
 	mesh.bindEnabledAttributes()
 	min, max := mesh.GetDrawRange()

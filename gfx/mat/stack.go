@@ -14,8 +14,8 @@ func NewStack() *Stack {
 }
 
 // Copies the top element and pushes it on the stack.
-func (ms *Stack) Push() {
-	(*ms) = append(*ms, (*ms)[len(*ms)-1])
+func (ms *Stack) Push(top *Mat4) {
+	(*ms) = append(*ms, top)
 }
 
 // Removes the first element of the matrix from the stack, if there is only one element left

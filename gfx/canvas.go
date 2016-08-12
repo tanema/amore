@@ -121,8 +121,7 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, canvas.fbo)
 	SetViewport(0, 0, canvas.width, canvas.height)
 	// Set up the projection matrix
-	gl_state.projectionStack.Push()
-	gl_state.projectionStack.Load(mat.Ortho(0.0, float32(screen_width), 0.0, float32(screen_height)))
+	gl_state.projectionStack.Push(mat.Ortho(0.0, float32(screen_width), 0.0, float32(screen_height)))
 
 	canvas.attacheExtra(canvases)
 	canvas.attachedCanvases = canvases

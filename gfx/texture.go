@@ -288,7 +288,7 @@ func (texture *Texture) drawv(model *mat.Mat4, vertices []float32) {
 // ox, oy are offset
 // kx, ky are the shear. If ky is not given ky will equal kx
 func (texture *Texture) Draw(args ...float32) {
-	texture.drawv(generateModelMatFromArgs(args), texture.vertices)
+	texture.drawv(mat.New4(args...), texture.vertices)
 }
 
 // Drawq satisfies the QuadDrawable interface.
@@ -301,5 +301,5 @@ func (texture *Texture) Draw(args ...float32) {
 // ox, oy are offset
 // kx, ky are the shear. If ky is not given ky will equal kx
 func (texture *Texture) Drawq(quad *Quad, args ...float32) {
-	texture.drawv(generateModelMatFromArgs(args), quad.getVertices())
+	texture.drawv(mat.New4(args...), quad.getVertices())
 }

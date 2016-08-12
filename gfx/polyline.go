@@ -164,7 +164,7 @@ func (polyline *polyLine) renderMiterEdge(sleeve, current, next vec.Vec2) {
 
 	det := determinant(sleeve, t)
 	// lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
-	if Abs(det)/(sleeve.Len()*len_t) < LINES_PARALLEL_EPS && sleeve.Dot(t) > 0 {
+	if abs(det)/(sleeve.Len()*len_t) < LINES_PARALLEL_EPS && sleeve.Dot(t) > 0 {
 		polyline.normals = append(polyline.normals, sleeve_normal)
 		polyline.normals = append(polyline.normals, sleeve_normal.Mul(-1))
 	} else {
@@ -201,7 +201,7 @@ func (polyline *polyLine) renderBevelEdge(sleeve, current, next vec.Vec2) {
 	len_t := t.Len()
 
 	det := determinant(sleeve, t)
-	if Abs(det)/(sleeve.Len()*len_t) < LINES_PARALLEL_EPS && sleeve.Dot(t) > 0 {
+	if abs(det)/(sleeve.Len()*len_t) < LINES_PARALLEL_EPS && sleeve.Dot(t) > 0 {
 		// lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
 		n := getNormal(t, polyline.halfwidth/len_t)
 		polyline.normals = append(polyline.normals, n)
@@ -348,7 +348,7 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 		overdraw = polyline.renderOverdraw(is_looping)
 	}
 
-	numindices := Maxi(len(polyline.vertices)/4, len(overdraw)/4)
+	numindices := maxi(len(polyline.vertices)/4, len(overdraw)/4)
 	indices := newAltQuadIndices(numindices)
 
 	prepareDraw(nil)

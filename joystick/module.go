@@ -1,9 +1,9 @@
 package joystick
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
+	"math"
 
-	"github.com/tanema/amore/gfx"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 var (
@@ -120,7 +120,7 @@ func getJoystickFromID(id int) *Joystick {
 // value, as can happen with gamepads and joysticks. It will also clamp the values
 // to the absolute -1, 1 values because sometimes joysticks wont reach all the way.
 func clampval(x float32) float32 {
-	if gfx.Abs(x) < 0.01 {
+	if abs(x) < 0.01 {
 		return 0.0
 	}
 
@@ -130,4 +130,29 @@ func clampval(x float32) float32 {
 		return 1.0
 	}
 	return x
+}
+
+const maxUint16 = math.MaxUint16
+const maxUint32 = math.MaxUint32
+
+func mini(x, y int) int {
+	return int(math.Min(float64(x), float64(y)))
+}
+
+func max(x, y float32) float32 {
+	return float32(math.Max(float64(x), float64(y)))
+}
+
+func min(x, y float32) float32 {
+	return float32(math.Min(float64(x), float64(y)))
+}
+
+func abs(a float32) float32 {
+	if a < 0 {
+		return -a
+	} else if a == 0 {
+		return 0
+	}
+
+	return a
 }
