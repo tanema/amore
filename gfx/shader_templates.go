@@ -18,6 +18,7 @@ const (
 uniform mat4 ProjectionMat;
 uniform mat4 ViewMat;
 uniform mat4 ModelMat;
+uniform mat4 PreMulMat;
 uniform vec4 ScreenSize;
 `
 
@@ -36,7 +37,7 @@ void main() {
 	VaryingTexCoord = VertexTexCoord;
 	VaryingColor = VertexColor * ConstantColor;
 	gl_PointSize = PointSize;
-	gl_Position = position(ProjectionMat, ViewMat, ModelMat, VertexPosition);
+	gl_Position = position(PreMulMat, VertexPosition);
 }`
 
 	pixel_header = `
@@ -63,8 +64,8 @@ void main() {
 }`
 
 	default_vertex_shader_code = `
-vec4 position(mat4 projection, mat4 view, mat4 model, vec3 vertpos) {
-	return projection * view * model * vec4(vertpos, 1); 
+vec4 position(mat4 transform, vec3 vertpos) {
+	return transform * vec4(vertpos, 1);
 }`
 
 	default_pixel_shader_code = `

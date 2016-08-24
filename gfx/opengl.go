@@ -121,9 +121,12 @@ func prepareDraw(model *mgl32.Mat4) {
 		model = &modelIdent
 	}
 
+	pmMat := gl_state.projectionStack.Peek().Mul4(gl_state.viewStack.Peek().Mul4(*model))
+
 	gl_state.currentShader.SendMat4("ProjectionMat", gl_state.projectionStack.Peek())
 	gl_state.currentShader.SendMat4("ViewMat", gl_state.viewStack.Peek())
 	gl_state.currentShader.SendMat4("ModelMat", *model)
+	gl_state.currentShader.SendMat4("PreMulMat", pmMat)
 	gl_state.currentShader.SendFloat("ScreenSize", float32(screen_width), float32(screen_height), 0, 0)
 	gl_state.currentShader.SendFloat("PointSize", states.back().pointSize)
 }
@@ -349,7 +352,7 @@ func Translate(x, y float32) {
 // affects all future drawing operations by rotating the coordinate system around
 // the origin by the given amount of radians. This change lasts until drawing completes
 func Rotate(angle float32) {
-	gl_state.viewStack.LeftMul(mgl32.HomogRotate3D(angle, mgl32.Vec3{0, 0, 1}))
+	gl_state.viewStack.LeftMul(mgl32.HomogRotate3DZ(angle))
 }
 
 // Scale scales the coordinate system in two dimensions. By default the coordinate system
