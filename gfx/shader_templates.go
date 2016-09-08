@@ -23,11 +23,11 @@ uniform vec4 ScreenSize;
 `
 
 	vertex_header = `
-attribute vec3 VertexPosition;
-attribute vec2 VertexTexCoord;
+attribute vec4 VertexPosition;
+attribute vec4 VertexTexCoord;
 attribute vec4 VertexColor;
 attribute vec4 ConstantColor;
-varying vec2 VaryingTexCoord;
+varying vec4 VaryingTexCoord;
 varying vec4 VaryingColor;
 uniform float PointSize;
 `
@@ -42,7 +42,7 @@ void main() {
 
 	pixel_header = `
 #define Canvases gl_FragData
-varying vec2 VaryingTexCoord;
+varying vec4 VaryingTexCoord;
 varying vec4 VaryingColor;
 uniform sampler2D _tex0_;
 `
@@ -52,7 +52,7 @@ void main() {
 	// fix crashing issue in OSX when _tex0_ is unused within effect()
 	float dummy = Texel(_tex0_, vec2(.5)).r;
 	vec2 pixelcoord = vec2(gl_FragCoord.x, (gl_FragCoord.y * ScreenSize.z) + ScreenSize.w);
-	gl_FragColor = effect(VaryingColor, _tex0_, VaryingTexCoord, pixelcoord);
+	gl_FragColor = effect(VaryingColor, _tex0_, VaryingTexCoord.st, pixelcoord);
 }`
 
 	footer_multi_canvas = `
@@ -64,8 +64,8 @@ void main() {
 }`
 
 	default_vertex_shader_code = `
-vec4 position(mat4 transform, vec3 vertpos) {
-	return transform * vec4(vertpos, 1);
+vec4 position(mat4 transform, vec4 vertpos) {
+	return transform * vertpos;
 }`
 
 	default_pixel_shader_code = `
