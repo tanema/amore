@@ -1,0 +1,85 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "UJTpOZ5IuuyoWFrS42uw/167mn0=",
+			"path": "github.com/BurntSushi/toml",
+			"revision": "f0aeabca5a127c4078abb8c8d64298b147264b55",
+			"revisionTime": "2016-04-26T10:16:13Z"
+		},
+		{
+			"checksumSHA1": "+o6dXUMZihIQpLKR6FsElz2ahkE=",
+			"path": "github.com/eaburns/bit",
+			"revision": "7bd5cd37375d2f05b48121d57a0304d339bc56fb",
+			"revisionTime": "2013-10-29T21:37:40Z"
+		},
+		{
+			"checksumSHA1": "CqqPO0CNJj05ECxdzHDTT612nB4=",
+			"path": "github.com/eaburns/flac",
+			"revision": "5edcd3ad347b407342451a3c5df6b9977457786e",
+			"revisionTime": "2016-03-12T21:15:48Z"
+		},
+		{
+			"checksumSHA1": "OWqHv1gVrS3yx4aS8tcX6uKd8XM=",
+			"path": "github.com/go-gl/gl/v2.1/gl",
+			"revision": "cd1cf4a9b229045e8a41d5945fc597617e8bae4f",
+			"revisionTime": "2016-03-06T11:11:50Z"
+		},
+		{
+			"checksumSHA1": "N6NC84Sk2bCixsBEi5PH3d1eLC0=",
+			"path": "github.com/go-gl/mathgl/mgl32",
+			"revision": "30e80ddae43e8836e390b36ee0f127a4a0d2c0f3",
+			"revisionTime": "2016-05-07T21:42:34Z"
+		},
+		{
+			"checksumSHA1": "Q85bpFUzU7nPCkt3biuL0KcVuWg=",
+			"path": "github.com/go-gl/mathgl/mgl32/matstack",
+			"revision": "30e80ddae43e8836e390b36ee0f127a4a0d2c0f3",
+			"revisionTime": "2016-05-07T21:42:34Z"
+		},
+		{
+			"checksumSHA1": "tc5N/cE7ZzwqFCftBCcyQIP6lco=",
+			"path": "github.com/hajimehoshi/go-vorbis",
+			"revision": "61fabb47ea217fd8b0000f5f1db05893580550a2",
+			"revisionTime": "2016-03-10T03:41:52Z"
+		},
+		{
+			"checksumSHA1": "mbiL+06sX+H42i83bUbgQd9IlrQ=",
+			"path": "github.com/tanema/freetype-go/freetype",
+			"revision": "dc1e2b83a6a63e7740967c29ad64b3de5ed93495",
+			"revisionTime": "2016-02-20T04:10:39Z"
+		},
+		{
+			"checksumSHA1": "drO1H/R34iyk8b/ltMw9I773fRM=",
+			"path": "github.com/tanema/freetype-go/freetype/raster",
+			"revision": "dc1e2b83a6a63e7740967c29ad64b3de5ed93495",
+			"revisionTime": "2016-02-20T04:10:39Z"
+		},
+		{
+			"checksumSHA1": "2nfa3G6ZYSggbZvmWiIfwgce8Dk=",
+			"path": "github.com/tanema/freetype-go/freetype/truetype",
+			"revision": "dc1e2b83a6a63e7740967c29ad64b3de5ed93495",
+			"revisionTime": "2016-02-20T04:10:39Z"
+		},
+		{
+			"checksumSHA1": "S10q7buBUHtX/wOi6DyGXYWkGB4=",
+			"path": "github.com/veandco/go-sdl2/sdl",
+			"revision": "acaa5e7814bee505935e910e4751ff793e24aafb",
+			"revisionTime": "2016-05-06T14:14:06Z"
+		},
+		{
+			"checksumSHA1": "8C1Wo1n41eZziU9fDQT7Bic5WSg=",
+			"path": "golang.org/x/image/math/f32",
+			"revision": "f551d3a6b7fc11df315ad9e18b404280680f8bec",
+			"revisionTime": "2016-04-08T04:15:19Z"
+		},
+		{
+			"checksumSHA1": "flv8T4qJHJtl6FxcuFUy8ULi+fU=",
+			"path": "golang.org/x/mobile/internal/mobileinit",
+			"revision": "6b7a416f797acce523b723f64e445ded687e1a33",
+			"revisionTime": "2016-05-20T23:27:30Z"
+		}
+	],
+	"rootPath": "github.com/tanema/amore"
+}
