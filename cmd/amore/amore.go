@@ -31,15 +31,40 @@ func main() {
 			newProject(project_name)
 		} else if args[0] == "version" {
 			printVersion()
+		} else {
+			printHelp()
 		}
 	} else {
-		printVersion()
+		printHelp()
 	}
 }
 
 // printVersion outputs the command line version
 func printVersion() {
 	fmt.Printf("Amore version: %v", amoreVersion)
+}
+
+func printHelp() {
+	fmt.Printf(`
+Amore - %v
+
+usage: amore <command> [args ..]
+
+Commands:
+  new <project_name>
+    Generates all basic files and folders to get started in the current directory
+
+  bundle [paths...]
+    Bundles inputed file paths.
+    If no paths were given then it will bundle the default assets folder and the conf.toml file.
+
+  version
+    Will print the version of this cli.
+
+  help
+    Will print this message.
+
+`, amoreVersion)
 }
 
 // Prints out the error message and exists with a non-success signal.
