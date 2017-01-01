@@ -1,24 +1,24 @@
 # Amore
- 
+
 [![GoDoc](https://godoc.org/github.com/tanema/amore?status.svg)](http://godoc.org/github.com/tanema/amore)
 
 A game framework for Go, inspired by Love 2D. Currently in Beta.
- 
+
 ## Objectives
 
 * Enable making games easy, fast and fun
 * Making games portable
 * Single executable deployment strategy.
- 
+
 ## Aimed Platform Support:
 
 - **OS X**
 - **Linux**
 - **Windows**
-- **iOS** 
+- **iOS**
 - **Android**
 
- 
+
 ## Installation
 
 Install the amore package by running the go get command
@@ -31,7 +31,7 @@ go get -u github.com/tanema/amore/...
 
 Amore requires [SDL2](http://libsdl.org/download-2.0.php) to operate on PC. You can install it by doing the following.
 
-__Ubuntu 14.04 and above__, type: `apt-get install libsdl2-dev`  
+__Ubuntu 14.04 and above__, type: `apt-get install libsdl2-dev`
 
 __Fedora 20 and above__, type: `yum install SDL2-devel`
 
@@ -53,7 +53,7 @@ go install github.com/tanema/amore/cmd
 
 * `amore new` will generate initial files for a game in the current folder
 * `amore bundle` will generate a file called `asset_bundle.go` with all the assets and config in ziped byte array to be included in the binary
- 
+
 
 ## Example
 
@@ -64,20 +64,23 @@ See more examples at [github.com/tanema/amore-examples](https://github.com/tanem
 package main
 
 import (
-	"github.com/tanema/amore"
-	"github.com/tanema/amore/gfx"
+  "github.com/tanema/amore"
+  "github.com/tanema/amore/gfx"
 )
 
 func main() {
-	amore.Start(update, draw)
+  amore.Start(update, draw)
 }
 
 func update(deltaTime float32) {
 }
 
 func draw() {
-	gfx.Print("Hello World",50, 50)
+  gfx.Print("Hello World",50, 50)
 }
 ```
 
+## TODO
 
+- font rendering is bad
+- better sound support (add xm, better handling for non wav)

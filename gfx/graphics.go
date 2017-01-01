@@ -154,11 +154,11 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 
 // Point will draw a point on the screen at x, y position. The size of the point
 // is dependant on the point size set with SetPointSize.
-func Point(x, y float32) {
+func Points(coords ...float32) {
 	prepareDraw(nil)
 	bindTexture(gl_state.defaultTexture)
 	useVertexAttribArrays(attribflag_pos)
-	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr([]float32{x, y}))
+	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 	gl.DrawArrays(gl.POINTS, 0, 1)
 }
 

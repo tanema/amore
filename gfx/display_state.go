@@ -53,7 +53,7 @@ type glState struct {
 func newDisplayState() displayState {
 	return displayState{
 		blend_mode:             BLENDMODE_ALPHA,
-		pointSize:              1,
+		pointSize:              5,
 		pixelSize:              1,
 		stencilCompare:         COMPARE_ALWAYS,
 		line_width:             1,

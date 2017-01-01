@@ -1198,3 +1198,7 @@ func VertexAttribPointer(dst Attrib, size int, ty Enum, normalized bool, stride 
 func Viewport(x, y, width, height int) {
 	gl.Viewport(int32(x), int32(y), int32(width), int32(height))
 }
+
+func PointSize(size float32) {
+	gl.PointSize(size)
+}

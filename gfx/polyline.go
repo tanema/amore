@@ -47,11 +47,6 @@ func newPolyLine(join LineJoin, style LineStyle, line_width, pixel_size float32)
 		halfwidth:  line_width * 0.5,
 		pixel_size: pixel_size,
 	}
-
-	if new_polyline.overdraw {
-		new_polyline.halfwidth -= pixel_size * 0.3
-	}
-
 	return new_polyline
 }
 

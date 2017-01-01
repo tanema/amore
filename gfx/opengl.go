@@ -600,6 +600,7 @@ func GetLineJoin() LineJoin {
 // SetPointSize will set the size of points drawn by Point
 func SetPointSize(size float32) {
 	states.back().pointSize = size
+	gl.PointSize(size)
 }
 
 // GetPointSize will return the current point size
