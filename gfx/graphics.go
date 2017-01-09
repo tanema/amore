@@ -159,7 +159,7 @@ func Points(coords ...float32) {
 	bindTexture(gl_state.defaultTexture)
 	useVertexAttribArrays(attribflag_pos)
 	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
-	gl.DrawArrays(gl.POINTS, 0, 1)
+	gl.DrawArrays(gl.POINTS, 0, len(coords)/2)
 }
 
 // Line is a short form of Polyline so you can enter your params not in an array
