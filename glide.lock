@@ -1,0 +1,43 @@
+hash: 2799f886ad4d711e8594fda67fa5c88b2262264353bc3b9a964716a6b2765685
+updated: 2017-02-16T15:43:00.167144689-05:00
+imports:
+- name: github.com/BurntSushi/toml
+  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
+- name: github.com/eaburns/bit
+  version: 7bd5cd37375d2f05b48121d57a0304d339bc56fb
+- name: github.com/eaburns/flac
+  version: 5edcd3ad347b407342451a3c5df6b9977457786e
+- name: github.com/go-gl/gl
+  version: b303bcb3e83b7ef645a5104e1c2db7f8d9e8918a
+  subpackages:
+  - v2.1/gl
+- name: github.com/go-gl/mathgl
+  version: 9e3ea3e806141087fbb83a8a8e7038bf73eff120
+  subpackages:
+  - mgl32
+  - mgl32/matstack
+- name: github.com/hajimehoshi/go-vorbis
+  version: 61fabb47ea217fd8b0000f5f1db05893580550a2
+- name: github.com/skratchdot/open-golang
+  version: 75fb7ed4208cf72d323d7d02fd1a5964a7a9073c
+  subpackages:
+  - open
+- name: github.com/tanema/freetype-go
+  version: dc1e2b83a6a63e7740967c29ad64b3de5ed93495
+  subpackages:
+  - freetype
+  - freetype/raster
+  - freetype/truetype
+- name: github.com/veandco/go-sdl2
+  version: 29d75db2591136c18034ee04a816f23f28b673d6
+  subpackages:
+  - sdl
+- name: golang.org/x/image
+  version: 83686c547965220f8b5d75e83ddc67d73420a89f
+  subpackages:
+  - math/f32
+- name: golang.org/x/mobile
+  version: c2432111674ba1e139be11cc746383352b9f4d08
+  subpackages:
+  - internal/mobileinit
+testImports: []
