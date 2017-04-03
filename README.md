@@ -2,7 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/tanema/amore?status.svg)](http://godoc.org/github.com/tanema/amore)
 
-A game framework for Go, inspired by Love 2D. Currently in Beta.
+A game framework for Go, inspired by Love 2D. Currently in Beta. This is a hobby framework and support should not be expected.
 
 ## Objectives
 
