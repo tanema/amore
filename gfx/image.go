@@ -7,6 +7,7 @@ import (
 	_ "image/png"
 
 	"github.com/tanema/amore/file"
+	"github.com/tanema/amore/gfx/gl"
 )
 
 // Image is an image that is drawable to the screen
@@ -74,4 +75,19 @@ func (img *Image) loadVolatile() bool {
 	}
 
 	return true
+}
+
+// Drawv will take raw verticies so that you can draw the image on a polygon, specifying
+// the image coords.
+func (img *Image) Drawv(vertices []float32) {
+	prepareDraw(nil)
+	bindTexture(img.Texture.getHandle())
+	useVertexAttribArrays(attribflag_pos | attribflag_texcoord)
+
+	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(vertices))
+
+	textCoords := []float32{1, 1, 0, 1, 0, 0, 1, 0}
+	gl.VertexAttribPointer(attrib_texcoord, 2, gl.FLOAT, false, 0, gl.Ptr(textCoords))
+
+	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
 }

@@ -117,7 +117,7 @@ func Ellipse(mode DrawMode, x, y, radiusx, radiusy float32) {
 	Ellipsep(mode, x, y, radiusx, radiusy, defaultPointCount)
 }
 
-// Circlep will draw a circle at x, y with a radius as specified.
+// Ellipsep will draw a circle at x, y with a radius as specified.
 // radiusx and radiusy will specify how much the width will be along those axis
 // points specifies how many points should be generated in the arc.
 // If it is lower it will look jagged. If it is higher it will hit performace.
