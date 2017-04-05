@@ -79,6 +79,12 @@ func NewFile(path string) (File, error) {
 	}, nil
 }
 
+// Create will create and return a new empty file at the pass path
+func Create(path string) (File, error) {
+	path = normalizePath(path)
+	return os.Create(path)
+}
+
 // CreateDirectory will create all directories in the path given if they do not exist
 func CreateDirectory(path string) error {
 	return os.MkdirAll(normalizePath(path), os.ModeDir|os.ModePerm)
