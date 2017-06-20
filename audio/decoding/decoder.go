@@ -80,6 +80,8 @@ func Decode(filepath string) (Decoder, error) {
 		decoder = &vorbisDecoder{decoderBase: base}
 	case ".flac":
 		decoder = &flacDecoder{decoderBase: base}
+	case ".mp3":
+		decoder = &mp3Decoder{decoderBase: base}
 	default:
 		src.Close()
 		return nil, errors.New("unsupported audio file extention")
