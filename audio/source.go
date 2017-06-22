@@ -17,7 +17,7 @@ const (
 // Source manages decoding sound data, creates an openal sound and manages the
 // data associated with the source.
 type Source struct {
-	decoder           decoding.Decoder
+	decoder           *decoding.Decoder
 	source            al.Source
 	isStatic          bool
 	pitch             float32
@@ -82,7 +82,7 @@ func NewSource(filepath string, static bool) (*Source, error) {
 
 	if static {
 		new_source.staticBuffer = al.GenBuffers(1)[0]
-		new_source.staticBuffer.BufferData(decoder.GetFormat(), decoder.GetData(), decoder.GetSampleRate())
+		new_source.staticBuffer.BufferData(decoder.Format, decoder.GetData(), decoder.SampleRate)
 	} else {
 		new_source.streamBuffers = []al.Buffer{} //al.GenBuffers(MAX_BUFFERS)
 	}
@@ -161,12 +161,12 @@ func (s *Source) GetAttenuationDistances() (float32, float32) {
 
 // GetChannels returns the number of channels in the Source.
 func (s *Source) GetChannels() int16 {
-	return s.decoder.GetChannels()
+	return s.decoder.Channels
 }
 
 // GetDuration returns the total duration of the source.
 func (s *Source) GetDuration() time.Duration {
-	return s.decoder.GetDuration()
+	return s.decoder.Duration()
 }
 
 // GetCone returns the Source's directional volume cones by inner angle, outer angle,
@@ -421,7 +421,7 @@ func (s *Source) Play() bool {
 func (s *Source) stream(buffer al.Buffer) int {
 	decoded := s.decoder.Decode() //get more data
 	if decoded > 0 {
-		buffer.BufferData(s.decoder.GetFormat(), s.decoder.GetBuffer(), s.decoder.GetSampleRate())
+		buffer.BufferData(s.decoder.Format, s.decoder.Buffer, s.decoder.SampleRate)
 	}
 	if s.decoder.IsFinished() && s.IsLooping() {
 		s.decoder.Seek(0)
