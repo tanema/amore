@@ -7,14 +7,15 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 )
 
 type waveDecoder struct {
-	decoderBase
+	io.Reader
+	src            io.ReadCloser
 	header         *riffHeader
 	info           *riffChunkFmt
 	firstSamplePos uint32
+	dataSize       int32
 }
 
 type riffHeader struct {
@@ -33,11 +34,30 @@ type riffChunkFmt struct {
 	BitsPerSample  uint16
 }
 
-func (decoder *waveDecoder) read() error {
-	var err error
+func newWaveDecoder(src io.ReadCloser) (*Decoder, error) {
+	decoder := &waveDecoder{
+		src:    src,
+		Reader: src,
+		info:   &riffChunkFmt{},
+		header: &riffHeader{},
+	}
 
-	decoder.header = &riffHeader{}
-	if err = binary.Read(decoder.src, binary.LittleEndian, decoder.header); err != nil {
+	if err := decoder.decode(); err != nil {
+		return nil, err
+	}
+
+	return newDecoder(
+		src,
+		decoder,
+		int16(decoder.info.NumChannels),
+		int32(decoder.info.SampleRate),
+		int16(decoder.info.BitsPerSample),
+		decoder.dataSize,
+	), nil
+}
+
+func (decoder *waveDecoder) decode() error {
+	if err := binary.Read(decoder.src, binary.LittleEndian, decoder.header); err != nil {
 		return err
 	}
 
@@ -50,7 +70,7 @@ func (decoder *waveDecoder) read() error {
 	var chunkSize uint32
 	for {
 		// Read next chunkID
-		err = binary.Read(decoder.src, binary.BigEndian, &chunk)
+		err := binary.Read(decoder.src, binary.BigEndian, &chunk)
 		if err == io.EOF {
 			return io.ErrUnexpectedEOF
 		} else if err != nil {
@@ -65,19 +85,19 @@ func (decoder *waveDecoder) read() error {
 			return err
 		}
 
+		seeker := decoder.src.(io.Seeker)
 		if bytes.Equal(chunk[:], []byte("fmt ")) {
 			// seek 4 bytes back because riffChunkFmt reads the chunkSize again
-			if _, err = decoder.src.Seek(-4, os.SEEK_CUR); err != nil {
+			if _, err = seeker.Seek(-4, os.SEEK_CUR); err != nil {
 				return err
 			}
 
-			decoder.info = &riffChunkFmt{}
 			if err = binary.Read(decoder.src, binary.LittleEndian, decoder.info); err != nil {
 				return err
 			}
 			if decoder.info.LengthOfHeader > 16 { // canonical format if chunklen == 16
 				// Skip extra params
-				if _, err = decoder.src.Seek(int64(decoder.info.LengthOfHeader-16), os.SEEK_CUR); err != nil {
+				if _, err = seeker.Seek(int64(decoder.info.LengthOfHeader-16), os.SEEK_CUR); err != nil {
 					return err
 				}
 			}
@@ -87,29 +107,29 @@ func (decoder *waveDecoder) read() error {
 				return fmt.Errorf("Audio Format not supported")
 			}
 		} else if bytes.Equal(chunk[:], []byte("data")) {
-			size, _ := decoder.src.Seek(0, os.SEEK_CUR)
+			size, _ := seeker.Seek(0, os.SEEK_CUR)
 			decoder.firstSamplePos = uint32(size)
 			decoder.dataSize = int32(chunkSize)
 			break
 		} else {
-			if _, err = decoder.src.Seek(int64(chunkSize), os.SEEK_CUR); err != nil {
+			if _, err = seeker.Seek(int64(chunkSize), os.SEEK_CUR); err != nil {
 				return err
 			}
 		}
 	}
 
-	if decoder.info == nil {
-		return fmt.Errorf("unable to read the wav file format")
-	}
-
-	bytesPerSample := int32(decoder.info.BitsPerSample / 8)
-	numSamples := decoder.dataSize / bytesPerSample
-
-	decoder.channels = int16(decoder.info.NumChannels)
-	decoder.sampleRate = int32(decoder.info.SampleRate)
-	decoder.bitDepth = int16(decoder.info.BitsPerSample)
-	decoder.format = getFormat(decoder.channels, decoder.bitDepth)
-	decoder.duration = time.Duration(float64(numSamples)/float64(decoder.info.SampleRate)) * time.Second
-
 	return nil
+}
+
+func (decoder *waveDecoder) Seek(offset int64, whence int) (int64, error) {
+	seeker := decoder.src.(io.Seeker)
+	switch whence {
+	case io.SeekStart:
+		offset += int64(decoder.firstSamplePos)
+	case io.SeekCurrent:
+	case io.SeekEnd:
+		offset += int64(decoder.firstSamplePos) + int64(decoder.dataSize)
+		whence = io.SeekStart
+	}
+	return seeker.Seek(offset, whence)
 }

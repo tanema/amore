@@ -13,45 +13,28 @@ import (
 )
 
 type (
-	// Decoder is an interface for all the decoders and future sound data objects
-	Decoder interface {
-		read() error
-		GetBuffer() []byte
-		Seek(int64) bool
-		IsFinished() bool
-		GetFormat() uint32
-		GetChannels() int16
-		GetBitDepth() int16
-		GetSampleRate() int32
-		GetData() []byte
-		Decode() int
-		GetDuration() time.Duration
-		ByteOffsetToDur(offset int32) time.Duration
-		DurToByteOffset(dur time.Duration) int32
-	}
-	// decoderBase is a base implementation of a few methods to keep tryings DRY
-	decoderBase struct {
-		src_path       string
-		src            io.ReadSeeker
-		channels       int16
-		sampleRate     int32
-		bitDepth       int16
-		duration       time.Duration
-		eof            bool
-		buffer         []byte
-		format         uint32
-		dataSize       int32
-		currentPos     int64
-		firstSamplePos uint32
+	// Decoder is a base implementation of a few methods to keep tryings DRY
+	Decoder struct {
+		src        io.ReadCloser
+		codec      io.ReadSeeker
+		bitDepth   int16
+		eof        bool
+		dataSize   int32
+		currentPos int64
+
+		Channels    int16
+		SampleRate  int32
+		Buffer      []byte
+		Format      uint32
+		formatBytes int32
 	}
 )
 
-// The amount of bytes in each format
-var formatBytes = map[uint32]int32{
-	al.FormatMono8:    1,
-	al.FormatMono16:   2,
-	al.FormatStereo8:  2,
-	al.FormatStereo16: 4,
+var extHandlers = map[string]func(io.ReadCloser) (*Decoder, error){
+	".wav":  newWaveDecoder,
+	".ogg":  newVorbisDecoder,
+	".flac": newFlacDecoder,
+	".mp3":  newMp3Decoder,
 }
 
 // arbitrary buffer size, could be tuned in the future
@@ -61,33 +44,20 @@ const BUFFER_SIZE = 128 * 1024
 // that will handle its file type by the extention on the path. Supported formats
 // are wav, ogg, and flac. If there is an error retrieving the file or decoding it,
 // will return that error.
-func Decode(filepath string) (Decoder, error) {
+func Decode(filepath string) (*Decoder, error) {
 	src, err := file.NewFile(filepath)
 	if err != nil {
 		return nil, err
 	}
 
-	base := decoderBase{
-		src:      src,
-		src_path: filepath,
-	}
-
-	var decoder Decoder
-	switch file.Ext(filepath) {
-	case ".wav":
-		decoder = &waveDecoder{decoderBase: base}
-	case ".ogg":
-		decoder = &vorbisDecoder{decoderBase: base}
-	case ".flac":
-		decoder = &flacDecoder{decoderBase: base}
-	case ".mp3":
-		decoder = &mp3Decoder{decoderBase: base}
-	default:
+	handler, hasHandler := extHandlers[file.Ext(filepath)]
+	if !hasHandler {
 		src.Close()
 		return nil, errors.New("unsupported audio file extention")
 	}
 
-	if err = decoder.read(); err != nil {
+	decoder, err := handler(src)
+	if err != nil {
 		src.Close()
 		return nil, err
 	}
@@ -95,66 +65,73 @@ func Decode(filepath string) (Decoder, error) {
 	return decoder, nil
 }
 
-// getFormat will return the openal format for the channels and depth provided
-func getFormat(channels, depth int16) uint32 {
-	switch channels, depth := channels, depth; {
-	case channels == 1 && depth == 8:
-		return al.FormatMono8
-	case channels == 1 && depth == 16:
-		return al.FormatMono16
-	case channels == 2 && depth == 8:
-		return al.FormatStereo8
-	case channels == 2 && depth == 16:
-		return al.FormatStereo16
-	default:
-		return 0
+func newDecoder(src io.ReadCloser, codec io.ReadSeeker, channels int16, sampleRate int32, bitDepth int16, dataSize int32) *Decoder {
+	format, bytes := getFormatInfo(channels, bitDepth)
+	return &Decoder{
+		src:         src,
+		codec:       codec,
+		Channels:    channels,
+		SampleRate:  sampleRate,
+		bitDepth:    bitDepth,
+		dataSize:    dataSize,
+		currentPos:  0,
+		Format:      format,
+		formatBytes: bytes,
+		Buffer:      make([]byte, BUFFER_SIZE),
 	}
 }
 
-//Stubs for methods so functionality can be DRY
-func (decoder *decoderBase) GetBuffer() []byte          { return decoder.buffer }
-func (decoder *decoderBase) IsFinished() bool           { return decoder.eof }
-func (decoder *decoderBase) GetSampleRate() int32       { return decoder.sampleRate }
-func (decoder *decoderBase) GetChannels() int16         { return decoder.channels }
-func (decoder *decoderBase) GetBitDepth() int16         { return decoder.bitDepth }
-func (decoder *decoderBase) GetDuration() time.Duration { return decoder.duration }
-func (decoder *decoderBase) GetFormat() uint32          { return decoder.format }
+func (decoder *Decoder) IsFinished() bool {
+	return decoder.eof
+}
 
-func (decoder *decoderBase) GetData() []byte {
+func (decoder *Decoder) Duration() time.Duration {
+	return decoder.ByteOffsetToDur(decoder.dataSize / decoder.formatBytes)
+}
+
+func (decoder *Decoder) GetData() []byte {
 	data := make([]byte, decoder.dataSize)
 	decoder.Seek(0)
-	decoder.src.Read(data)
+	decoder.codec.Read(data)
 	return data
 }
 
 // ByteOffsetToDur will translate byte count to time duration
-func (decoder *decoderBase) ByteOffsetToDur(offset int32) time.Duration {
-	return time.Duration(offset * formatBytes[decoder.GetFormat()] * int32(time.Second) / decoder.GetSampleRate())
+func (decoder *Decoder) ByteOffsetToDur(offset int32) time.Duration {
+	return time.Duration(offset * decoder.formatBytes * int32(time.Second) / decoder.SampleRate)
 }
 
 // DurToByteOffset will translate time duration to a byte count
-func (decoder *decoderBase) DurToByteOffset(dur time.Duration) int32 {
-	return int32(dur) * int32(decoder.GetSampleRate()) / (formatBytes[decoder.GetFormat()] * int32(time.Second))
+func (decoder *Decoder) DurToByteOffset(dur time.Duration) int32 {
+	return int32(dur) * int32(decoder.SampleRate) / (decoder.formatBytes * int32(time.Second))
 }
 
 // Decode will read the next chunk into the buffer and return the amount of bytes read
-func (decoder *decoderBase) Decode() int {
-	buffer := make([]byte, BUFFER_SIZE)
-	n, err := decoder.src.Read(buffer)
-	decoder.currentPos += int64(n)
-	if n > 0 && decoder.currentPos >= int64(decoder.dataSize) { // protect against tail data
-		n -= int(decoder.currentPos - int64(decoder.dataSize))
-		err = io.EOF
-	}
+func (decoder *Decoder) Decode() int {
+	n, err := decoder.codec.Read(decoder.Buffer)
 	decoder.eof = (err == io.EOF)
-	decoder.buffer = buffer[:n]
 	return n
 }
 
 // Seek will seek in the source data by count of bytes
-func (decoder *decoderBase) Seek(s int64) bool {
+func (decoder *Decoder) Seek(s int64) bool {
 	decoder.currentPos = s
-	_, err := decoder.src.Seek(int64(decoder.firstSamplePos)+decoder.currentPos, os.SEEK_SET)
+	_, err := decoder.codec.Seek(decoder.currentPos, os.SEEK_SET)
 	decoder.eof = (err == io.EOF)
 	return err == nil || decoder.eof
+}
+
+func getFormatInfo(channels, depth int16) (format uint32, bytesInFormat int32) {
+	switch channels, depth := channels, depth; {
+	case channels == 1 && depth == 8:
+		return al.FormatMono8, 1
+	case channels == 1 && depth == 16:
+		return al.FormatMono16, 2
+	case channels == 2 && depth == 8:
+		return al.FormatStereo8, 2
+	case channels == 2 && depth == 16:
+		return al.FormatStereo16, 4
+	default:
+		return 0, 0
+	}
 }

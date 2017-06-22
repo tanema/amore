@@ -2,7 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/tanema/amore?status.svg)](http://godoc.org/github.com/tanema/amore)
 
-A game framework for Go, inspired by Love 2D. Currently in Beta. This is a hobby framework and support should not be expected.
+A game library for Go, inspired by Love 2D. Currently in Beta. This is a hobby library and support should not be expected.
 
 ## Objectives
 
@@ -17,7 +17,6 @@ A game framework for Go, inspired by Love 2D. Currently in Beta. This is a hobby
 - **Windows**
 - **iOS**
 - **Android**
-
 
 ## Installation
 
@@ -40,8 +39,6 @@ __Arch Linux__, type: `pacman -S sdl2`
 __Mac OS X__, via [Homebrew](http://brew.sh): `brew install sdl2`
 
 __Windows__, via [Msys2](https://msys2.github.io): `pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2`
-
-_Note: Ubuntu 14.04 currently has broken header file in the SDL2 package that disables people from compiling against it. It will be needed to either patch the header file or install SDL2 from source._
 
 ## Amore Command
 
@@ -82,5 +79,4 @@ func draw() {
 
 ## TODO
 
-- font rendering is bad
-- better sound support (add xm, better handling for non wav)
+- [ ] font rendering, especially spacing is bad

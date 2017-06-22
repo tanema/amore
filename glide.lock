@@ -1,8 +1,8 @@
-hash: 2799f886ad4d711e8594fda67fa5c88b2262264353bc3b9a964716a6b2765685
-updated: 2017-02-16T15:43:00.167144689-05:00
+hash: 9034261e7c30a7994e5a535118df8ab5a623a15900a032e684365488327879a9
+updated: 2017-06-22T10:59:43.683439732-04:00
 imports:
 - name: github.com/BurntSushi/toml
-  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
+  version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/eaburns/bit
   version: 7bd5cd37375d2f05b48121d57a0304d339bc56fb
 - name: github.com/eaburns/flac
@@ -16,8 +16,12 @@ imports:
   subpackages:
   - mgl32
   - mgl32/matstack
-- name: github.com/hajimehoshi/go-vorbis
-  version: 61fabb47ea217fd8b0000f5f1db05893580550a2
+- name: github.com/hajimehoshi/go-mp3
+  version: 2c461bfa5c31eaa2eed3e3234bc610029044612b
+- name: github.com/jfreymuth/oggvorbis
+  version: b87e13662b6a817ccce95d8f8322e12be4a0f1f6
+- name: github.com/jfreymuth/vorbis
+  version: 2f16367d086d143e8e946cc5ee24618147d673dc
 - name: github.com/skratchdot/open-golang
   version: 75fb7ed4208cf72d323d7d02fd1a5964a7a9073c
   subpackages:
