@@ -24,7 +24,7 @@ func newMp3Decoder(src io.ReadCloser) (*Decoder, error) {
 		2,
 		int32(r.SampleRate()),
 		16,
-		int32(r.Length()),
+		int32(r.Length())*2,
 	), nil
 }
 

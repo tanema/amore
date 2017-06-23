@@ -4,6 +4,7 @@ package decoding
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -86,7 +87,7 @@ func (decoder *Decoder) IsFinished() bool {
 }
 
 func (decoder *Decoder) Duration() time.Duration {
-	return decoder.ByteOffsetToDur(decoder.dataSize / decoder.formatBytes)
+	return decoder.ByteOffsetToDur(decoder.dataSize)
 }
 
 func (decoder *Decoder) GetData() []byte {
@@ -96,14 +97,18 @@ func (decoder *Decoder) GetData() []byte {
 	return data
 }
 
+// func (decoder *Decoder) samplesPerOneSec() int {
+//	return decoder.SampleRate * decoder.Channels * decoder.formatBytes
+// }
+
 // ByteOffsetToDur will translate byte count to time duration
 func (decoder *Decoder) ByteOffsetToDur(offset int32) time.Duration {
-	return time.Duration(offset * decoder.formatBytes * int32(time.Second) / decoder.SampleRate)
+	return time.Duration((int64(offset) / int64(decoder.formatBytes) / int64(decoder.Channels))) * time.Second / time.Duration(decoder.SampleRate)
 }
 
 // DurToByteOffset will translate time duration to a byte count
 func (decoder *Decoder) DurToByteOffset(dur time.Duration) int32 {
-	return int32(dur) * int32(decoder.SampleRate) / (decoder.formatBytes * int32(time.Second))
+	return int32((dur*time.Duration(decoder.SampleRate))/time.Second) * int32(decoder.Channels) * decoder.formatBytes
 }
 
 // Decode will read the next chunk into the buffer and return the amount of bytes read
