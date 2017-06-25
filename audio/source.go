@@ -36,6 +36,7 @@ type Source struct {
 	cone              al.Cone
 	staticBuffer      al.Buffer
 	streamBuffers     []al.Buffer
+	offsetBytes       int32
 }
 
 // State indicates the current playing state of the source.
@@ -119,9 +120,13 @@ func (s *Source) update() bool {
 		pool.mutex.Lock()
 		defer pool.mutex.Unlock()
 		for i := s.source.BuffersProcessed(); i > 0; i-- {
+			curOffsetBytes := s.source.OffsetByte()
 			buffer := s.source.UnqueueBuffer()
-			s.stream(buffer)
-			s.source.QueueBuffers(buffer)
+			newOffsetBytes := s.source.OffsetByte()
+			s.offsetBytes += (curOffsetBytes - newOffsetBytes)
+			if s.stream(buffer) > 0 {
+				s.source.QueueBuffers(buffer)
+			}
 		}
 		return true
 	}
@@ -424,7 +429,7 @@ func (s *Source) stream(buffer al.Buffer) int {
 		buffer.BufferData(s.decoder.Format, s.decoder.Buffer, s.decoder.SampleRate)
 	}
 	if s.decoder.IsFinished() && s.IsLooping() {
-		s.decoder.Seek(0)
+		s.Rewind()
 	}
 	return decoded
 }
@@ -455,20 +460,20 @@ func (s *Source) Rewind() { s.Seek(0) }
 // Seek sets the currently playing position of the Source.
 func (s *Source) Seek(offset time.Duration) {
 	if s.isValid() {
-		size := s.decoder.DurToByteOffset(offset)
+		s.offsetBytes = s.decoder.DurToByteOffset(offset)
 		if !s.isStatic {
 			waspaused := s.paused
 			// Because we still have old data from before the seek in the buffers let's empty them.
 			s.Stop()
 			s.Play()
-			s.decoder.Seek(int64(size))
+			s.decoder.Seek(int64(s.offsetBytes))
 			if waspaused {
 				s.Pause()
 			}
 		} else {
 			pool.mutex.Lock()
 			defer pool.mutex.Unlock()
-			s.source.SetOffsetBytes(size)
+			s.source.SetOffsetBytes(s.offsetBytes)
 		}
 	}
 }
@@ -489,7 +494,7 @@ func (s *Source) Stop() {
 		pool.release(s)
 		pool.mutex.Unlock()
 	}
-	s.decoder.Seek(0)
+	s.Rewind()
 }
 
 // Tell returns the currently playing position of the Source.
@@ -497,7 +502,11 @@ func (s *Source) Tell() time.Duration {
 	if s.isValid() {
 		pool.mutex.Lock()
 		defer pool.mutex.Unlock()
-		return s.decoder.ByteOffsetToDur(s.source.OffsetByte())
+		if s.isStatic {
+			return s.decoder.ByteOffsetToDur(s.source.OffsetByte())
+		} else {
+			return s.decoder.ByteOffsetToDur(s.offsetBytes + s.source.OffsetByte())
+		}
 	}
 	return time.Duration(0.0)
 }

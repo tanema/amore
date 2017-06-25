@@ -70,7 +70,7 @@ func (d *vorbisReader) Read(b []byte) (int, error) {
 	if left > len(b) {
 		left = len(b)
 	}
-	if left < 0 {
+	if left <= 0 {
 		return 0, io.EOF
 	}
 	left = left / 2 * 2

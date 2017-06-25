@@ -4,7 +4,6 @@ package decoding
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"time"
@@ -78,7 +77,6 @@ func newDecoder(src io.ReadCloser, codec io.ReadSeeker, channels int16, sampleRa
 		currentPos:  0,
 		Format:      format,
 		formatBytes: bytes,
-		Buffer:      make([]byte, BUFFER_SIZE),
 	}
 }
 
@@ -113,7 +111,9 @@ func (decoder *Decoder) DurToByteOffset(dur time.Duration) int32 {
 
 // Decode will read the next chunk into the buffer and return the amount of bytes read
 func (decoder *Decoder) Decode() int {
-	n, err := decoder.codec.Read(decoder.Buffer)
+	buffer := make([]byte, BUFFER_SIZE)
+	n, err := decoder.codec.Read(buffer)
+	decoder.Buffer = buffer[:n]
 	decoder.eof = (err == io.EOF)
 	return n
 }

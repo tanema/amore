@@ -38,7 +38,7 @@ type mp3Reader struct {
 
 func (d *mp3Reader) readUntil(pos int) error {
 	for len(d.data) <= pos {
-		buf := make([]uint8, BUFFER_SIZE)
+		buf := make([]uint8, 8192)
 		n, err := d.decoder.Read(buf)
 		d.data = append(d.data, buf[:n]...)
 		if err != nil {
@@ -56,7 +56,7 @@ func (d *mp3Reader) Read(b []byte) (int, error) {
 	if left > len(b) {
 		left = len(b)
 	}
-	if left < 0 {
+	if left <= 0 {
 		return 0, io.EOF
 	}
 	if err := d.readUntil(d.pos + left); err != nil {
