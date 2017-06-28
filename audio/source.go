@@ -463,10 +463,10 @@ func (s *Source) Seek(offset time.Duration) {
 		s.offsetBytes = s.decoder.DurToByteOffset(offset)
 		if !s.isStatic {
 			waspaused := s.paused
+			s.decoder.Seek(int64(s.offsetBytes))
 			// Because we still have old data from before the seek in the buffers let's empty them.
 			s.Stop()
 			s.Play()
-			s.decoder.Seek(int64(s.offsetBytes))
 			if waspaused {
 				s.Pause()
 			}

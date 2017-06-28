@@ -23,5 +23,7 @@ import:
 - package: golang.org/x/mobile
   subpackages:
   - internal/mobileinit
-- package: github.com/hajimehoshi/go-mp3
 - package: github.com/jfreymuth/oggvorbis
+- package: github.com/hajimehoshi/go-mp3
+  vcs: git
+  version: b3138428e5bd51f3fb80c02d41e677e6b4325978

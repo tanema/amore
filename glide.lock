@@ -1,5 +1,5 @@
-hash: 9034261e7c30a7994e5a535118df8ab5a623a15900a032e684365488327879a9
-updated: 2017-06-22T10:59:43.683439732-04:00
+hash: 2dc72b7164f6ee53fd152f43c0b08bca2ed32e26a1d54a8e930fb1d284e65208
+updated: 2017-06-26T09:23:39.514707054-04:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
@@ -17,7 +17,11 @@ imports:
   - mgl32
   - mgl32/matstack
 - name: github.com/hajimehoshi/go-mp3
-  version: 2c461bfa5c31eaa2eed3e3234bc610029044612b
+  version: b3138428e5bd51f3fb80c02d41e677e6b4325978
+  vcs: git
+  subpackages:
+  - internal/bits
+  - internal/imdct
 - name: github.com/jfreymuth/oggvorbis
   version: b87e13662b6a817ccce95d8f8322e12be4a0f1f6
 - name: github.com/jfreymuth/vorbis
