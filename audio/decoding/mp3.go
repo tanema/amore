@@ -33,7 +33,7 @@ type mp3Reader struct {
 	readBytes int
 	pos       int
 	source    io.Closer
-	decoder   *mp3.Decoded
+	decoder   *mp3.Decoder
 }
 
 func (d *mp3Reader) readUntil(pos int) error {
