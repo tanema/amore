@@ -36,6 +36,8 @@ __Fedora 20 and above__, type: `yum install SDL2-devel`
 
 __Arch Linux__, type: `pacman -S sdl2`
 
+__openSUSE__, type: `zypper in libSDL2-devel`
+
 __Mac OS X__, via [Homebrew](http://brew.sh): `brew install sdl2`
 
 __Windows__, via [Msys2](https://msys2.github.io): `pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2`
