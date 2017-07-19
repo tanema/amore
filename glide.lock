@@ -1,5 +1,5 @@
-hash: 2dc72b7164f6ee53fd152f43c0b08bca2ed32e26a1d54a8e930fb1d284e65208
-updated: 2017-06-26T09:23:39.514707054-04:00
+hash: 19c6bae953313f0e82578fa72848851963a8430da3a5c963b85d8303ac47ba1a
+updated: 2017-07-18T21:46:08.447601855-04:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
@@ -18,7 +18,6 @@ imports:
   - mgl32/matstack
 - name: github.com/hajimehoshi/go-mp3
   version: b3138428e5bd51f3fb80c02d41e677e6b4325978
-  vcs: git
   subpackages:
   - internal/bits
   - internal/imdct

@@ -20,6 +20,15 @@ A game library for Go, inspired by Love 2D. Currently in Beta. This is a hobby l
 
 ## Installation
 
+It is recommended that you use [glide](https://github.com/Masterminds/glide) for working
+with this project so that it is certain which dependancies you are vendoring.
+
+You can get this project with glide by running
+
+```bash
+glide get github.com/tanema/amore
+```
+
 Install the amore package by running the go get command
 
 ```bash
