@@ -29,7 +29,7 @@ You can get this project with glide by running
 glide get github.com/tanema/amore
 ```
 
-Install the amore package by running the go get command
+Or install the amore package by running the go get command
 
 ```bash
 go get -u github.com/tanema/amore/...
