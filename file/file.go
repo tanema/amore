@@ -61,7 +61,7 @@ func NewFile(path string) (File, error) {
 	path = normalizePath(path)
 	zipFile, ok := zipFiles[path]
 	if !ok {
-		return os.Open(path)
+		return os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0777)
 	}
 
 	rc, err := zipFile.Open()
@@ -82,7 +82,7 @@ func NewFile(path string) (File, error) {
 // Create will create and return a new empty file at the pass path
 func Create(path string) (File, error) {
 	path = normalizePath(path)
-	return os.Create(path)
+	return os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
 }
 
 // CreateDirectory will create all directories in the path given if they do not exist
