@@ -40,7 +40,6 @@ type (
 		GetWidth() int32
 		GetHeight() int32
 		getVerticies() []float32
-		Release()
 	}
 )
 
@@ -261,11 +260,6 @@ func (texture *Texture) unloadVolatile() {
 	}
 	deleteTexture(texture.textureId)
 	texture = nil
-}
-
-// Release will release the texture data and clean up the memory
-func (texture *Texture) Release() {
-	releaseVolatile(texture)
 }
 
 // drawv will take in verticies from the public draw calls and draw the texture

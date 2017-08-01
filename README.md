@@ -92,4 +92,3 @@ func draw() {
 
 - [ ] font rendering, especially spacing is bad
 - [ ] audio seeking broken
-- [ ] use `runtime.SetFinalizer` to release assets so that the develop does not have to manage volatiles.

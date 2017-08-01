@@ -75,12 +75,6 @@ type (
 	}
 )
 
-// Release will release all the gl objects associates with the system and clean
-// up the memory
-func (system *ParticleSystem) Release() {
-	system.quadIndices.Release()
-}
-
 // calculate_variation is used to calculate the variation in starting spin on
 // each particle
 func calculate_variation(inner, outer, v float32) float32 {
@@ -105,7 +99,7 @@ func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
 		lifetime:               -1,
 		offset:                 mgl32.Vec2{float32(texture.GetWidth()) * 0.5, float32(texture.GetHeight()) * 0.5},
 		defaultOffset:          true,
-		colors:                 []*Color{&Color{1.0, 1.0, 1.0, 1.0}},
+		colors:                 []*Color{{1.0, 1.0, 1.0, 1.0}},
 		sizes:                  []float32{1.0},
 		particles:              []*particle{},
 		maxParticles:           size,
@@ -136,7 +130,6 @@ func (system *ParticleSystem) SetBufferSize(size int) {
 		system.particles = system.particles[:int(size)]
 	}
 	system.maxParticles = size
-	system.quadIndices.Release()
 	system.quadIndices = newQuadIndices(size)
 	system.life = system.lifetime
 	system.emitCounter = 0
@@ -489,7 +482,7 @@ func (system *ParticleSystem) GetOffset() (x, y float32) {
 // system will interpolate between each color evenly over the particle's lifetime.
 func (system *ParticleSystem) SetColor(newColors ...*Color) {
 	if newColors == nil {
-		system.colors = []*Color{&Color{1.0, 1.0, 1.0, 1.0}}
+		system.colors = []*Color{{1.0, 1.0, 1.0, 1.0}}
 	} else {
 		system.colors = newColors
 	}

@@ -231,7 +231,6 @@ func deleteTexture(texture gl.Texture) {
 
 // Deinit will do the clean up for the context.
 func DeInit() {
-	unloadAllVolatile()
 	gl.DeleteTexture(gl_state.defaultTexture)
 	gl_state.defaultTexture = gl.Texture{}
 	gl_state.initialized = false

@@ -30,12 +30,6 @@ func NewImageFont(filename, glyph_hints string) *Font {
 	}
 }
 
-// Release will release all the gl objects associates with the canvas and clean
-// up the memory
-func (font *Font) Release() {
-	font.rasterizers[0].Release() //only release the first because the rest are fallbacks
-}
-
 // SetLineHeight sets the height between lines
 func (font *Font) SetLineHeight(height float32) {
 	font.lineHeight = height

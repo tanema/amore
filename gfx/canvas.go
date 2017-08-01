@@ -44,7 +44,6 @@ func (canvas *Canvas) loadVolatile() bool {
 	//NULL means reserve texture memory, but texels are undefined
 	gl.TexImage2D(gl.TEXTURE_2D, 0, int(canvas.width), int(canvas.height), gl.RGBA, gl.UNSIGNED_BYTE, nil)
 	if gl.GetError() != gl.NO_ERROR {
-		canvas.Texture.Release()
 		canvas.status = gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT
 		return false
 	}
@@ -74,13 +73,6 @@ func (canvas *Canvas) unLoadVolatile() {
 	canvas.depth_stencil = gl.Renderbuffer{}
 
 	canvas.attachedCanvases = []*Canvas{}
-	canvas.Texture.Release()
-}
-
-// Release will release all the gl objects associates with the canvas and clean
-// up the memory
-func (canvas *Canvas) Release() {
-	releaseVolatile(canvas)
 }
 
 // startGrab will bind this canvas to grab all drawing operations

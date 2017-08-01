@@ -41,13 +41,6 @@ func NewSpriteBatchExt(texture iTexture, size int, usage Usage) *SpriteBatch {
 	}
 }
 
-// Release cleans up the gl object associates with the sprite batch. This should
-// only be done when discarding this object.
-func (sprite_batch *SpriteBatch) Release() {
-	sprite_batch.array_buf.Release()
-	sprite_batch.quad_indices.Release()
-}
-
 // Add adds a sprite to the batch. Sprites are drawn in the order they are added.
 // x, y The position to draw the object
 // r rotation of the object
@@ -75,9 +68,6 @@ func (sprite_batch *SpriteBatch) Setq(index int, quad *Quad, args ...float32) er
 
 // Clear will remove all the sprites from the batch
 func (sprite_batch *SpriteBatch) Clear() {
-	if sprite_batch.array_buf != nil {
-		releaseVolatile(sprite_batch.array_buf)
-	}
 	sprite_batch.array_buf = newVertexBuffer(sprite_batch.size*4*8, []float32{}, sprite_batch.usage)
 	sprite_batch.count = 0
 }
@@ -125,13 +115,8 @@ func (sprite_batch *SpriteBatch) SetBufferSize(newsize int) error {
 	} else if newsize == sprite_batch.size {
 		return nil
 	}
-
-	sprite_batch.array_buf.Release()
 	sprite_batch.array_buf = newVertexBuffer(newsize*4*8, sprite_batch.array_buf.data, sprite_batch.usage)
-
-	sprite_batch.quad_indices.Release()
 	sprite_batch.quad_indices = newQuadIndices(newsize)
-
 	sprite_batch.size = newsize
 	return nil
 }

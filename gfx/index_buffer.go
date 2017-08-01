@@ -86,7 +86,7 @@ func (buffer *indexBuffer) unbind() {
 }
 
 func (buffer *indexBuffer) fill(offset int, data []uint32) {
-	copy(buffer.data[offset:], data[:len(data)])
+	copy(buffer.data[offset:], data[:])
 	if !buffer.ibo.Valid() {
 		return
 	}
@@ -121,8 +121,4 @@ func (buffer *indexBuffer) loadVolatile() bool {
 func (buffer *indexBuffer) unloadVolatile() {
 	gl.DeleteBuffer(buffer.ibo)
 	buffer.ibo.Value = 0
-}
-
-func (buffer *indexBuffer) Release() {
-	releaseVolatile(buffer)
 }

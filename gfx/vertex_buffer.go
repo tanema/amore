@@ -85,7 +85,7 @@ func (buffer *vertexBuffer) unbind() {
 }
 
 func (buffer *vertexBuffer) fill(offset int, data []float32) {
-	copy(buffer.data[offset:], data[:len(data)])
+	copy(buffer.data[offset:], data[:])
 	if !buffer.vbo.Valid() {
 		return
 	}
@@ -110,8 +110,4 @@ func (buffer *vertexBuffer) loadVolatile() bool {
 func (buffer *vertexBuffer) unloadVolatile() {
 	gl.DeleteBuffer(buffer.vbo)
 	buffer.vbo.Value = 0
-}
-
-func (buffer *vertexBuffer) Release() {
-	releaseVolatile(buffer)
 }

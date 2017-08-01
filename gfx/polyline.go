@@ -363,8 +363,6 @@ func (polyline *polyLine) drawTriangles(is_looping bool) {
 		gl.DrawElements(gl.TRIANGLES, (len(overdraw)/4)*6, gl.UNSIGNED_SHORT, gl.Ptr(indices))
 		SetColorC(c)
 	}
-
-	indices.Release()
 }
 
 func (polyline *polyLine) drawTriangleStrip(is_looping bool) {

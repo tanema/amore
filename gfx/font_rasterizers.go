@@ -27,7 +27,6 @@ type (
 		hasGlyph(g rune) bool
 		hasGlyphs(text string) bool
 		getKerning(leftglyph, rightglyph rune) float32
-		Release()
 	}
 	rasterizerBase struct {
 		*Texture

@@ -25,7 +25,6 @@ func Print(fs string, argv ...float32) {
 		return
 	}
 	text.Draw(argv...)
-	text.Release()
 }
 
 func Printc(strs []string, colors []*Color, argv ...float32) {
@@ -34,7 +33,6 @@ func Printc(strs []string, colors []*Color, argv ...float32) {
 		return
 	}
 	text.Draw(argv...)
-	text.Release()
 }
 
 func Printf(fs string, wrapLimit float32, align AlignMode, argv ...float32) {
@@ -43,7 +41,6 @@ func Printf(fs string, wrapLimit float32, align AlignMode, argv ...float32) {
 		return
 	}
 	text.Draw(argv...)
-	text.Release()
 }
 
 func Printfc(strs []string, colors []*Color, wrapLimit float32, align AlignMode, argv ...float32) {
@@ -52,7 +49,6 @@ func Printfc(strs []string, colors []*Color, wrapLimit float32, align AlignMode,
 		return
 	}
 	text.Draw(argv...)
-	text.Release()
 }
 
 func NewText(font *Font, text string) (*Text, error) {
@@ -88,12 +84,10 @@ func NewColorTextExt(font *Font, strs []string, colors []*Color, wrap_limit floa
 		batches:   make(map[rasterizer]*SpriteBatch),
 	}
 
-	registerVolatile(new_text)
-
 	return new_text, nil
 }
 
-func (text *Text) loadVolatile() bool {
+func (text *Text) load() bool {
 	length := len(strings.Join(text.strings, ""))
 	for _, rast := range text.font.rasterizers {
 		text.batches[rast] = NewSpriteBatch(rast.getTexture(), length)
@@ -102,16 +96,6 @@ func (text *Text) loadVolatile() bool {
 	text.spaceSize = float32(spaceGlyph.advanceWidth)
 	text.generate()
 	return true
-}
-
-func (text *Text) unloadVolatile() {
-	for _, batch := range text.batches {
-		batch.Release()
-	}
-}
-
-func (text *Text) Release() {
-	releaseVolatile(text)
 }
 
 func (text *Text) generate() {
@@ -267,7 +251,7 @@ func (text *Text) GetFont() *Font {
 
 func (text *Text) SetFont(f *Font) {
 	text.font = f
-	text.loadVolatile()
+	text.load()
 }
 
 func (text *Text) Set(t string) {
