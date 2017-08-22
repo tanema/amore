@@ -20,7 +20,9 @@ func registerVolatile(new_volatile volatile) {
 	all_volatile = append(all_volatile, new_volatile)
 	if gl_state.initialized {
 		new_volatile.loadVolatile()
-		runtime.SetFinalizer(new_volatile, new_volatile.unloadVolatile)
+		runtime.SetFinalizer(new_volatile, func(vol volatile) {
+			vol.unloadVolatile()
+		})
 	}
 }
 
