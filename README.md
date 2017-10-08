@@ -62,10 +62,8 @@ go install github.com/tanema/amore/cmd
 * `amore new` will generate initial files for a game in the current folder
 * `amore bundle` will generate a file called `asset_bundle.go` with all the assets and config in ziped byte array to be included in the binary
 
-
 ## Example
 
-See more examples at [github.com/tanema/amore-examples](https://github.com/tanema/amore-examples)
 
 ```golang
 // Basic hello world program
@@ -87,6 +85,11 @@ func draw() {
   gfx.Print("Hello World",50, 50)
 }
 ```
+
+## Resources
+
+- more examples at [github.com/tanema/amore-examples](https://github.com/tanema/amore-examples)
+- spritesheet animation [https://github.com/tanema/spry](https://github.com/tanema/spry)
 
 ## TODO
 
