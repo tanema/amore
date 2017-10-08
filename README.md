@@ -90,6 +90,8 @@ func draw() {
 
 - more examples at [github.com/tanema/amore-examples](https://github.com/tanema/amore-examples)
 - spritesheet animation [https://github.com/tanema/spry](https://github.com/tanema/spry)
+- collision detection [https://github.com/tanema/ump](https://github.com/tanema/ump)
+- camera control [https://github.com/tanema/lense](https://github.com/tanema/lense)
 
 ## TODO
 
