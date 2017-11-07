@@ -13,12 +13,12 @@ type (
 	}
 )
 
-// New Quad will generate a new *Quad with the dimensions given
+// NewQuad will generate a new *Quad with the dimensions given
 // x, y are position on the texture
 // w, h are the size of the quad
 // sw, sh are references on how large the texture is. image.GetWidth(), image.GetHeight()
 func NewQuad(x, y, w, h, sw, sh int32) *Quad {
-	new_quad := &Quad{
+	newQuad := &Quad{
 		x:  float32(x),
 		y:  float32(y),
 		w:  float32(w),
@@ -26,8 +26,8 @@ func NewQuad(x, y, w, h, sw, sh int32) *Quad {
 		sw: float32(sw),
 		sh: float32(sh),
 	}
-	new_quad.generateVertices()
-	return new_quad
+	newQuad.generateVertices()
+	return newQuad
 }
 
 // generateVertices generates an array of data for drawing the quad.

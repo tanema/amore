@@ -3,6 +3,7 @@ package gfx
 import (
 	"image"
 	"image/draw"
+	// loading all image libs for loading
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -40,13 +41,13 @@ type (
 	}
 	imageFontRasterizer struct {
 		rasterizerBase
-		glyph_hints string
+		glyphHints string
 	}
 	ttfFontRasterizer struct {
 		rasterizerBase
-		font_size float32
-		ttf       *truetype.Font
-		context   *freetype.Context
+		fontSize float32
+		ttf      *truetype.Font
+		context  *freetype.Context
 	}
 	glyphData struct {
 		rec             *Quad
@@ -69,14 +70,14 @@ func pow2(x uint32) uint32 {
 	return x + 1
 }
 
-func newTtfRasterizer(filename string, font_size float32) *ttfFontRasterizer {
-	rasterizer := &ttfFontRasterizer{rasterizerBase: rasterizerBase{filepath: filename}, font_size: font_size}
+func newTtfRasterizer(filename string, fontSize float32) *ttfFontRasterizer {
+	rasterizer := &ttfFontRasterizer{rasterizerBase: rasterizerBase{filepath: filename}, fontSize: fontSize}
 	registerVolatile(rasterizer)
 	return rasterizer
 }
 
-func newImageRasterizer(filename, glyph_hints string) *imageFontRasterizer {
-	rasterizer := &imageFontRasterizer{rasterizerBase: rasterizerBase{filepath: filename}, glyph_hints: glyph_hints}
+func newImageRasterizer(filename, glyphHints string) *imageFontRasterizer {
+	rasterizer := &imageFontRasterizer{rasterizerBase: rasterizerBase{filepath: filename}, glyphHints: glyphHints}
 	registerVolatile(rasterizer)
 	return rasterizer
 }
@@ -142,15 +143,15 @@ func (rast *ttfFontRasterizer) loadVolatile() bool {
 	rast.context = freetype.NewContext()
 	rast.context.SetDPI(72)
 	rast.context.SetFont(rast.ttf)
-	rast.context.SetFontSize(float64(rast.font_size))
+	rast.context.SetFontSize(float64(rast.fontSize))
 
-	font_bounds := rast.ttf.Bounds()
-	rast.advance = rast.context.FUnitToPixelRU(int(font_bounds.XMax - font_bounds.XMin))
-	rast.height = rast.context.FUnitToPixelRU(int(font_bounds.YMax-font_bounds.YMin) + 5)
-	image_width := pow2(uint32(int32(rast.advance) * glyphsPerRow))
-	image_height := pow2(uint32(int32(rast.height) * glyphsPerCol))
+	fontBounds := rast.ttf.Bounds()
+	rast.advance = rast.context.FUnitToPixelRU(int(fontBounds.XMax - fontBounds.XMin))
+	rast.height = rast.context.FUnitToPixelRU(int(fontBounds.YMax-fontBounds.YMin) + 5)
+	imageWidth := pow2(uint32(int32(rast.advance) * glyphsPerRow))
+	imageHeight := pow2(uint32(int32(rast.height) * glyphsPerCol))
 
-	rgba := image.NewRGBA(image.Rect(0, 0, int(image_width), int(image_height)))
+	rgba := image.NewRGBA(image.Rect(0, 0, int(imageWidth), int(imageHeight)))
 	rast.context.SetClip(rgba.Bounds())
 	rast.context.SetDst(rgba)
 	rast.context.SetSrc(image.White)
@@ -171,7 +172,7 @@ func (rast *ttfFontRasterizer) loadVolatile() bool {
 		ascent := rast.height - descent
 
 		rast.glyphs[ch] = glyphData{
-			rec:             NewQuad(int32(gx), int32(gy), int32(rast.advance), int32(rast.height), int32(image_width), int32(image_height)),
+			rec:             NewQuad(int32(gx), int32(gy), int32(rast.advance), int32(rast.height), int32(imageWidth), int32(imageHeight)),
 			leftSideBearing: lsb,
 			advanceWidth:    aw,
 			topSideBearing:  tsb,
@@ -206,7 +207,7 @@ func (rast *ttfFontRasterizer) getKerning(leftglyph, rightglyph rune) float32 {
 }
 
 func (rast *imageFontRasterizer) loadVolatile() bool {
-	glyph_rune_hints := []rune(rast.glyph_hints)
+	glyphRuneHints := []rune(rast.glyphHints)
 
 	imgFile, err := file.NewFile(rast.filepath)
 	if err != nil {
@@ -221,23 +222,23 @@ func (rast *imageFontRasterizer) loadVolatile() bool {
 
 	rast.glyphs = make(map[rune]glyphData)
 	glyphsPerRow := int32(16)
-	glyphsPerCol := (int32(len(glyph_rune_hints)) / glyphsPerRow) + 1
-	rast.advance = img.Bounds().Dx() / len(glyph_rune_hints)
+	glyphsPerCol := (int32(len(glyphRuneHints)) / glyphsPerRow) + 1
+	rast.advance = img.Bounds().Dx() / len(glyphRuneHints)
 	rast.height = img.Bounds().Dy()
 	rast.ascent = rast.height
 	rast.descent = 0
-	image_width := pow2(uint32(int32(rast.advance) * glyphsPerRow))
-	image_height := pow2(uint32(int32(rast.height) * glyphsPerCol))
+	imageWidth := pow2(uint32(int32(rast.advance) * glyphsPerRow))
+	imageHeight := pow2(uint32(int32(rast.height) * glyphsPerCol))
 
-	rgba := image.NewRGBA(image.Rect(0, 0, int(image_width), int(image_height)))
+	rgba := image.NewRGBA(image.Rect(0, 0, int(imageWidth), int(imageHeight)))
 
 	var gx, gy int
-	for i := 0; i < len(glyph_rune_hints); i++ {
-		dst_rec := image.Rect(gx, gy, gx+rast.advance, gy+rast.height)
-		draw.Draw(rgba, dst_rec, img, image.Pt(i*rast.advance, 0), draw.Src)
+	for i := 0; i < len(glyphRuneHints); i++ {
+		dstRec := image.Rect(gx, gy, gx+rast.advance, gy+rast.height)
+		draw.Draw(rgba, dstRec, img, image.Pt(i*rast.advance, 0), draw.Src)
 
-		rast.glyphs[glyph_rune_hints[i]] = glyphData{
-			rec:             NewQuad(int32(gx), int32(gy), int32(rast.advance), int32(rast.height), int32(image_width), int32(image_height)),
+		rast.glyphs[glyphRuneHints[i]] = glyphData{
+			rec:             NewQuad(int32(gx), int32(gy), int32(rast.advance), int32(rast.height), int32(imageWidth), int32(imageHeight)),
 			leftSideBearing: 0,
 			advanceWidth:    rast.advance,
 			topSideBearing:  0,

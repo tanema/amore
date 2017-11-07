@@ -38,7 +38,7 @@ var extHandlers = map[string]func(io.ReadCloser) (*Decoder, error){
 }
 
 // arbitrary buffer size, could be tuned in the future
-const BUFFER_SIZE = 128 * 1024
+const bufferSize = 128 * 1024
 
 // Decode will get the file at the path provided. It will then send it to the decoder
 // that will handle its file type by the extention on the path. Supported formats
@@ -80,14 +80,17 @@ func newDecoder(src io.ReadCloser, codec io.ReadSeeker, channels int16, sampleRa
 	}
 }
 
+// IsFinished returns is the decoder is finished decoding
 func (decoder *Decoder) IsFinished() bool {
 	return decoder.eof
 }
 
+// Duration will return the total time duration of this clip
 func (decoder *Decoder) Duration() time.Duration {
 	return decoder.ByteOffsetToDur(decoder.dataSize)
 }
 
+// GetData returns the complete set of data
 func (decoder *Decoder) GetData() []byte {
 	data := make([]byte, decoder.dataSize)
 	decoder.Seek(0)
@@ -111,7 +114,7 @@ func (decoder *Decoder) DurToByteOffset(dur time.Duration) int32 {
 
 // Decode will read the next chunk into the buffer and return the amount of bytes read
 func (decoder *Decoder) Decode() int {
-	buffer := make([]byte, BUFFER_SIZE)
+	buffer := make([]byte, bufferSize)
 	n, err := decoder.codec.Read(buffer)
 	decoder.Buffer = buffer[:n]
 	decoder.eof = (err == io.EOF)

@@ -12,19 +12,19 @@ import (
 )
 
 var (
-	opengl_version         string
-	opengl_vendor          string
+	openglVersion          string
+	openglVendor           string
 	maxAnisotropy          float32
 	maxTextureSize         int32
 	maxRenderTargets       int32
 	maxRenderbufferSamples int32
 	maxTextureUnits        int32
-	screen_width           = int32(0)
-	screen_height          = int32(0)
+	screenWidth            = int32(0)
+	screenHeight           = int32(0)
 	modelIdent             = mgl32.Ident4()
 	defaultShader          *Shader
 
-	gl_state = glState{
+	glState = openglState{
 		viewport: make([]int32, 4),
 	}
 	states = displayStateStack{newDisplayState()}
@@ -34,7 +34,7 @@ var (
 // w x h. This is generally called from the game loop and wont generally need to
 // be called unless you are rolling your own game loop.
 func InitContext(w, h int32) {
-	if gl_state.initialized {
+	if glState.initialized {
 		return
 	}
 
@@ -42,25 +42,25 @@ func InitContext(w, h int32) {
 	gl.ContextWatcher.OnMakeCurrent(nil)
 
 	//Get system info
-	opengl_version = gl.GetString(gl.VERSION)
-	opengl_vendor = gl.GetString(gl.VENDOR)
-	gl_state.defaultFBO = gl.GetBoundFramebuffer()
-	gl.GetIntegerv(gl.VIEWPORT, gl_state.viewport)
+	openglVersion = gl.GetString(gl.VERSION)
+	openglVendor = gl.GetString(gl.VENDOR)
+	glState.defaultFBO = gl.GetBoundFramebuffer()
+	gl.GetIntegerv(gl.VIEWPORT, glState.viewport)
 	// And the current scissor - but we need to compensate for GL scissors
 	// starting at the bottom left instead of top left.
 	gl.GetIntegerv(gl.SCISSOR_BOX, states.back().scissorBox)
-	states.back().scissorBox[1] = gl_state.viewport[3] - (states.back().scissorBox[1] + states.back().scissorBox[3])
+	states.back().scissorBox[1] = glState.viewport[3] - (states.back().scissorBox[1] + states.back().scissorBox[3])
 
 	initMaxValues() //check shim code
 
 	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
-	gl.VertexAttrib4fv(attrib_color, glcolor)
-	gl.VertexAttrib4fv(attrib_constantcolor, glcolor)
+	gl.VertexAttrib4fv(attribColor, glcolor)
+	gl.VertexAttrib4fv(attribConstantColor, glcolor)
 	useVertexAttribArrays(0)
 
 	// Enable blending
 	gl.Enable(gl.BLEND)
-	SetBlendMode(BLENDMODE_ALPHA)
+	SetBlendMode(BlendModeAlpha)
 	// Auto-generated mipmaps should be the best quality possible
 	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
 	// Make sure antialiasing works when set elsewhere
@@ -69,19 +69,19 @@ func InitContext(w, h int32) {
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
 	//default matricies
-	gl_state.projectionStack = matstack.NewMatStack()
-	gl_state.viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
+	glState.projectionStack = matstack.NewMatStack()
+	glState.viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
 
 	SetViewportSize(w, h)
 	SetBackgroundColor(0, 0, 0, 255)
 
-	gl_state.boundTextures = make([]gl.Texture, maxTextureUnits)
+	glState.boundTextures = make([]gl.Texture, maxTextureUnits)
 	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
-	gl_state.curTextureUnit = int(curgltextureunit - gl.TEXTURE0)
+	glState.curTextureUnit = int(curgltextureunit - gl.TEXTURE0)
 	// Retrieve currently bound textures for each texture unit.
-	for i := 0; i < len(gl_state.boundTextures); i++ {
+	for i := 0; i < len(glState.boundTextures); i++ {
 		gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(i)))
-		gl_state.boundTextures[i] = gl.Texture{Value: uint32(gl.GetInteger(gl.TEXTURE_BINDING_2D))}
+		glState.boundTextures[i] = gl.Texture{Value: uint32(gl.GetInteger(gl.TEXTURE_BINDING_2D))}
 	}
 	gl.ActiveTexture(gl.Enum(curgltextureunit))
 	createDefaultTexture()
@@ -90,7 +90,7 @@ func InitContext(w, h int32) {
 	// We always need a default shader.
 	defaultShader = NewShader()
 
-	gl_state.initialized = true
+	glState.initialized = true
 
 	loadAllVolatile()
 
@@ -103,8 +103,8 @@ func InitContext(w, h int32) {
 // primitives, which would create the need to use different "passthrough"
 // shaders for untextured primitives vs images.
 func createDefaultTexture() {
-	gl_state.defaultTexture = gl.CreateTexture()
-	bindTexture(gl_state.defaultTexture)
+	glState.defaultTexture = gl.CreateTexture()
+	bindTexture(glState.defaultTexture)
 
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
@@ -121,21 +121,21 @@ func prepareDraw(model *mgl32.Mat4) {
 		model = &modelIdent
 	}
 
-	pmMat := gl_state.projectionStack.Peek().Mul4(gl_state.viewStack.Peek().Mul4(*model))
+	pmMat := glState.projectionStack.Peek().Mul4(glState.viewStack.Peek().Mul4(*model))
 
-	gl_state.currentShader.SendMat4("ProjectionMat", gl_state.projectionStack.Peek())
-	gl_state.currentShader.SendMat4("ViewMat", gl_state.viewStack.Peek())
-	gl_state.currentShader.SendMat4("ModelMat", *model)
-	gl_state.currentShader.SendMat4("PreMulMat", pmMat)
-	gl_state.currentShader.SendFloat("ScreenSize", float32(screen_width), float32(screen_height), 0, 0)
-	gl_state.currentShader.SendFloat("PointSize", states.back().pointSize)
+	glState.currentShader.SendMat4("ProjectionMat", glState.projectionStack.Peek())
+	glState.currentShader.SendMat4("ViewMat", glState.viewStack.Peek())
+	glState.currentShader.SendMat4("ModelMat", *model)
+	glState.currentShader.SendMat4("PreMulMat", pmMat)
+	glState.currentShader.SendFloat("ScreenSize", float32(screenWidth), float32(screenHeight), 0, 0)
+	glState.currentShader.SendFloat("PointSize", states.back().pointSize)
 }
 
 // useVertexAttribArrays will enable the vertex attrib array for the flags passed
 // and if the flags were not passed it will disabled them. This make sure that only
 // those attributes are enabled.
 func useVertexAttribArrays(arraybits uint32) {
-	diff := arraybits ^ gl_state.enabledAttribArrays
+	diff := arraybits ^ glState.enabledAttribArrays
 
 	if diff == 0 {
 		return
@@ -154,35 +154,35 @@ func useVertexAttribArrays(arraybits uint32) {
 		}
 	}
 
-	gl_state.enabledAttribArrays = arraybits
+	glState.enabledAttribArrays = arraybits
 
 	// glDisableVertexAttribArray will make the constant value for a vertex
 	// attribute undefined. We rely on the per-vertex color attribute being
 	// white when no per-vertex color is used, so we set it here.
 	// FIXME: Is there a better place to do this?
-	if (diff&attribflag_color) > 0 && (arraybits&attribflag_color) == 0 {
-		gl.VertexAttrib4f(attrib_color, 1.0, 1.0, 1.0, 1.0)
+	if (diff&attribFlagColor) > 0 && (arraybits&attribFlagColor) == 0 {
+		gl.VertexAttrib4f(attribColor, 1.0, 1.0, 1.0, 1.0)
 	}
 }
 
 // setTextureUnit activates a texture unit
 func setTextureUnit(textureunit int) error {
-	if textureunit < 0 || textureunit >= len(gl_state.boundTextures) {
-		return fmt.Errorf("Invalid texture unit index (%v).", textureunit)
+	if textureunit < 0 || textureunit >= len(glState.boundTextures) {
+		return fmt.Errorf("invalid texture unit index (%v)", textureunit)
 	}
 
-	if textureunit != gl_state.curTextureUnit {
+	if textureunit != glState.curTextureUnit {
 		gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(textureunit)))
 	}
 
-	gl_state.curTextureUnit = textureunit
+	glState.curTextureUnit = textureunit
 	return nil
 }
 
 // bindTexture will bind a texture to the current context if it isnt already bound
 func bindTexture(texture gl.Texture) {
-	if texture != gl_state.boundTextures[gl_state.curTextureUnit] {
-		gl_state.boundTextures[gl_state.curTextureUnit] = texture
+	if texture != glState.boundTextures[glState.curTextureUnit] {
+		glState.boundTextures[glState.curTextureUnit] = texture
 		gl.BindTexture(gl.TEXTURE_2D, texture)
 	}
 }
@@ -190,13 +190,13 @@ func bindTexture(texture gl.Texture) {
 // bindTextureToUnit will bind a texture to a texture unit. If restorprev is true
 // it will enable the current texture unit after completing
 func bindTextureToUnit(texture gl.Texture, textureunit int, restoreprev bool) error {
-	if texture != gl_state.boundTextures[textureunit] {
-		oldtextureunit := gl_state.curTextureUnit
+	if texture != glState.boundTextures[textureunit] {
+		oldtextureunit := glState.curTextureUnit
 		if err := setTextureUnit(textureunit); err != nil {
 			return err
 		}
-		gl_state.boundTextures[textureunit] = texture
-		gl.BindTexture(gl.TEXTURE_2D, gl_state.boundTextures[textureunit])
+		glState.boundTextures[textureunit] = texture
+		gl.BindTexture(gl.TEXTURE_2D, glState.boundTextures[textureunit])
 		if restoreprev {
 			return setTextureUnit(oldtextureunit)
 		}
@@ -207,12 +207,12 @@ func bindTextureToUnit(texture gl.Texture, textureunit int, restoreprev bool) er
 // HasFramebufferSRGB will return true if standard RGB color space is suporrted on
 // this system. Only supported on non ES environments.
 func HasFramebufferSRGB() bool {
-	return gl_state.framebufferSRGBEnabled
+	return glState.framebufferSRGBEnabled
 }
 
 // getDefaultFBO will return the framebuffer that was bound at startup.
 func getDefaultFBO() gl.Framebuffer {
-	return gl_state.defaultFBO
+	return glState.defaultFBO
 }
 
 // deleteTexture will clean up the texture if it was bound before and also clean
@@ -220,20 +220,20 @@ func getDefaultFBO() gl.Framebuffer {
 func deleteTexture(texture gl.Texture) {
 	// glDeleteTextures binds texture 0 to all texture units the deleted texture
 	// was bound to before deletion.
-	for i, texid := range gl_state.boundTextures {
+	for i, texid := range glState.boundTextures {
 		if texid == texture {
-			gl_state.boundTextures[i] = gl.Texture{Value: 0}
+			glState.boundTextures[i] = gl.Texture{Value: 0}
 		}
 	}
 
 	gl.DeleteTexture(texture)
 }
 
-// Deinit will do the clean up for the context.
+// DeInit will do the clean up for the context.
 func DeInit() {
-	gl.DeleteTexture(gl_state.defaultTexture)
-	gl_state.defaultTexture = gl.Texture{}
-	gl_state.initialized = false
+	gl.DeleteTexture(glState.defaultTexture)
+	glState.defaultTexture = gl.Texture{}
+	glState.initialized = false
 	gl.ContextWatcher.OnDetach()
 }
 
@@ -241,7 +241,7 @@ func DeInit() {
 // directly with opengl and used by the framework. Only use this if you know what
 // you are doing
 func GetViewport() []int32 {
-	return gl_state.viewport
+	return glState.viewport
 }
 
 // SetViewportSize will set the viewport to 0, 0, w, h. This is interfaced
@@ -255,23 +255,23 @@ func SetViewportSize(w, h int32) {
 // directly with opengl and used by the framework. Only use this if you know what
 // you are doing
 func SetViewport(x, y, w, h int32) {
-	screen_width = w
-	screen_height = h
+	screenWidth = w
+	screenHeight = h
 	// Set the viewport to top-left corner.
-	gl.Viewport(int(y), int(x), int(screen_width), int(screen_height))
-	gl_state.viewport = []int32{y, x, screen_width, screen_height}
-	gl_state.projectionStack.Load(mgl32.Ortho(float32(x), float32(screen_width), float32(screen_height), float32(y), -1, 1))
+	gl.Viewport(int(y), int(x), int(screenWidth), int(screenHeight))
+	glState.viewport = []int32{y, x, screenWidth, screenHeight}
+	glState.projectionStack.Load(mgl32.Ortho(float32(x), float32(screenWidth), float32(screenHeight), float32(y), -1, 1))
 	SetScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
 }
 
 // GetWidth will return the width of the rendering context.
 func GetWidth() float32 {
-	return float32(screen_width)
+	return float32(screenWidth)
 }
 
 // GetHeight will return the height of the rendering context.
 func GetHeight() float32 {
-	return float32(screen_height)
+	return float32(screenHeight)
 }
 
 // Clear will clear everything already rendered to the screen and set is all to
@@ -280,14 +280,14 @@ func Clear(r, g, b, a float32) {
 	ClearC(NewColor(r, g, b, a))
 }
 
-// Clear will clear everything already rendered to the screen and set is all to
+// ClearC will clear everything already rendered to the screen and set is all to
 // the *Color provided.
 func ClearC(c *Color) {
 	gl.ClearColor(c[0], c[1], c[2], c[3])
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-// Preset is used at the end of the game loop to swap the frame buffers and display
+// Present is used at the end of the game loop to swap the frame buffers and display
 // the next rendered frame. This is normally used by the game loop and should not
 // be used unless rolling your own game loop.
 func Present() {
@@ -308,7 +308,7 @@ func Present() {
 func IsActive() bool {
 	// The graphics module is only completely 'active' if there's a window, a
 	// context, and the active variable is set.
-	return gl_state.active && IsCreated() && window.IsOpen()
+	return glState.active && IsCreated() && window.IsOpen()
 }
 
 // SetActive will enable or disable the rendering of the the game. Mainly this is
@@ -316,23 +316,23 @@ func IsActive() bool {
 func SetActive(enable bool) {
 	// Make sure all pending OpenGL commands have fully executed before
 	// returning, when going from active to inactive. This is required on iOS.
-	if IsCreated() && gl_state.active && !enable {
+	if IsCreated() && glState.active && !enable {
 		gl.Finish()
 	}
 
-	gl_state.active = enable
+	glState.active = enable
 }
 
 // IsCreated checks if the opengl context has be initialized.
 func IsCreated() bool {
-	return gl_state.initialized
+	return glState.initialized
 }
 
 // Origin will reset all translations and transformations back to defaults.
 // This function is always used to reverse any previous calls to Rotate, Scale,
 // Shear or Translate.
 func Origin() {
-	gl_state.viewStack.LoadIdent()
+	glState.viewStack.LoadIdent()
 	states.back().pixelSize = 1.0
 }
 
@@ -344,14 +344,14 @@ func Origin() {
 // or else a Pop reverts to a previous graphics state. Translating using whole
 // numbers will prevent tearing/blurring of images and fonts draw after translating.
 func Translate(x, y float32) {
-	gl_state.viewStack.LeftMul(mgl32.Translate3D(x, y, 0))
+	glState.viewStack.LeftMul(mgl32.Translate3D(x, y, 0))
 }
 
 // Rotate rotates the coordinate system in two dimensions. Calling this function
 // affects all future drawing operations by rotating the coordinate system around
 // the origin by the given amount of radians. This change lasts until drawing completes
 func Rotate(angle float32) {
-	gl_state.viewStack.LeftMul(mgl32.HomogRotate3DZ(angle))
+	glState.viewStack.LeftMul(mgl32.HomogRotate3DZ(angle))
 }
 
 // Scale scales the coordinate system in two dimensions. By default the coordinate system
@@ -375,7 +375,7 @@ func Scale(args ...float32) {
 		sy = sx
 	}
 
-	gl_state.viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
+	glState.viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
 
 	states.back().pixelSize *= (2.0 / (mgl32.Abs(sx) + mgl32.Abs(sy)))
 }
@@ -393,7 +393,7 @@ func Shear(args ...float32) {
 		ky = kx
 	}
 
-	gl_state.viewStack.LeftMul(mgl32.ShearX3D(kx, ky))
+	glState.viewStack.LeftMul(mgl32.ShearX3D(kx, ky))
 }
 
 // Push copies and pushes the current coordinate transformation to the transformation
@@ -403,7 +403,7 @@ func Shear(args ...float32) {
 // using the pop operation, which returns the coordinate transform to the state
 // it was in before calling push.
 func Push() {
-	gl_state.viewStack.Push()
+	glState.viewStack.Push()
 	states.push(*states.back())
 }
 
@@ -411,7 +411,7 @@ func Push() {
 // This function is always used to reverse a previous push operation. It returns
 // the current transformation state to what it was before the last preceding push.
 func Pop() {
-	gl_state.viewStack.Pop()
+	glState.viewStack.Pop()
 	states.pop()
 }
 
@@ -427,12 +427,12 @@ func SetScissor(args ...int32) {
 	} else if len(args) == 4 {
 		x, y, width, height := args[0], args[1], args[2], args[3]
 		gl.Enable(gl.SCISSOR_TEST)
-		if gl_state.currentCanvas != nil {
+		if glState.currentCanvas != nil {
 			gl.Scissor(x, y, width, height)
 		} else {
 			// With no Canvas active, we need to compensate for glScissor starting
 			// from the lower left of the viewport instead of the top left.
-			gl.Scissor(x, gl_state.viewport[3]-(y+height), width, height)
+			gl.Scissor(x, glState.viewport[3]-(y+height), width, height)
 		}
 		states.back().scissorBox = []int32{x, y, width, height}
 		states.back().scissor = true
@@ -477,8 +477,8 @@ func ClearScissor() {
 // values in each pixel. Each Canvas has its own per-pixel stencil values. Stencil
 // values are within the range of [0, 255]. This stencil has the defaults of
 // StencilAction: STENCIL_REPLACE, value: 1, keepvalues: true
-func Stencil(stencil_func func()) {
-	StencilExt(stencil_func, STENCIL_REPLACE, 1, false)
+func Stencil(stencilFunc func()) {
+	StencilExt(stencilFunc, StencilReplace, 1, false)
 }
 
 // StencilExt operates like stencil but with access to change the stencil action,
@@ -493,22 +493,22 @@ func Stencil(stencil_func func()) {
 // keepvalues: True to preserve old stencil values of pixels, false to re-set
 // every pixel's stencil value to 0 before executing the stencil function. Clear
 // will also re-set all stencil values.
-func StencilExt(stencil_func func(), action StencilAction, value int32, keepvalues bool) {
-	gl_state.writingToStencil = true
+func StencilExt(stencilFunc func(), action StencilAction, value int32, keepvalues bool) {
+	glState.writingToStencil = true
 	if !keepvalues {
 		gl.Clear(gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	}
-	if gl_state.currentCanvas != nil {
-		gl_state.currentCanvas.checkCreateStencil()
+	if glState.currentCanvas != nil {
+		glState.currentCanvas.checkCreateStencil()
 	}
 	gl.Enable(gl.STENCIL_TEST)
 	gl.ColorMask(false, false, false, false)
 	gl.StencilFunc(gl.ALWAYS, int(value), 0xFF)
 	gl.StencilOp(gl.KEEP, gl.KEEP, gl.Enum(action))
 
-	stencil_func()
+	stencilFunc()
 
-	gl_state.writingToStencil = false
+	glState.writingToStencil = false
 	SetColorMask(states.back().colorMask)
 	SetStencilTest(states.back().stencilCompare, states.back().stencilTestValue)
 }
@@ -519,19 +519,19 @@ func StencilExt(stencil_func func(), action StencilAction, value int32, keepvalu
 // value of each pixel that the geometry touches. The stencil values of pixels are
 // affected via Stencil/StencilEXT.
 func SetStencilTest(compare CompareMode, value int32) {
-	if gl_state.writingToStencil {
+	if glState.writingToStencil {
 		return
 	}
 
 	states.back().stencilCompare = compare
 	states.back().stencilTestValue = value
-	if compare == COMPARE_ALWAYS {
+	if compare == CompareAlways {
 		gl.Disable(gl.STENCIL_TEST)
 		return
 	}
 
-	if gl_state.currentCanvas != nil {
-		gl_state.currentCanvas.checkCreateStencil()
+	if glState.currentCanvas != nil {
+		glState.currentCanvas.checkCreateStencil()
 	}
 
 	gl.Enable(gl.STENCIL_TEST)
@@ -541,7 +541,7 @@ func SetStencilTest(compare CompareMode, value int32) {
 
 // ClearStencilTest stops the stencil test from operating
 func ClearStencilTest() {
-	SetStencilTest(COMPARE_ALWAYS, 0)
+	SetStencilTest(CompareAlways, 0)
 }
 
 // GetStencilTest will return the current compare mode and the stencil test value.
@@ -568,32 +568,32 @@ func GetColorMask() ColorMask {
 // SetLineWidth changes the width in pixels that the lines will render when using
 // Line or PolyLine
 func SetLineWidth(width float32) {
-	states.back().line_width = width
+	states.back().lineWidth = width
 }
 
 // SetLineStyle will set the line style either smooth (overdraw) or rough.
 func SetLineStyle(style LineStyle) {
-	states.back().line_style = style
+	states.back().lineStyle = style
 }
 
 // SetLineJoin will change how each line joins. options are None, Bevel or Miter.
 func SetLineJoin(join LineJoin) {
-	states.back().line_join = join
+	states.back().lineJoin = join
 }
 
 // GetLineWidth will return the current line width. Default line width is 1
 func GetLineWidth() float32 {
-	return states.back().line_width
+	return states.back().lineWidth
 }
 
 // GetLineStyle will return the current line style. Default line style is smooth
 func GetLineStyle() LineStyle {
-	return states.back().line_style
+	return states.back().lineStyle
 }
 
 // GetLineJoin will return the current line join. Default line join is miter.
 func GetLineJoin() LineJoin {
-	return states.back().line_join
+	return states.back().lineJoin
 }
 
 // SetPointSize will set the size of points drawn by Point
@@ -627,23 +627,23 @@ func SetShader(shader *Shader) {
 
 // SetBackgroundColor sets the background color.
 func SetBackgroundColor(r, g, b, a float32) {
-	states.back().background_color = NewColor(r, g, b, a)
+	states.back().backgroundColor = NewColor(r, g, b, a)
 }
 
 // SetBackgroundColorC sets the background color.
 func SetBackgroundColorC(c *Color) {
-	states.back().background_color = c
+	states.back().backgroundColor = c
 }
 
 // GetBackgroundColor gets the background color.
 func GetBackgroundColor() (r, g, b, a float32) {
-	bc := states.back().background_color
+	bc := states.back().backgroundColor
 	return bc[0], bc[1], bc[2], bc[3]
 }
 
 // GetBackgroundColorC gets the background color.
 func GetBackgroundColorC() *Color {
-	return states.back().background_color
+	return states.back().backgroundColor
 }
 
 // setColor translates r,g,b,a to Color
@@ -660,7 +660,7 @@ func SetColor(r, g, b, a float32) {
 func SetColorC(c *Color) {
 	states.back().color = c
 
-	gl.VertexAttrib4f(attrib_constantcolor, c[0], c[1], c[2], c[3])
+	gl.VertexAttrib4f(attribConstantColor, c[0], c[1], c[2], c[3])
 }
 
 // GetColor returns the current drawing color.
@@ -689,9 +689,9 @@ func GetFont() *Font {
 func SetCanvas(canvases ...*Canvas) error {
 	if canvases == nil || len(canvases) < 0 {
 		states.back().canvases = nil
-		if gl_state.currentCanvas != nil {
-			gl_state.currentCanvas.stopGrab(false)
-			gl_state.currentCanvas = nil
+		if glState.currentCanvas != nil {
+			glState.currentCanvas.stopGrab(false)
+			glState.currentCanvas = nil
 		}
 	} else {
 		states.back().canvases = canvases
@@ -715,35 +715,35 @@ func SetBlendMode(mode BlendMode) {
 	dstA := gl.ZERO
 
 	switch mode {
-	case BLENDMODE_ALPHA:
+	case BlendModeAlpha:
 		srcRGB = gl.SRC_ALPHA
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_ALPHA
 		dstA = gl.ONE_MINUS_SRC_ALPHA
-	case BLENDMODE_MULTIPLICATIVE:
+	case BlendModeMultiplicative:
 		srcRGB = gl.DST_COLOR
 		srcA = gl.DST_COLOR
 		dstRGB = gl.ZERO
 		dstA = gl.ZERO
-	case BLENDMODE_PREMULTIPLIED:
+	case BlendModePremultiplied:
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_ALPHA
 		dstA = gl.ONE_MINUS_SRC_ALPHA
-	case BLENDMODE_SUBTRACTIVE:
+	case BlendModeSubtractive:
 		fn = gl.FUNC_REVERSE_SUBTRACT
-	case BLENDMODE_ADDITIVE:
+	case BlendModeAdditive:
 		srcRGB = gl.SRC_ALPHA
 		srcA = gl.SRC_ALPHA
 		dstRGB = gl.ONE
 		dstA = gl.ONE
-	case BLENDMODE_SCREEN:
+	case BlendModeScreen:
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_COLOR
 		dstA = gl.ONE_MINUS_SRC_COLOR
 		break
-	case BLENDMODE_REPLACE:
+	case BlendModeReplace:
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ZERO
@@ -752,7 +752,7 @@ func SetBlendMode(mode BlendMode) {
 
 	gl.BlendEquation(gl.Enum(fn))
 	gl.BlendFuncSeparate(gl.Enum(srcRGB), gl.Enum(dstRGB), gl.Enum(srcA), gl.Enum(dstA))
-	states.back().blend_mode = mode
+	states.back().blendMode = mode
 }
 
 // SetDefaultFilter sets the default scaling filters used with Images, Canvases, and Fonts.
@@ -769,16 +769,20 @@ func SetDefaultFilterF(f Filter) {
 	states.back().defaultFilter = f
 }
 
-// GetDefaultFilterF returns the scaling filters used with Images, Canvases, and Fonts.
+// GetDefaultFilter returns the scaling filters used with Images, Canvases, and Fonts.
 func GetDefaultFilter() Filter {
 	return states.back().defaultFilter
 }
 
+// SetDefaultMipmapFilter will set the default mipmap filters for when new images
+// are created
 func SetDefaultMipmapFilter(filter FilterMode, sharpness float32) {
 	states.back().defaultMipmapFilter = filter
 	states.back().defaultMipmapSharpness = sharpness
 }
 
+// GetDefaultMipmapFilter will return the default filtermode and sharpness for
+// all new images
 func GetDefaultMipmapFilter() (filter FilterMode, sharpness float32) {
 	return states.back().defaultMipmapFilter, states.back().defaultMipmapSharpness
 }

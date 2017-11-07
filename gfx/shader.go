@@ -13,26 +13,29 @@ import (
 	"github.com/tanema/amore/gfx/gl"
 )
 
+// Shader is a glsl program that can be applied while drawing.
 type Shader struct {
-	vertex_code    string
-	pixel_code     string
+	vertexCode     string
+	pixelCode      string
 	program        gl.Program
 	uniforms       map[string]uniform // uniform location buffer map
 	texUnitPool    map[string]int
 	activeTexUnits []gl.Texture
 }
 
+// NewShader will create a new shader program. It takes in either paths to glsl
+// files or shader code directly
 func NewShader(paths ...string) *Shader {
-	new_shader := &Shader{}
+	newShader := &Shader{}
 	code := pathsToCode(paths...)
-	new_shader.vertex_code, new_shader.pixel_code = shaderCodeToGLSL(code...)
-	registerVolatile(new_shader)
-	return new_shader
+	newShader.vertexCode, newShader.pixelCode = shaderCodeToGLSL(code...)
+	registerVolatile(newShader)
+	return newShader
 }
 
 func (shader *Shader) loadVolatile() bool {
-	vert := compileCode(gl.VERTEX_SHADER, shader.vertex_code)
-	frag := compileCode(gl.FRAGMENT_SHADER, shader.pixel_code)
+	vert := compileCode(gl.VERTEX_SHADER, shader.vertexCode)
+	frag := compileCode(gl.FRAGMENT_SHADER, shader.pixelCode)
 	shader.program = gl.CreateProgram()
 	shader.texUnitPool = make(map[string]int)
 	shader.activeTexUnits = make([]gl.Texture, maxTextureUnits)
@@ -40,10 +43,10 @@ func (shader *Shader) loadVolatile() bool {
 	gl.AttachShader(shader.program, vert)
 	gl.AttachShader(shader.program, frag)
 
-	gl.BindAttribLocation(shader.program, attrib_pos, "VertexPosition")
-	gl.BindAttribLocation(shader.program, attrib_texcoord, "VertexTexCoord")
-	gl.BindAttribLocation(shader.program, attrib_color, "VertexColor")
-	gl.BindAttribLocation(shader.program, attrib_constantcolor, "ConstantColor")
+	gl.BindAttribLocation(shader.program, attribPos, "VertexPosition")
+	gl.BindAttribLocation(shader.program, attribTexCoord, "VertexTexCoord")
+	gl.BindAttribLocation(shader.program, attribColor, "VertexColor")
+	gl.BindAttribLocation(shader.program, attribConstantColor, "ConstantColor")
 
 	gl.LinkProgram(shader.program)
 	gl.DeleteShader(vert)
@@ -66,7 +69,7 @@ func (shader *Shader) unloadVolatile() {
 	// decrement global texture id counters for texture units which had textures bound from this shader
 	for i := 0; i < len(shader.activeTexUnits); i++ {
 		if shader.activeTexUnits[i].Valid() {
-			gl_state.textureCounters[i] = gl_state.textureCounters[i] - 1
+			glState.textureCounters[i] = glState.textureCounters[i] - 1
 		}
 	}
 }
@@ -96,9 +99,9 @@ func (shader *Shader) mapUniforms() {
 }
 
 func (shader *Shader) attach(temporary bool) {
-	if gl_state.currentShader != shader {
+	if glState.currentShader != shader {
 		gl.UseProgram(shader.program)
-		gl_state.currentShader = shader
+		glState.currentShader = shader
 	}
 	if !temporary {
 		// make sure all sent textures are properly bound to their respective texture units
@@ -114,25 +117,27 @@ func (shader *Shader) attach(temporary bool) {
 	}
 }
 
-func (shader *Shader) getUniformAndCheck(name string, expected_type UniformType, value_count int) (uniform, error) {
+func (shader *Shader) getUniformAndCheck(name string, expected UniformType, count int) (uniform, error) {
 	u, ok := shader.uniforms[name]
 	if !ok {
-		return u, errors.New(fmt.Sprintf("No uniform with the name %v", name))
+		return u, fmt.Errorf("no uniform with the name %v", name)
 	}
-	if u.BaseType != expected_type {
-		return u, errors.New("Invalid type for uniform " + name + ". expected " + translateUniformBaseType(u.BaseType) + " and got " + translateUniformBaseType(expected_type))
+	if u.BaseType != expected {
+		return u, errors.New("Invalid type for uniform " + name + ". expected " + translateUniformBaseType(u.BaseType) + " and got " + translateUniformBaseType(expected))
 	}
-	if value_count != u.Count*u.TypeSize {
-		return u, errors.New(fmt.Sprintf("Invalid number of arguments for uniform  %v expected %v and got %v", name, (u.Count * u.TypeSize), value_count))
+	if count != u.Count*u.TypeSize {
+		return u, fmt.Errorf("invalid number of arguments for uniform  %v expected %v and got %v", name, (u.Count * u.TypeSize), count)
 	}
 	return u, nil
 }
 
+// SendInt allows you to pass in integer values into your shader, by the name of
+// the variable
 func (shader *Shader) SendInt(name string, values ...int32) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	u, err := shader.getUniformAndCheck(name, UNIFORM_INT, len(values))
+	u, err := shader.getUniformAndCheck(name, UniformInt, len(values))
 	if err != nil {
 		return err
 	}
@@ -154,11 +159,13 @@ func (shader *Shader) SendInt(name string, values ...int32) error {
 	return errors.New("Invalid type size for uniform: " + name)
 }
 
+// SendFloat allows you to pass in float32 values into your shader, by the name of
+// the variable
 func (shader *Shader) SendFloat(name string, values ...float32) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	u, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, len(values))
+	u, err := shader.getUniformAndCheck(name, UniformFloat, len(values))
 	if err != nil {
 		return err
 	}
@@ -180,11 +187,13 @@ func (shader *Shader) SendFloat(name string, values ...float32) error {
 	return errors.New("Invalid type size for uniform: " + name)
 }
 
+// SendMat4 allows you to pass in a 4x4 matrix value into your shader, by the name of
+// the variable
 func (shader *Shader) SendMat4(name string, mat mgl32.Mat4) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	u, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 4)
+	u, err := shader.getUniformAndCheck(name, UniformFloat, 4)
 	if err != nil {
 		return err
 	}
@@ -197,11 +206,13 @@ func (shader *Shader) SendMat4(name string, mat mgl32.Mat4) error {
 	return nil
 }
 
+// SendMat3 allows you to pass in a 3x3 matrix value into your shader, by the name of
+// the variable
 func (shader *Shader) SendMat3(name string, mat mgl32.Mat3) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	u, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 3)
+	u, err := shader.getUniformAndCheck(name, UniformFloat, 3)
 	if err != nil {
 		return err
 	}
@@ -213,11 +224,13 @@ func (shader *Shader) SendMat3(name string, mat mgl32.Mat3) error {
 	return nil
 }
 
+// SendMat2 allows you to pass in a 2x2 matrix value into your shader, by the name of
+// the variable
 func (shader *Shader) SendMat2(name string, mat mgl32.Mat2) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
-	u, err := shader.getUniformAndCheck(name, UNIFORM_FLOAT, 3)
+	u, err := shader.getUniformAndCheck(name, UniformFloat, 3)
 	if err != nil {
 		return err
 	}
@@ -228,14 +241,16 @@ func (shader *Shader) SendMat2(name string, mat mgl32.Mat2) error {
 	return nil
 }
 
-func (shader *Shader) SendTexture(name string, texture iTexture) error {
+// SendTexture allows you to pass in a ITexture to your shader as a sampler, by the name of
+// the variable. This means you can pass in an image but also a canvas.
+func (shader *Shader) SendTexture(name string, texture ITexture) error {
 	shader.attach(true)
 	defer states.back().shader.attach(false)
 
 	gltex := texture.getHandle()
 	texunit := shader.getTextureUnit(name)
 
-	u, err := shader.getUniformAndCheck(name, UNIFORM_SAMPLER, 1)
+	u, err := shader.getUniformAndCheck(name, UniformSampler, 1)
 	if err != nil {
 		return err
 	}
@@ -246,7 +261,7 @@ func (shader *Shader) SendTexture(name string, texture iTexture) error {
 
 	// increment global shader texture id counter for this texture unit, if we haven't already
 	if !shader.activeTexUnits[texunit-1].Valid() {
-		gl_state.textureCounters[texunit-1]++
+		glState.textureCounters[texunit-1]++
 	}
 
 	// store texture id so it can be re-bound to the proper texture unit later
@@ -263,8 +278,8 @@ func (shader *Shader) getTextureUnit(name string) int {
 
 	texunit := -1
 	// prefer texture units which are unused by all other shaders
-	for i := 0; i < len(gl_state.textureCounters); i++ {
-		if gl_state.textureCounters[i] == 0 {
+	for i := 0; i < len(glState.textureCounters); i++ {
+		if glState.textureCounters[i] == 0 {
 			texunit = i + 1
 			break
 		}
@@ -292,45 +307,45 @@ func createVertexCode(code string) string {
 	codes := struct {
 		Syntax, Header, Uniforms, Code, Footer string
 	}{
-		Syntax:   shader_syntax,
-		Header:   vertex_header,
-		Uniforms: shader_uniforms,
+		Syntax:   shaderSyntax,
+		Header:   vertexHeader,
+		Uniforms: shaderUniforms,
 		Code:     code,
-		Footer:   vertex_footer,
+		Footer:   vertexFooter,
 	}
 
-	var template_writer bytes.Buffer
-	err := shader_template.Execute(&template_writer, codes)
+	var templateWriter bytes.Buffer
+	err := shaderTemplate.Execute(&templateWriter, codes)
 	if err != nil {
 		panic(err)
 	}
 
-	return template_writer.String()
+	return templateWriter.String()
 }
 
-func createPixelCode(code string, is_multicanvas bool) string {
+func createPixelCode(code string, isMulticanvas bool) string {
 	codes := struct {
 		Syntax, Header, Uniforms, Line, Footer, Code string
 	}{
-		Syntax:   shader_syntax,
-		Header:   pixel_header,
-		Uniforms: shader_uniforms,
+		Syntax:   shaderSyntax,
+		Header:   pixelHeader,
+		Uniforms: shaderUniforms,
 		Code:     code,
 	}
 
-	if is_multicanvas {
-		codes.Footer = footer_multi_canvas
+	if isMulticanvas {
+		codes.Footer = footerMultiCanvas
 	} else {
-		codes.Footer = pixel_footer
+		codes.Footer = pixelFooter
 	}
 
-	var template_writer bytes.Buffer
-	err := shader_template.Execute(&template_writer, codes)
+	var templateWriter bytes.Buffer
+	err := shaderTemplate.Execute(&templateWriter, codes)
 	if err != nil {
 		panic(err)
 	}
 
-	return template_writer.String()
+	return templateWriter.String()
 }
 
 func isVertexCode(code string) bool {
@@ -355,8 +370,8 @@ func pathsToCode(paths ...string) []string {
 	if paths != nil {
 		for _, path := range paths {
 			//if this is not code it must be a path
-			is_pixel, _ := isPixelCode(path)
-			if !isVertexCode(path) && !is_pixel {
+			isPixel, _ := isPixelCode(path)
+			if !isVertexCode(path) && !isPixel {
 				code = append(code, file.ReadString(path))
 			} else { //it is code!
 				code = append(code, path)
@@ -367,23 +382,23 @@ func pathsToCode(paths ...string) []string {
 }
 
 func shaderCodeToGLSL(code ...string) (string, string) {
-	vertexcode := default_vertex_shader_code
-	pixelcode := default_pixel_shader_code
-	is_multicanvas := false // whether pixel code has "effects" function instead of "effect"
+	vertexcode := defaultVertexShaderCode
+	pixelcode := defaultPixelShaderCode
+	isMulticanvas := false // whether pixel code has "effects" function instead of "effect"
 
-	for _, shader_code := range code {
-		if isVertexCode(shader_code) {
-			vertexcode = shader_code
+	for _, shaderCode := range code {
+		if isVertexCode(shaderCode) {
+			vertexcode = shaderCode
 		}
 
-		ispixel, isMultiCanvas := isPixelCode(shader_code)
+		ispixel, isMultiCanvas := isPixelCode(shaderCode)
 		if ispixel {
-			pixelcode = shader_code
-			is_multicanvas = isMultiCanvas
+			pixelcode = shaderCode
+			isMulticanvas = isMultiCanvas
 		}
 	}
 
-	return createVertexCode(vertexcode), createPixelCode(pixelcode, is_multicanvas)
+	return createVertexCode(vertexcode), createPixelCode(pixelcode, isMulticanvas)
 }
 
 func compileCode(shaderType gl.Enum, src string) gl.Shader {

@@ -38,11 +38,10 @@ func alcGetError(d unsafe.Pointer) int32 {
 func alcOpenDevice(name string) unsafe.Pointer {
 	if name == "" {
 		return (unsafe.Pointer)(C.alcOpenDevice((*C.ALCchar)(nil)))
-	} else {
-		n := C.CString(name)
-		defer C.free(unsafe.Pointer(n))
-		return (unsafe.Pointer)(C.alcOpenDevice((*C.ALCchar)(unsafe.Pointer(n))))
 	}
+	n := C.CString(name)
+	defer C.free(unsafe.Pointer(n))
+	return (unsafe.Pointer)(C.alcOpenDevice((*C.ALCchar)(unsafe.Pointer(n))))
 }
 
 func alcCloseDevice(d unsafe.Pointer) bool {

@@ -97,12 +97,12 @@ func getDeviceGUID(idx int) string {
 	return sdl.JoystickGetGUIDString(sdl.JoystickGetDeviceGUID(idx))
 }
 
-//Gets the number of connected joysticks.
+// GetJoystickCount Gets the number of connected joysticks.
 func GetJoystickCount() int {
 	return len(activeSticks)
 }
 
-//Gets a list of connected Joysticks.
+// GetJoysticks Gets a list of connected Joysticks.
 func GetJoysticks() []*Joystick {
 	return activeSticks
 }

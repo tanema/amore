@@ -1,9 +1,5 @@
-/*
-The audio package is use for creating audio sources, managing/pooling resources,
-and playback of those audio sources.
-
-Supported audio types are wav, ogg, and flac
-*/
+// Package audio is use for creating audio sources, managing/pooling resources,
+// and playback of those audio sources.
 package audio
 
 import (
@@ -13,14 +9,15 @@ import (
 // DistanceModel defines sound attenuation.
 type DistanceModel int32
 
+// Distance models to be set
 const (
-	DISTANCE_NONE             DistanceModel = 0xD000
-	DISTANCE_INVERSE          DistanceModel = 0xD001
-	DISTANCE_INVERSE_CLAMPED  DistanceModel = 0xD002
-	DISTANCE_LINEAR           DistanceModel = 0xD003
-	DISTANCE_LINEAR_CLAMPED   DistanceModel = 0xD004
-	DISTANCE_EXPONENT         DistanceModel = 0xD005
-	DISTANCE_EXPONENT_CLAMPED DistanceModel = 0xD006
+	DistanceNone            DistanceModel = 0xD000
+	DistanceInverse         DistanceModel = 0xD001
+	DistanceInverseClamped  DistanceModel = 0xD002
+	DistanceLinear          DistanceModel = 0xD003
+	DistanceLinearClamped   DistanceModel = 0xD004
+	DistanceExponent        DistanceModel = 0xD005
+	DistanceExponentClamped DistanceModel = 0xD006
 )
 
 // init will open the audio interface.

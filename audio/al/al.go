@@ -16,7 +16,7 @@
 // On Ubuntu 14.04 'Trusty', you may have to install this library
 // by running the command below.
 //
-// 		sudo apt-get install libopenal-dev
+//		sudo apt-get install libopenal-dev
 //
 // When compiled for Android, this package uses OpenAL Soft. Please add its
 // license file to the open source notices of your application.
@@ -24,7 +24,6 @@
 // http://repo.or.cz/w/openal-soft.git/blob/HEAD:/COPYING.
 //
 // Vendored and extended from github.com/golang/mobile for extending functionality
-
 package al
 
 // Capability represents OpenAL extension capabilities.
@@ -48,6 +47,7 @@ func Enabled(c Capability) bool {
 // Vector represents an vector in a Cartesian coordinate system.
 type Vector [3]float32
 
+// Cone is the audio cone
 type Cone struct {
 	InnerAngle  int32
 	OuterAngle  int32
@@ -199,34 +199,42 @@ func (s Source) SetGain(v float32) {
 	setSourcef(s, paramGain, v)
 }
 
+// Pitch todo
 func (s Source) Pitch() float32 {
 	return getSourcef(s, paramPitch)
 }
 
+// SetPitch todo
 func (s Source) SetPitch(p float32) {
 	setSourcef(s, paramPitch, p)
 }
 
+// Rolloff todo
 func (s Source) Rolloff() float32 {
 	return getSourcef(s, paramRolloffFactor)
 }
 
-func (s Source) SetRolloff(roll_off float32) {
-	setSourcef(s, paramRolloffFactor, roll_off)
+// SetRolloff todo
+func (s Source) SetRolloff(rolloff float32) {
+	setSourcef(s, paramRolloffFactor, rolloff)
 }
 
+// ReferenceDistance todo
 func (s Source) ReferenceDistance() float32 {
 	return getSourcef(s, paramReferenceDistance)
 }
 
+// SetReferenceDistance todo
 func (s Source) SetReferenceDistance(dis float32) {
 	setSourcef(s, paramReferenceDistance, dis)
 }
 
+// MaxDistance todo
 func (s Source) MaxDistance() float32 {
 	return getSourcef(s, paramMaxDistance)
 }
 
+// SetMaxDistance todo
 func (s Source) SetMaxDistance(dis float32) {
 	setSourcef(s, paramMaxDistance, dis)
 }
@@ -237,20 +245,22 @@ func (s Source) Looping() bool {
 }
 
 // SetLooping sets the source looping
-func (s Source) SetLooping(should_loop bool) {
-	if should_loop {
+func (s Source) SetLooping(shouldloop bool) {
+	if shouldloop {
 		setSourcei(s, paramLooping, 1)
 	} else {
 		setSourcei(s, paramLooping, 0)
 	}
 }
 
+// Relative todo
 func (s Source) Relative() bool {
 	return getSourcei(s, paramSourceRelative) == 1
 }
 
-func (s Source) SetRelative(is_relative bool) {
-	if is_relative {
+// SetRelative todo
+func (s Source) SetRelative(isRelative bool) {
+	if isRelative {
 		setSourcei(s, paramSourceRelative, 1)
 	} else {
 		setSourcei(s, paramSourceRelative, 0)
@@ -289,7 +299,7 @@ func (s Source) SetPosition(v Vector) {
 	setSourcefv(s, paramPosition, v[:])
 }
 
-// Position returns the position of the source.
+// Direction returns the direction of the source.
 func (s Source) Direction() Vector {
 	v := Vector{}
 	getSourcefv(s, paramDirection, v[:])
@@ -301,6 +311,7 @@ func (s Source) SetDirection(v Vector) {
 	setSourcefv(s, paramDirection, v[:])
 }
 
+// Cone returns the audio cone
 func (s Source) Cone() Cone {
 	return Cone{
 		InnerAngle:  getSourcei(s, paramConeInnerAngle),
@@ -309,6 +320,7 @@ func (s Source) Cone() Cone {
 	}
 }
 
+// SetCone sets the audio cone
 func (s Source) SetCone(c Cone) {
 	setSourcei(s, paramConeInnerAngle, c.InnerAngle)
 	setSourcei(s, paramConeOuterAngle, c.OuterAngle)
@@ -344,17 +356,17 @@ func (s Source) State() int32 {
 	return getSourcei(s, paramSourceState)
 }
 
-// BuffersQueued returns the number of the queued buffers.
+// SetBuffer returns the number of the queued buffers.
 func (s Source) SetBuffer(b Buffer) {
 	setSourcei(s, paramBuffer, int32(b))
 }
 
-// BuffersQueued returns the number of the queued buffers.
+// Buffer returns the number of the queued buffers.
 func (s Source) Buffer() Buffer {
 	return Buffer(getSourcei(s, paramBuffer))
 }
 
-// BuffersQueued returns the number of the queued buffers.
+// ClearBuffers returns the number of the queued buffers.
 func (s Source) ClearBuffers() {
 	setSourcei(s, paramBuffer, 0)
 }
@@ -374,7 +386,7 @@ func (s Source) OffsetSeconds() float32 {
 	return getSourcef(s, paramSecOffset)
 }
 
-// OffsetSeconds returns the current playback position of the source in seconds.
+// SetOffsetSeconds returns the current playback position of the source in seconds.
 func (s Source) SetOffsetSeconds(seconds float32) {
 	setSourcef(s, paramSecOffset, seconds)
 }
@@ -384,7 +396,7 @@ func (s Source) OffsetSample() float32 {
 	return getSourcef(s, paramSampleOffset)
 }
 
-// OffsetSample returns the sample offset of the current playback position.
+// SetOffsetSample returns the sample offset of the current playback position.
 func (s Source) SetOffsetSample(samples float32) {
 	setSourcef(s, paramSampleOffset, samples)
 }
@@ -394,7 +406,7 @@ func (s Source) OffsetByte() int32 {
 	return getSourcei(s, paramByteOffset)
 }
 
-// OffsetSample returns the sample offset of the current playback position.
+// SetOffsetBytes returns the sample offset of the current playback position.
 func (s Source) SetOffsetBytes(bytes int32) {
 	setSourcei(s, paramByteOffset, bytes)
 }
@@ -428,7 +440,7 @@ func (s Source) QueueBuffers(buffer ...Buffer) {
 	alSourceQueueBuffers(s, buffer)
 }
 
-// UnqueueBuffers removes the specified buffers from the buffer queue.
+// UnqueueBuffer removes the specified buffers from the buffer queue.
 func (s Source) UnqueueBuffer() Buffer {
 	buffers := make([]Buffer, 1)
 	alSourceUnqueueBuffers(s, buffers)
@@ -497,7 +509,7 @@ func setListenerfv(param int, v []float32) {
 	alListenerfv(param, v)
 }
 
-// A buffer represents a chunk of PCM audio data that could be buffered to an audio
+// Buffer represents a chunk of PCM audio data that could be buffered to an audio
 // source. A single buffer could be shared between multiple sources.
 type Buffer uint32
 

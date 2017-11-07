@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	shader_syntax = `
+	shaderSyntax = `
 #version 120
 #define number float
 #define Image sampler2D
@@ -14,7 +14,7 @@ const (
 #pragma optionNV(strict on)
 `
 	//Uniforms shared by the vertex and pixel shader stages.
-	shader_uniforms = `
+	shaderUniforms = `
 uniform mat4 ProjectionMat;
 uniform mat4 ViewMat;
 uniform mat4 ModelMat;
@@ -22,7 +22,7 @@ uniform mat4 PreMulMat;
 uniform vec4 ScreenSize;
 `
 
-	vertex_header = `
+	vertexHeader = `
 attribute vec4 VertexPosition;
 attribute vec4 VertexTexCoord;
 attribute vec4 VertexColor;
@@ -32,7 +32,7 @@ varying vec4 VaryingColor;
 uniform float PointSize;
 `
 
-	vertex_footer = `
+	vertexFooter = `
 void main() {
 	VaryingTexCoord = VertexTexCoord;
 	VaryingColor = VertexColor * ConstantColor;
@@ -40,14 +40,14 @@ void main() {
 	gl_Position = position(PreMulMat, VertexPosition);
 }`
 
-	pixel_header = `
+	pixelHeader = `
 #define Canvases gl_FragData
 varying vec4 VaryingTexCoord;
 varying vec4 VaryingColor;
 uniform sampler2D _tex0_;
 `
 
-	pixel_footer = `
+	pixelFooter = `
 void main() {
 	// fix crashing issue in OSX when _tex0_ is unused within effect()
 	float dummy = Texel(_tex0_, vec2(.5)).r;
@@ -55,7 +55,7 @@ void main() {
 	gl_FragColor = effect(VaryingColor, _tex0_, VaryingTexCoord.st, pixelcoord);
 }`
 
-	footer_multi_canvas = `
+	footerMultiCanvas = `
 void main() {
 	// fix crashing issue in OSX when _tex0_ is unused within effect()
 	float dummy = Texel(_tex0_, vec2(.5)).r;
@@ -63,19 +63,19 @@ void main() {
 	effects(VaryingColor, _tex0_, VaryingTexCoord.st, pixelcoord);
 }`
 
-	default_vertex_shader_code = `
+	defaultVertexShaderCode = `
 vec4 position(mat4 transform, vec4 vertpos) {
 	return transform * vertpos;
 }`
 
-	default_pixel_shader_code = `
+	defaultPixelShaderCode = `
 vec4 effect(vec4 vcolor, Image tex, vec2 texcoord, vec2 pixcoord) {
 	return Texel(tex, texcoord) * vcolor;
 }`
 )
 
 var (
-	shader_template, _ = template.New("shader").Parse(`{{.Syntax}}
+	shaderTemplate, _ = template.New("shader").Parse(`{{.Syntax}}
 {{.Header}}
 {{.Uniforms}}
 #line 1

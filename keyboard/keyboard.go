@@ -1,4 +1,4 @@
-// The keyboard Pacakge handles the keyboard events on the gl context
+// Package keyboard handles the keyboard events on the gl context
 // To capture events as they happen you can use the callbacks OnKeyDown, OnKeyUp,
 // OnTextInput, and OnTextEdit. Define them by calling keyboard.OnKeyDown = [callback]
 package keyboard
@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	key_repeat = true
-	text_input = true
+	keyRepeat = true
+	textInput = true
 )
 
 // IsDown checks whether a certain key is down.
@@ -35,12 +35,12 @@ func GetScancodeFromKey(key Key) Scancode {
 
 // SetKeyRepeat wnables or disables key repeat for love.keypressed.
 func SetKeyRepeat(enabled bool) {
-	key_repeat = enabled
+	keyRepeat = enabled
 }
 
 // HasKeyRepeat gets whether key repeat is enabled.
 func HasKeyRepeat() bool {
-	return key_repeat
+	return keyRepeat
 }
 
 // HasTextInput gets whether text input events are enabled. For example if enabled, and

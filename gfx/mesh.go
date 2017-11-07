@@ -11,7 +11,7 @@ type (
 	// Mesh is a collection of points that a texture can be applied to.
 	Mesh struct {
 		mode           MeshDrawMode
-		texture        iTexture
+		texture        ITexture
 		vbo            *vertexBuffer
 		vertexStride   int
 		enabledattribs uint32
@@ -28,9 +28,9 @@ type (
 )
 
 // NewMesh will generate a mesh with the verticies and it with a max size of the size
-// provided. MeshDrawMode is default to DRAWMODE_FAN and Usage is USAGE_DYNAMIC
+// provided. MeshDrawMode is default to DrawmodeFan and Usage is UsageDynamic
 func NewMesh(verticies []float32, size int) (*Mesh, error) {
-	return NewMeshExt(verticies, size, DRAWMODE_FAN, USAGE_DYNAMIC)
+	return NewMeshExt(verticies, size, DrawmodeFan, UsageDynamic)
 }
 
 // NewMeshExt is like NewMesh but with access to setting the MeshDrawMode and Usage.
@@ -42,7 +42,7 @@ func NewMeshExt(vertices []float32, size int, mode MeshDrawMode, usage Usage) (*
 		return nil, fmt.Errorf("Not enough data to establish a mesh")
 	}
 
-	new_mesh := &Mesh{
+	newMesh := &Mesh{
 		rangeMin:     -1,
 		rangeMax:     -1,
 		mode:         mode,
@@ -51,9 +51,9 @@ func NewMeshExt(vertices []float32, size int, mode MeshDrawMode, usage Usage) (*
 		vbo:          newVertexBuffer(size*stride, vertices, usage),
 	}
 
-	new_mesh.generateFlags()
+	newMesh.generateFlags()
 
-	return new_mesh, nil
+	return newMesh, nil
 }
 
 // generateFlags will generate a attribs flag setting with the vertex stride. It
@@ -61,13 +61,13 @@ func NewMeshExt(vertices []float32, size int, mode MeshDrawMode, usage Usage) (*
 func (mesh *Mesh) generateFlags() error {
 	switch mesh.vertexStride {
 	case 8:
-		mesh.enabledattribs = attribflag_pos | attribflag_texcoord | attribflag_color
+		mesh.enabledattribs = attribFlagPos | attribFlagTexCoord | attribFlagColor
 	case 6:
-		mesh.enabledattribs = attribflag_pos | attribflag_color
+		mesh.enabledattribs = attribFlagPos | attribFlagColor
 	case 4:
-		mesh.enabledattribs = attribflag_pos | attribflag_texcoord
+		mesh.enabledattribs = attribFlagPos | attribFlagTexCoord
 	case 2:
-		mesh.enabledattribs = attribflag_pos
+		mesh.enabledattribs = attribFlagPos
 	default:
 		return fmt.Errorf("invalid mesh verticies format, vertext stride was calculated as %v", mesh.vertexStride)
 	}
@@ -86,7 +86,7 @@ func (mesh *Mesh) GetDrawMode() MeshDrawMode {
 
 // SetTexture will apply a texture to the mesh. This will go a lot better if uv coords
 // were provided to the mesh.
-func (mesh *Mesh) SetTexture(text iTexture) {
+func (mesh *Mesh) SetTexture(text ITexture) {
 	mesh.texture = text
 }
 
@@ -95,9 +95,9 @@ func (mesh *Mesh) ClearTexture() {
 	mesh.texture = nil
 }
 
-// GetTexture will return an interface iTexture if there is a texture bound, and
+// GetTexture will return an interface ITexture if there is a texture bound, and
 // nil if there isnt
-func (mesh *Mesh) GetTexture() iTexture {
+func (mesh *Mesh) GetTexture() ITexture {
 	return mesh.texture
 }
 
@@ -105,7 +105,7 @@ func (mesh *Mesh) GetTexture() iTexture {
 // need to render a portion of the mesh.
 func (mesh *Mesh) SetDrawRange(min, max int) error {
 	if min < 0 || max < 0 || min > max {
-		return fmt.Errorf("Invalid draw range.")
+		return fmt.Errorf("invalid draw range")
 	}
 	mesh.rangeMin = min
 	mesh.rangeMax = max
@@ -175,14 +175,14 @@ func (mesh *Mesh) GetVertexStride() int {
 
 // GetVertexFormat will return true for each attribute that is enabled.
 func (mesh *Mesh) GetVertexFormat() (vertex, text, color bool) {
-	return mesh.enabledattribs&attribflag_pos > 0, mesh.enabledattribs&attribflag_texcoord > 0, mesh.enabledattribs&attribflag_color > 0
+	return mesh.enabledattribs&attribFlagPos > 0, mesh.enabledattribs&attribFlagTexCoord > 0, mesh.enabledattribs&attribFlagColor > 0
 }
 
 // SetVertexMap will allow to set indexes of verticies that should be drawn.
-func (mesh *Mesh) SetVertexMap(vertex_map []uint32) {
-	if len(vertex_map) > 0 {
-		mesh.ibo = newIndexBuffer(len(vertex_map), vertex_map, mesh.vbo.usage)
-		mesh.elementCount = len(vertex_map)
+func (mesh *Mesh) SetVertexMap(vertexMap []uint32) {
+	if len(vertexMap) > 0 {
+		mesh.ibo = newIndexBuffer(len(vertexMap), vertexMap, mesh.vbo.usage)
+		mesh.elementCount = len(vertexMap)
 	}
 }
 
@@ -222,16 +222,16 @@ func (mesh *Mesh) bindEnabledAttributes() {
 	defer mesh.vbo.unbind()
 
 	offset := 0
-	if (mesh.enabledattribs & attribflag_pos) > 0 {
-		gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
+	if (mesh.enabledattribs & attribFlagPos) > 0 {
+		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
 		offset += 2 * 4
 	}
-	if (mesh.enabledattribs & attribflag_texcoord) > 0 {
-		gl.VertexAttribPointer(attrib_texcoord, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
+	if (mesh.enabledattribs & attribFlagTexCoord) > 0 {
+		gl.VertexAttribPointer(attribTexCoord, 2, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
 		offset += 2 * 4
 	}
-	if (mesh.enabledattribs & attribflag_color) > 0 {
-		gl.VertexAttribPointer(attrib_color, 4, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
+	if (mesh.enabledattribs & attribFlagColor) > 0 {
+		gl.VertexAttribPointer(attribColor, 4, gl.FLOAT, false, mesh.vertexStride*4, gl.PtrOffset(offset))
 	}
 }
 
@@ -241,7 +241,7 @@ func (mesh *Mesh) bindTexture() {
 	if mesh.texture != nil {
 		bindTexture(mesh.texture.getHandle())
 	} else {
-		bindTexture(gl_state.defaultTexture)
+		bindTexture(glState.defaultTexture)
 	}
 }
 

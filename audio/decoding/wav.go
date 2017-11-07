@@ -63,7 +63,7 @@ func (decoder *waveDecoder) decode() error {
 
 	if !bytes.Equal(decoder.header.Ftype[:], []byte("RIFF")) ||
 		!bytes.Equal(decoder.header.ChunkFormat[:], []byte("WAVE")) {
-		return errors.New("Not a RIFF/WAVE file.")
+		return errors.New("not a RIFF/WAVE file")
 	}
 
 	var chunk [4]byte

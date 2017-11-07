@@ -7,6 +7,7 @@ import (
 // Scancode is the id for a character independant of keyboard setup
 type Scancode uint32
 
+// Scancodes for keys.
 const (
 	ScancodeUnknown            Scancode = Scancode(sdl.SCANCODE_UNKNOWN)
 	ScancodeA                  Scancode = Scancode(sdl.SCANCODE_A)

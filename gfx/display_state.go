@@ -9,11 +9,11 @@ import (
 // displayState track a certain point in transformations
 type displayState struct {
 	color                  *Color
-	background_color       *Color
-	blend_mode             BlendMode
-	line_width             float32
-	line_style             LineStyle
-	line_join              LineJoin
+	backgroundColor        *Color
+	blendMode              BlendMode
+	lineWidth              float32
+	lineStyle              LineStyle
+	lineJoin               LineJoin
 	pointSize              float32
 	scissor                bool
 	scissorBox             []int32
@@ -31,7 +31,7 @@ type displayState struct {
 }
 
 // glState keeps track of the context attributes
-type glState struct {
+type openglState struct {
 	initialized            bool
 	active                 bool
 	boundTextures          []gl.Texture
@@ -52,16 +52,16 @@ type glState struct {
 // newDisplayState initializes a display states default values
 func newDisplayState() displayState {
 	return displayState{
-		blend_mode:             BLENDMODE_ALPHA,
+		blendMode:              BlendModeAlpha,
 		pointSize:              5,
 		pixelSize:              1,
-		stencilCompare:         COMPARE_ALWAYS,
-		line_width:             1,
-		line_join:              LINE_JOIN_MITER,
-		line_style:             LINE_SMOOTH,
+		stencilCompare:         CompareAlways,
+		lineWidth:              1,
+		lineJoin:               LineJoinMiter,
+		lineStyle:              LineSmooth,
 		shader:                 defaultShader,
 		defaultFilter:          newFilter(),
-		defaultMipmapFilter:    FILTER_NEAREST,
+		defaultMipmapFilter:    FilterNearest,
 		defaultMipmapSharpness: 0.0,
 		color:      NewColor(255, 255, 255, 255),
 		colorMask:  ColorMask{r: true, g: true, b: true, a: true},

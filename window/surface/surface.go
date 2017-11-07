@@ -1,10 +1,11 @@
-// A simple package meant to load sdl surfaces without sdl_image. This enables
-// removing the sdl_image dependancy
+// Package surface is a simple package meant to load sdl surfaces without sdl_image.
+// This enables removing the sdl_image dependancy
 package surface
 
 import (
 	"image"
 	"image/draw"
+	// loading all the image libs to support loading
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -20,20 +21,20 @@ import (
 // on any surface you load. This method will call an error if the file does not exist
 // or cannot decode it (not an image)
 func Load(path string) (*sdl.Surface, error) {
-	imgFile, new_err := file.NewFile(path)
+	imgFile, newErr := file.NewFile(path)
 	defer imgFile.Close()
-	if new_err != nil {
-		return &sdl.Surface{}, new_err
+	if newErr != nil {
+		return &sdl.Surface{}, newErr
 	}
 
-	decoded_img, _, img_err := image.Decode(imgFile)
-	if img_err != nil {
-		return &sdl.Surface{}, img_err
+	decodedImg, _, imgErr := image.Decode(imgFile)
+	if imgErr != nil {
+		return &sdl.Surface{}, imgErr
 	}
 
-	bounds := decoded_img.Bounds()
-	rgba := image.NewRGBA(decoded_img.Bounds())
-	draw.Draw(rgba, bounds, decoded_img, image.Point{0, 0}, draw.Src)
+	bounds := decodedImg.Bounds()
+	rgba := image.NewRGBA(decodedImg.Bounds())
+	draw.Draw(rgba, bounds, decodedImg, image.Point{0, 0}, draw.Src)
 
 	var rmask, gmask, bmask, amask uint32
 	switch runtime.GOARCH {

@@ -21,13 +21,13 @@ func enableMultisample() {
 }
 
 func initMaxValues() {
-	gl_state.framebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
+	glState.framebufferSRGBEnabled = gl.IsEnabled(gl.FRAMEBUFFER_SRGB)
 	gl.GetFloatv(gl.POINT_SIZE, &states.back().pointSize)
 	gl.GetFloatv(gl.MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy)
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
 	gl.GetIntegerv(gl.MAX_SAMPLES, &maxRenderbufferSamples)
 	gl.GetIntegerv(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits)
-	gl_state.textureCounters = make([]int, maxTextureUnits)
+	glState.textureCounters = make([]int, maxTextureUnits)
 	gl.GetIntegerv(gl.MAX_DRAW_BUFFERS, &maxRenderTargets)
 	var maxattachments int32
 	gl.GetIntegerv(gl.MAX_COLOR_ATTACHMENTS, &maxattachments)
@@ -40,6 +40,7 @@ func setTexMipMap() {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.GENERATE_MIPMAP, gl.TRUE)
 }
 
+// SetMipmapSharpness sets the lod bias for opengl
 func (texture *Texture) SetMipmapSharpness(sharpness float32) {
 	var maxMipmapSharpness float32
 	gl.GetFloatv(gl.MAX_TEXTURE_LOD_BIAS, &maxMipmapSharpness)

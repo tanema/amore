@@ -108,7 +108,7 @@ func (bndlr *bundler) writeOut() error {
 	})
 }
 
-// Converts zip binary contents to a string literal.
+// FprintZipData Converts zip binary contents to a string literal.
 func FprintZipData(zipData []byte) *bytes.Buffer {
 	dest := new(bytes.Buffer)
 	for _, b := range zipData {

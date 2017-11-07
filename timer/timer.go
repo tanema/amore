@@ -1,4 +1,4 @@
-// The timer Package manages game timing by calling step so that the user can get
+// Package timer manages game timing by calling step so that the user can get
 // FPS, and delta time from this pacakge
 package timer
 
@@ -7,32 +7,32 @@ import (
 )
 
 const (
-	fps_update_frequency = 1 //update 1 per second
+	fpsUpdateFrequency = 1 //update 1 per second
 )
 
 var (
-	fps                 int     // frames per second
-	frames              int     // frames since last update freq
-	current_time        float32 //current frame time
-	previous_time       float32 // last frame time
-	previous_fps_update float32 // last time fps was updated
-	dt                  float32 // change in time since last step
-	average_delta       float32 // average change in time over update frequency
+	fps               int     // frames per second
+	frames            int     // frames since last update freq
+	currentTime       float32 //current frame time
+	previousTime      float32 // last frame time
+	previousFPSUpdate float32 // last time fps was updated
+	dt                float32 // change in time since last step
+	averageDelta      float32 // average change in time over update frequency
 )
 
 // Step should be called every game loop if rolling your own to keep track of time
 // for the update function. It calculates fps and average fps.
 func Step() {
 	frames++
-	previous_time = current_time
-	current_time = GetTime()
-	dt = current_time - previous_time
+	previousTime = currentTime
+	currentTime = GetTime()
+	dt = currentTime - previousTime
 
-	time_since_last := current_time - previous_fps_update
-	if time_since_last > fps_update_frequency {
-		fps = int((float32(frames) / time_since_last) + 0.5)
-		average_delta = time_since_last / float32(frames)
-		previous_fps_update = current_time
+	timeSinceLast := currentTime - previousFPSUpdate
+	if timeSinceLast > fpsUpdateFrequency {
+		fps = int((float32(frames) / timeSinceLast) + 0.5)
+		averageDelta = timeSinceLast / float32(frames)
+		previousFPSUpdate = currentTime
 		frames = 0
 	}
 }
@@ -54,5 +54,5 @@ func GetFPS() int {
 
 // GetAverageDelta returns the average time of each frame
 func GetAverageDelta() float32 {
-	return average_delta
+	return averageDelta
 }

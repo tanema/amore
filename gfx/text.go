@@ -6,6 +6,7 @@ import (
 )
 
 type (
+	// Text is a container of text, color and text formatting.
 	Text struct {
 		font      *Font
 		strings   []string
@@ -19,6 +20,7 @@ type (
 	}
 )
 
+// Print will print a string in the current font. It accepts the normal drawable arguments
 func Print(fs string, argv ...float32) {
 	text, err := NewText(GetFont(), fs)
 	if err != nil {
@@ -27,6 +29,7 @@ func Print(fs string, argv ...float32) {
 	text.Draw(argv...)
 }
 
+// Printc will print out a colored string. It accepts the normal drawable arguments
 func Printc(strs []string, colors []*Color, argv ...float32) {
 	text, err := NewColorText(GetFont(), strs, colors)
 	if err != nil {
@@ -35,6 +38,8 @@ func Printc(strs []string, colors []*Color, argv ...float32) {
 	text.Draw(argv...)
 }
 
+// Printf will print out a string with a wrap limit and alignment. It accepts the
+// normal drawable arguments
 func Printf(fs string, wrapLimit float32, align AlignMode, argv ...float32) {
 	text, err := NewTextExt(GetFont(), fs, wrapLimit, align)
 	if err != nil {
@@ -43,6 +48,8 @@ func Printf(fs string, wrapLimit float32, align AlignMode, argv ...float32) {
 	text.Draw(argv...)
 }
 
+// Printfc will print out a colored string with a wrap limit and alignment. It
+// accepts the normal drawable arguments
 func Printfc(strs []string, colors []*Color, wrapLimit float32, align AlignMode, argv ...float32) {
 	text, err := NewColorTextExt(GetFont(), strs, colors, wrapLimit, align)
 	if err != nil {
@@ -51,22 +58,29 @@ func Printfc(strs []string, colors []*Color, wrapLimit float32, align AlignMode,
 	text.Draw(argv...)
 }
 
+// NewText will create a left aligned text element with the provided font and text.
 func NewText(font *Font, text string) (*Text, error) {
-	return NewTextExt(font, text, -1, ALIGN_LEFT)
+	return NewTextExt(font, text, -1, AlignLeft)
 }
 
-func NewTextExt(font *Font, text string, wrap_limit float32, align AlignMode) (*Text, error) {
+// NewTextExt will create a text object with the provided font and text. A wrap
+// and alignment can be provided as well. If wrapLimit is < 0 it will not wrap
+func NewTextExt(font *Font, text string, wrapLimit float32, align AlignMode) (*Text, error) {
 	if text == "" {
 		return nil, fmt.Errorf("Cannot create an text object with blank string")
 	}
-	return NewColorTextExt(font, []string{text}, []*Color{NewColor(255, 255, 255, 255)}, wrap_limit, align)
+	return NewColorTextExt(font, []string{text}, []*Color{NewColor(255, 255, 255, 255)}, wrapLimit, align)
 }
 
+// NewColorText will create a left aligned colored string
 func NewColorText(font *Font, strs []string, colors []*Color) (*Text, error) {
-	return NewColorTextExt(font, strs, colors, -1, ALIGN_LEFT)
+	return NewColorTextExt(font, strs, colors, -1, AlignLeft)
 }
 
-func NewColorTextExt(font *Font, strs []string, colors []*Color, wrap_limit float32, align AlignMode) (*Text, error) {
+// NewColorTextExt will create a colored text object with the provided font and
+// text. A wrap and alignment can be provided as well. If wrapLimit is < 0 it will
+// not wrap
+func NewColorTextExt(font *Font, strs []string, colors []*Color, wrapLimit float32, align AlignMode) (*Text, error) {
 	if len(strs) == 0 {
 		return nil, fmt.Errorf("Nothing to print")
 	}
@@ -75,16 +89,16 @@ func NewColorTextExt(font *Font, strs []string, colors []*Color, wrap_limit floa
 		return nil, fmt.Errorf("Improper countof strings to colors")
 	}
 
-	new_text := &Text{
+	newText := &Text{
 		font:      font,
 		strings:   strs,
 		colors:    colors,
-		wrapLimit: wrap_limit,
+		wrapLimit: wrapLimit,
 		align:     align,
 		batches:   make(map[rasterizer]*SpriteBatch),
 	}
 
-	return new_text, nil
+	return newText, nil
 }
 
 func (text *Text) load() bool {
@@ -162,12 +176,12 @@ func (text *Text) drawLine(currentLine []*word, lineWidth, gy float32) {
 	spaceing := text.spaceSize
 	var gx float32
 	switch text.align {
-	case ALIGN_LEFT:
-	case ALIGN_RIGHT:
+	case AlignLeft:
+	case AlignRight:
 		gx = text.wrapLimit - lineWidth
-	case ALIGN_CENTER:
+	case AlignCenter:
 		gx = (text.wrapLimit - lineWidth) / 2.0
-	case ALIGN_JUSTIFY:
+	case AlignJustify:
 		spaceing = (text.wrapLimit - lineWidth) / float32(len(currentLine)-1)
 	}
 
@@ -233,31 +247,39 @@ func (text *Text) generateWords() []*word {
 	return words
 }
 
+// GetWidth will return the text obejcts set width which will be <= wrapLimit
 func (text *Text) GetWidth() float32 {
 	return text.width
 }
 
+// GetHeight will return the height of the text object after text wrap.
 func (text *Text) GetHeight() float32 {
 	return text.height
 }
 
+// GetDimensions will return the width and height of the text object
 func (text *Text) GetDimensions() (float32, float32) {
 	return text.width, text.height
 }
 
+// GetFont will return the font that this text object has been created with
 func (text *Text) GetFont() *Font {
 	return text.font
 }
 
+// SetFont will set the font in which this text object will use to render the
+// string
 func (text *Text) SetFont(f *Font) {
 	text.font = f
 	text.load()
 }
 
+// Set will set the string to be rendered by this text object
 func (text *Text) Set(t string) {
 	text.Setc([]string{t}, []*Color{NewColor(255, 255, 255, 255)})
 }
 
+// Setc will set the string and colors for this text object to be rendered.
 func (text *Text) Setc(strs []string, colors []*Color) {
 	text.strings = strs
 	text.colors = colors

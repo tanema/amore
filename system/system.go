@@ -1,4 +1,4 @@
-// The system Pacakge is a utility pacakge meant to interface with system operations
+// Package system is a utility pacakge meant to interface with system operations
 // like opening an application or setting the clipboard text
 package system
 
@@ -39,10 +39,10 @@ func GetProcessorCount() int {
 	return runtime.NumCPU()
 }
 
-// OpenUrl will open a file, directory, or URI using the OS's default application
+// OpenURL will open a file, directory, or URI using the OS's default application
 // for that object type.
 //
 // See github.com/skratchdot/open-golang
-func OpenUrl(url string) {
+func OpenURL(url string) {
 	open.Start(url)
 }

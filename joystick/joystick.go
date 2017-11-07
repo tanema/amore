@@ -1,4 +1,4 @@
-// The joystick Package handles any joystick or gamepad events on the gl context,
+// Package joystick handles any joystick or gamepad events on the gl context,
 // it can be used for feedback and input.
 package joystick
 
@@ -167,7 +167,7 @@ func (joystick *Joystick) GetGamepadAxis(axis GameControllerAxis) float32 {
 	return clampval(float32(value) / 32768.0)
 }
 
-// IsGamePadDown checks if a virtual gamepad button on the Joystick is pressed.
+// IsGamepadDown checks if a virtual gamepad button on the Joystick is pressed.
 func (joystick *Joystick) IsGamepadDown(button GameControllerButton) bool {
 	if joystick.IsConnected() == false || joystick.IsGamepad() == false {
 		return false

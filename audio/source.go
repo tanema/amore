@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	MAX_ATTENUATION_DISTANCE = 1000000.0 // upper limit of sound attentuation time.
-	MAX_BUFFERS              = 8         //arbitrary limit of umber of buffers a source can use to stream
+	maxAttenuationDistance = 1000000.0 // upper limit of sound attentuation time.
+	maxBuffers             = 8         //arbitrary limit of umber of buffers a source can use to stream
 )
 
 // Source manages decoding sound data, creates an openal sound and manages the
@@ -42,6 +42,7 @@ type Source struct {
 // State indicates the current playing state of the source.
 type State int
 
+// Audio States
 const (
 	Unknown = State(0)
 	Initial = State(al.Initial)
@@ -66,7 +67,7 @@ func NewSource(filepath string, static bool) (*Source, error) {
 		return nil, err
 	}
 
-	new_source := &Source{
+	newSource := &Source{
 		decoder:           decoder,
 		isStatic:          static,
 		pitch:             1,
@@ -74,7 +75,7 @@ func NewSource(filepath string, static bool) (*Source, error) {
 		maxVolume:         1,
 		referenceDistance: 1,
 		rolloffFactor:     1,
-		maxDistance:       MAX_ATTENUATION_DISTANCE,
+		maxDistance:       maxAttenuationDistance,
 		cone:              al.Cone{0, 0, 0},
 		position:          al.Vector{},
 		velocity:          al.Vector{},
@@ -82,13 +83,13 @@ func NewSource(filepath string, static bool) (*Source, error) {
 	}
 
 	if static {
-		new_source.staticBuffer = al.GenBuffers(1)[0]
-		new_source.staticBuffer.BufferData(decoder.Format, decoder.GetData(), decoder.SampleRate)
+		newSource.staticBuffer = al.GenBuffers(1)[0]
+		newSource.staticBuffer.BufferData(decoder.Format, decoder.GetData(), decoder.SampleRate)
 	} else {
-		new_source.streamBuffers = []al.Buffer{} //al.GenBuffers(MAX_BUFFERS)
+		newSource.streamBuffers = []al.Buffer{} //al.GenBuffers(maxBuffers)
 	}
 
-	return new_source, nil
+	return newSource, nil
 }
 
 // isValid will return true if the source is associated with an openal source anymore.
@@ -321,8 +322,8 @@ func (s *Source) SetDirection(x, y, z float32) {
 }
 
 // SetLooping sets whether the Source should loop when the source is complete.
-func (s *Source) SetLooping(do_loop bool) {
-	s.looping = do_loop
+func (s *Source) SetLooping(loop bool) {
+	s.looping = loop
 	s.reset()
 }
 
@@ -340,14 +341,14 @@ func (s *Source) SetPosition(x, y, z float32) {
 
 // SetRelative sets whether the Source's position and direction are relative to
 // the listener.
-func (s *Source) SetRelative(is_relative bool) {
-	s.relative = is_relative
+func (s *Source) SetRelative(isRelative bool) {
+	s.relative = isRelative
 	s.reset()
 }
 
 // SetRolloff sets the rolloff factor.
-func (s *Source) SetRolloff(roll_off float32) {
-	s.rolloffFactor = roll_off
+func (s *Source) SetRolloff(rolloff float32) {
+	s.rolloffFactor = rolloff
 	s.reset()
 }
 
@@ -393,7 +394,7 @@ func (s *Source) Play() bool {
 		s.source.SetBuffer(s.staticBuffer)
 	} else {
 		buffers := []al.Buffer{}
-		for i := 0; i < MAX_BUFFERS; i++ {
+		for i := 0; i < maxBuffers; i++ {
 			buffer := al.GenBuffers(1)[0]
 			if s.stream(buffer) > 0 {
 				buffers = append(buffers, buffer)
@@ -504,9 +505,8 @@ func (s *Source) Tell() time.Duration {
 		defer pool.mutex.Unlock()
 		if s.isStatic {
 			return s.decoder.ByteOffsetToDur(s.source.OffsetByte())
-		} else {
-			return s.decoder.ByteOffsetToDur(s.offsetBytes + s.source.OffsetByte())
 		}
+		return s.decoder.ByteOffsetToDur(s.offsetBytes + s.source.OffsetByte())
 	}
 	return time.Duration(0.0)
 }

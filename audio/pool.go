@@ -7,9 +7,7 @@ import (
 	"github.com/tanema/amore/audio/al"
 )
 
-// An upper limit to try and reach while finding out how many sources the system
-// can handle
-const MAX_SOURCES = 64
+const maxSources = 64
 
 var pool *audioPool
 
@@ -17,7 +15,7 @@ var pool *audioPool
 type audioPool struct {
 	mutex        sync.Mutex
 	totalSources int
-	sources      [MAX_SOURCES]al.Source
+	sources      [maxSources]al.Source
 	available    []al.Source
 	playing      map[al.Source]*Source
 }
@@ -25,17 +23,17 @@ type audioPool struct {
 // createPool generates a new pool and gets the max sources.
 func createPool() {
 	pool = &audioPool{
-		sources:   [MAX_SOURCES]al.Source{},
+		sources:   [maxSources]al.Source{},
 		available: []al.Source{},
 		playing:   make(map[al.Source]*Source),
 	}
 
 	// Generate sources.
-	for i := 0; i < MAX_SOURCES; i++ {
+	for i := 0; i < maxSources; i++ {
 		pool.sources[i] = al.GenSources(1)[0]
 
 		// We might hit an implementation-dependent limit on the total number
-		// of sources before reaching MAX_SOURCES.
+		// of sources before reaching maxSources.
 		if al.Error() != 0 {
 			break
 		}

@@ -4,12 +4,13 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-// Specifies which hardware axis on the controller
+// GameControllerAxis specifies which hardware axis on the controller
 type GameControllerAxis sdl.GameControllerAxis
 
-// Specifies the hardware button on the controller
+// GameControllerButton specifies the hardware button on the controller
 type GameControllerButton sdl.GameControllerButton
 
+// Which axis is being interacted with
 const (
 	AxisInvalid      = GameControllerAxis(sdl.CONTROLLER_AXIS_INVALID)
 	AxisLeftx        = GameControllerAxis(sdl.CONTROLLER_AXIS_LEFTX)
@@ -21,6 +22,7 @@ const (
 	AxisMax          = GameControllerAxis(sdl.CONTROLLER_AXIS_MAX)
 )
 
+// Which button on the joystick is being interacted with
 const (
 	ButtonInvalid       = GameControllerButton(sdl.CONTROLLER_BUTTON_INVALID)
 	ButtonA             = GameControllerButton(sdl.CONTROLLER_BUTTON_A)

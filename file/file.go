@@ -1,7 +1,5 @@
-/*
-The file Package is meant to take care of all asset file opening so that file
-access is safe if trying to access a bundled file or a file from the disk
-*/
+// Package file is meant to take care of all asset file opening so that file
+// access is safe if trying to access a bundled file or a file from the disk
 package file
 
 import (
@@ -13,7 +11,7 @@ import (
 	"time"
 )
 
-// the File interface makes accessing bundled files and os.File consistent
+// File interface makes accessing bundled files and os.File consistent
 type File interface {
 	io.Reader
 	io.Writer

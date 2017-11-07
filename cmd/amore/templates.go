@@ -5,7 +5,7 @@ import (
 	"text/template"
 )
 
-var configTemplate, _ = template.New("config").Parse(`title = "{{.Name}}"   		# The window title (string)
+var configTemplate, _ = template.New("config").Parse(`title = "{{.Name}}"				# The window title (string)
 identity = ""             # The name of the save directory (string)
 icon = ""                 # Filepath to an image to use as the window's icon (string)
 width = 800               # The window width (number)

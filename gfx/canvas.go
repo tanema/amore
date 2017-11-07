@@ -13,7 +13,7 @@ import (
 type Canvas struct {
 	*Texture
 	fbo              gl.Framebuffer
-	depth_stencil    gl.Renderbuffer
+	depthStencil     gl.Renderbuffer
 	status           uint32
 	attachedCanvases []*Canvas
 	width, height    int32
@@ -22,12 +22,12 @@ type Canvas struct {
 
 // NewCanvas creates a pointer to a new canvas with the privided width and height
 func NewCanvas(width, height int32) *Canvas {
-	new_canvas := &Canvas{
+	newCanvas := &Canvas{
 		width:  width,
 		height: height,
 	}
-	registerVolatile(new_canvas)
-	return new_canvas
+	registerVolatile(newCanvas)
+	return newCanvas
 }
 
 // loadVolatile will create the framebuffer and return true if successful
@@ -63,14 +63,14 @@ func (canvas *Canvas) loadVolatile() bool {
 
 // unLoadVolatile will release the texture, framebuffer and depth buffer
 func (canvas *Canvas) unLoadVolatile() {
-	if gl_state.currentCanvas == canvas {
+	if glState.currentCanvas == canvas {
 		canvas.stopGrab(false)
 	}
 	gl.DeleteFramebuffer(canvas.fbo)
-	gl.DeleteRenderbuffer(canvas.depth_stencil)
+	gl.DeleteRenderbuffer(canvas.depthStencil)
 
 	canvas.fbo = gl.Framebuffer{}
-	canvas.depth_stencil = gl.Renderbuffer{}
+	canvas.depthStencil = gl.Renderbuffer{}
 
 	canvas.attachedCanvases = []*Canvas{}
 }
@@ -78,7 +78,7 @@ func (canvas *Canvas) unLoadVolatile() {
 // startGrab will bind this canvas to grab all drawing operations
 // multiple canvases can only be passed in on non mobile platforms
 func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
-	if gl_state.currentCanvas == canvas {
+	if glState.currentCanvas == canvas {
 		return nil // already grabbing
 	}
 
@@ -86,36 +86,36 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 		// Whether the new canvas list is different from the old one.
 		// A more thorough check is done below.
 		if maxRenderTargets < 4 {
-			return fmt.Errorf("Multi-canvas rendering is not supported on this system.")
+			return fmt.Errorf("multi-canvas rendering is not supported on this system")
 		}
 
 		if int32(len(canvases)+1) > maxRenderTargets {
-			return fmt.Errorf("This system can't simultaneously render to %v canvases.", len(canvases)+1)
+			return fmt.Errorf("this system can't simultaneously render to %v canvases", len(canvases)+1)
 		}
 
 		for i := 0; i < len(canvases); i++ {
 			if canvases[i].width != canvas.width || canvases[i].height != canvas.height {
-				return fmt.Errorf("All canvases must have the same dimensions.")
+				return fmt.Errorf("all canvases must have the same dimensions")
 			}
 		}
 	}
 
 	// cleanup after previous Canvas
-	if gl_state.currentCanvas != nil {
-		canvas.systemViewport = gl_state.currentCanvas.systemViewport
-		gl_state.currentCanvas.stopGrab(true)
+	if glState.currentCanvas != nil {
+		canvas.systemViewport = glState.currentCanvas.systemViewport
+		glState.currentCanvas.stopGrab(true)
 	} else {
 		canvas.systemViewport = GetViewport()
 	}
 
 	// indicate we are using this Canvas.
-	gl_state.currentCanvas = canvas
+	glState.currentCanvas = canvas
 	// bind the framebuffer object.
 	gl.BindFramebuffer(gl.FRAMEBUFFER, canvas.fbo)
 	SetViewport(0, 0, canvas.width, canvas.height)
 	// Set up the projection matrix
-	gl_state.projectionStack.Push()
-	gl_state.projectionStack.Load(mgl32.Ortho(0.0, float32(screen_width), 0.0, float32(screen_height), -1, 1))
+	glState.projectionStack.Push()
+	glState.projectionStack.Load(mgl32.Ortho(0.0, float32(screenWidth), 0.0, float32(screenHeight), -1, 1))
 
 	canvas.attacheExtra(canvases)
 	canvas.attachedCanvases = canvases
@@ -127,13 +127,13 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 // all the settings
 func (canvas *Canvas) stopGrab(switchingToOtherCanvas bool) error {
 	// i am not grabbing. leave me alone
-	if gl_state.currentCanvas != canvas {
+	if glState.currentCanvas != canvas {
 		return nil
 	}
-	gl_state.projectionStack.Pop()
+	glState.projectionStack.Pop()
 	if !switchingToOtherCanvas {
 		// bind system framebuffer.
-		gl_state.currentCanvas = nil
+		glState.currentCanvas = nil
 		gl.BindFramebuffer(gl.FRAMEBUFFER, getDefaultFBO())
 		SetViewport(canvas.systemViewport[0], canvas.systemViewport[1], canvas.systemViewport[2], canvas.systemViewport[3])
 	}
@@ -144,10 +144,10 @@ func (canvas *Canvas) stopGrab(switchingToOtherCanvas bool) error {
 // only if the dimensions given are invalid
 func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
 	if x < 0 || y < 0 || w <= 0 || h <= 0 || (x+w) > canvas.width || (y+h) > canvas.height {
-		return nil, fmt.Errorf("Invalid ImageData rectangle dimensions.")
+		return nil, fmt.Errorf("invalid ImageData rectangle dimensions")
 	}
 
-	prev_canvas := GetCanvas()
+	prevCanvas := GetCanvas()
 	SetCanvas(canvas)
 
 	screenshot := image.NewRGBA(image.Rect(int(x), int(y), int(w), int(h)))
@@ -160,7 +160,7 @@ func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
 		copy(screenshot.Pix[y*stride:], pixels[i:i+w*4])
 	}
 
-	SetCanvas(prev_canvas...)
+	SetCanvas(prevCanvas...)
 
 	// The new ImageData now owns the pixel data, so we don't delete it here.
 	return screenshot, nil
@@ -170,23 +170,23 @@ func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
 // some buffers to handle this.
 func (canvas *Canvas) checkCreateStencil() bool {
 	// Do nothing if we've already created the stencil buffer.
-	if canvas.depth_stencil.Valid() {
+	if canvas.depthStencil.Valid() {
 		return true
 	}
 
-	if gl_state.currentCanvas != canvas {
+	if glState.currentCanvas != canvas {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, canvas.fbo)
 	}
 
 	format := gl.STENCIL_INDEX8
 	attachment := gl.STENCIL_ATTACHMENT
 
-	canvas.depth_stencil = gl.CreateRenderbuffer()
-	gl.BindRenderbuffer(gl.RENDERBUFFER, canvas.depth_stencil)
+	canvas.depthStencil = gl.CreateRenderbuffer()
+	gl.BindRenderbuffer(gl.RENDERBUFFER, canvas.depthStencil)
 	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.Enum(format), int(canvas.width), int(canvas.height))
 
 	// Attach the stencil buffer to the framebuffer object.
-	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.Enum(attachment), gl.RENDERBUFFER, canvas.depth_stencil)
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.Enum(attachment), gl.RENDERBUFFER, canvas.depthStencil)
 	gl.BindRenderbuffer(gl.RENDERBUFFER, gl.Renderbuffer{})
 
 	success := (gl.CheckFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE)
@@ -195,13 +195,13 @@ func (canvas *Canvas) checkCreateStencil() bool {
 	if success {
 		gl.Clear(gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	} else {
-		gl.DeleteRenderbuffer(canvas.depth_stencil)
-		canvas.depth_stencil = gl.Renderbuffer{}
+		gl.DeleteRenderbuffer(canvas.depthStencil)
+		canvas.depthStencil = gl.Renderbuffer{}
 	}
 
-	if gl_state.currentCanvas != nil && gl_state.currentCanvas != canvas {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, gl_state.currentCanvas.fbo)
-	} else if gl_state.currentCanvas == nil {
+	if glState.currentCanvas != nil && glState.currentCanvas != canvas {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, glState.currentCanvas.fbo)
+	} else if glState.currentCanvas == nil {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, getDefaultFBO())
 	}
 
@@ -211,7 +211,7 @@ func (canvas *Canvas) checkCreateStencil() bool {
 // newFBO will generate a new Frame Buffer Object for use with the canvas
 func newFBO(texture gl.Texture) (gl.Framebuffer, uint32) {
 	// get currently bound fbo to reset to it later
-	current_fbo := gl.GetBoundFramebuffer()
+	currentFBO := gl.GetBoundFramebuffer()
 
 	framebuffer := gl.CreateFramebuffer()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, framebuffer)
@@ -224,7 +224,7 @@ func newFBO(texture gl.Texture) (gl.Framebuffer, uint32) {
 	status := gl.CheckFramebufferStatus(gl.FRAMEBUFFER)
 
 	// unbind framebuffer
-	gl.BindFramebuffer(gl.FRAMEBUFFER, current_fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, currentFBO)
 
 	return framebuffer, uint32(status)
 }

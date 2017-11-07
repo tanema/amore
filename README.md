@@ -98,3 +98,4 @@ func draw() {
 
 - [ ] font rendering, especially spacing is bad
 - [ ] audio seeking broken
+- [ ] send textures to shader not working

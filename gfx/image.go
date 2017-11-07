@@ -2,6 +2,7 @@ package gfx
 
 import (
 	"image"
+	// All image types have been imported for loading them
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -21,19 +22,19 @@ type Image struct {
 // file does not exist or cannot be decoded it will return an error.
 func NewImage(path string) (*Image, error) {
 	//we do this first time to check the image before volitile load
-	imgFile, new_err := file.NewFile(path)
+	imgFile, newErr := file.NewFile(path)
 	defer imgFile.Close()
-	if new_err != nil {
-		return nil, new_err
+	if newErr != nil {
+		return nil, newErr
 	}
 
-	decoded_img, _, img_err := image.Decode(imgFile)
-	if img_err != nil {
-		return nil, img_err
+	decodedImg, _, imgErr := image.Decode(imgFile)
+	if imgErr != nil {
+		return nil, imgErr
 	}
 
-	bounds := decoded_img.Bounds()
-	new_image := &Image{
+	bounds := decodedImg.Bounds()
+	newImage := &Image{
 		filePath: path,
 		mipmaps:  false,
 		Texture: &Texture{
@@ -42,35 +43,35 @@ func NewImage(path string) (*Image, error) {
 		},
 	}
 
-	registerVolatile(new_image)
-	return new_image, nil
+	registerVolatile(newImage)
+	return newImage, nil
 }
 
 // NewMipmappedImage is like NewImage but the image is mipmapped
 func NewMipmappedImage(path string) *Image {
-	new_image := &Image{
+	newImage := &Image{
 		filePath: path,
 		mipmaps:  true,
 	}
-	registerVolatile(new_image)
-	return new_image
+	registerVolatile(newImage)
+	return newImage
 }
 
 // loadVolatile will create the volatile objects
 func (img *Image) loadVolatile() bool {
-	imgFile, new_err := file.NewFile(img.filePath)
+	imgFile, newErr := file.NewFile(img.filePath)
 	defer imgFile.Close()
-	if new_err != nil {
+	if newErr != nil {
 		return false
 	}
 
-	decoded_img, _, img_err := image.Decode(imgFile)
-	if img_err != nil {
+	decodedImg, _, imgErr := image.Decode(imgFile)
+	if imgErr != nil {
 		return false
 	}
 
-	img.Texture, img_err = newImageTexture(decoded_img, img.mipmaps)
-	if img_err != nil {
+	img.Texture, imgErr = newImageTexture(decodedImg, img.mipmaps)
+	if imgErr != nil {
 		return false
 	}
 
@@ -82,10 +83,10 @@ func (img *Image) loadVolatile() bool {
 func (img *Image) Drawv(vertices, textCoords []float32) {
 	prepareDraw(nil)
 	bindTexture(img.Texture.getHandle())
-	useVertexAttribArrays(attribflag_pos | attribflag_texcoord)
+	useVertexAttribArrays(attribFlagPos | attribFlagTexCoord)
 
-	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(vertices))
-	gl.VertexAttribPointer(attrib_texcoord, 2, gl.FLOAT, false, 0, gl.Ptr(textCoords))
+	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(vertices))
+	gl.VertexAttribPointer(attribTexCoord, 2, gl.FLOAT, false, 0, gl.Ptr(textCoords))
 
 	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
 }

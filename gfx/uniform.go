@@ -38,38 +38,38 @@ func (u *uniform) getTypeSize() int {
 func (u *uniform) getBaseType() UniformType {
 	switch u.Type {
 	case gl.INT, gl.INT_VEC2, gl.INT_VEC3, gl.INT_VEC4:
-		return UNIFORM_INT
+		return UniformInt
 	case gl.FLOAT, gl.FLOAT_VEC2, gl.FLOAT_VEC3,
 		gl.FLOAT_VEC4, gl.FLOAT_MAT2, gl.FLOAT_MAT3, gl.FLOAT_MAT4:
-		return UNIFORM_FLOAT
+		return UniformFloat
 	case gl.BOOL, gl.BOOL_VEC2, gl.BOOL_VEC3, gl.BOOL_VEC4:
-		return UNIFORM_BOOL
+		return UniformBool
 	case gl.SAMPLER_2D, gl.SAMPLER_CUBE:
-		return UNIFORM_SAMPLER
+		return UniformSampler
 	}
-	return UNIFORM_UNKNOWN
+	return UniformUnknown
 }
 
 func (u uniform) getSecondType() UniformType {
 	switch u.Type {
 	case gl.INT_VEC2, gl.INT_VEC3, gl.INT_VEC4, gl.FLOAT_VEC2,
 		gl.FLOAT_VEC3, gl.FLOAT_VEC4, gl.BOOL_VEC2, gl.BOOL_VEC3, gl.BOOL_VEC4:
-		return UNIFORM_VEC
+		return UniformVec
 	case gl.FLOAT_MAT2, gl.FLOAT_MAT3, gl.FLOAT_MAT4:
-		return UNIFORM_MAT
+		return UniformMat
 	}
-	return UNIFORM_BASE
+	return UniformBase
 }
 
 func translateUniformBaseType(t UniformType) string {
 	switch t {
-	case UNIFORM_FLOAT:
+	case UniformFloat:
 		return "float"
-	case UNIFORM_INT:
+	case UniformInt:
 		return "int"
-	case UNIFORM_BOOL:
+	case UniformBool:
 		return "bool"
-	case UNIFORM_SAMPLER:
+	case UniformSampler:
 		return "sampler"
 	}
 	return "unknown"

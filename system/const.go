@@ -7,10 +7,11 @@ import (
 // PowerState defines the battery connection to the PC
 type PowerState int
 
+// PowerStates are different status of the battery status
 const (
-	POWERSTATE_UNKNOWN    PowerState = sdl.POWERSTATE_UNKNOWN
-	POWERSTATE_ON_BATTERY PowerState = sdl.POWERSTATE_ON_BATTERY
-	POWERSTATE_NO_BATTERY PowerState = sdl.POWERSTATE_NO_BATTERY
-	POWERSTATE_CHARGING   PowerState = sdl.POWERSTATE_CHARGING
-	POWERSTATE_CHARGED    PowerState = sdl.POWERSTATE_CHARGED
+	PowerStateUnknown   PowerState = sdl.POWERSTATE_UNKNOWN
+	PowerStateOnBattery PowerState = sdl.POWERSTATE_ON_BATTERY
+	PowerStateNoBattery PowerState = sdl.POWERSTATE_NO_BATTERY
+	PowerStateCharging  PowerState = sdl.POWERSTATE_CHARGING
+	PowerStateCharged   PowerState = sdl.POWERSTATE_CHARGED
 )

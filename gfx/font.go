@@ -12,19 +12,19 @@ type Font struct {
 }
 
 // NewFont rasterizes a ttf font and returns a pointer to a new Font
-func NewFont(filename string, font_size float32) *Font {
-	rast := newTtfRasterizer(filename, font_size)
+func NewFont(filename string, fontSize float32) *Font {
+	rast := newTtfRasterizer(filename, fontSize)
 	return &Font{
 		rasterizers: []rasterizer{rast},
 	}
 }
 
-// NewImageFont rasterizes an image using the glyph_hints. The glyph_hints should
+// NewImageFont rasterizes an image using the glyphHints. The glyphHints should
 // list all characters in the image. The characters should all have equal width
-// and height. Using the glyph_hints, the image is split up into equal rectangles
+// and height. Using the glyphHints, the image is split up into equal rectangles
 // for rasterization. The function will return a pointer to a new Font
-func NewImageFont(filename, glyph_hints string) *Font {
-	rast := newImageRasterizer(filename, glyph_hints)
+func NewImageFont(filename, glyphHints string) *Font {
+	rast := newImageRasterizer(filename, glyphHints)
 	return &Font{
 		rasterizers: []rasterizer{rast},
 	}
@@ -39,9 +39,8 @@ func (font *Font) SetLineHeight(height float32) {
 func (font *Font) GetLineHeight() float32 {
 	if font.lineHeight <= 0 {
 		return float32(font.rasterizers[0].getLineHeight())
-	} else {
-		return font.lineHeight
 	}
+	return font.lineHeight
 }
 
 // SetFilter sets the filtering on the font.
@@ -147,7 +146,7 @@ func (font *Font) GetWidth(text string) float32 {
 		return 0
 	}
 
-	var max_width float32
+	var maxWidth float32
 	for _, line := range strings.Split(text, "\n") {
 		var width float32
 		var prevChar rune
@@ -159,10 +158,10 @@ func (font *Font) GetWidth(text string) float32 {
 			}
 			prevChar = char
 		}
-		max_width = float32(math.Max(float64(max_width), float64(width)))
+		maxWidth = float32(math.Max(float64(maxWidth), float64(width)))
 	}
 
-	return max_width
+	return maxWidth
 }
 
 // GetWrap will split a string given a wrap limit. It will return the max width

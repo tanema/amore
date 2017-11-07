@@ -2,11 +2,9 @@
 // Use of this source code is governed by a MIT-style
 // license that can be foind in the LICENSE file.
 
-/*
-The base amore package is simply for stopping and starting your game. It will
-also automatically lock the os thread and set the application to use all available
-cpus.
-*/
+// Package amore  is simply for stopping and starting your game. It will
+// also automatically lock the os thread and set the application to use all
+// available cpus.
 package amore
 
 import (
@@ -33,12 +31,12 @@ func init() {
 // update and draw will be called synchronously because calls to OpenGL that are
 // not on the main thread will crash your program.
 func Start(update func(float32), draw func()) error {
-	current_window, window_err := window.NewWindow()
+	currentWindow, windowErr := window.NewWindow()
 	defer window.Destroy()
-	if window_err != nil {
-		return window_err
+	if windowErr != nil {
+		return windowErr
 	}
-	gfx.InitContext(current_window.Config.Width, current_window.Config.Height)
+	gfx.InitContext(currentWindow.Config.Width, currentWindow.Config.Height)
 	defer gfx.DeInit()
 	if OnLoad != nil {
 		OnLoad()

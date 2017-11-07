@@ -6,7 +6,7 @@ import (
 
 var (
 	// OnKeyDown is called when a key on the keyboard is pressed down.
-	OnKeyDown func(key Key, is_repeat bool)
+	OnKeyDown func(key Key, isRepeat bool)
 	// OnKeyUp is called when a key on the keyboard is released.
 	OnKeyUp func(key Key)
 	// OnTextInput is called when text has been entered by the user. For example if
@@ -21,15 +21,15 @@ var (
 func Delegate(event sdl.Event) {
 	switch e := event.(type) {
 	case *sdl.KeyDownEvent:
-		is_repeat := (e.Repeat == 1)
+		isRepeat := (e.Repeat == 1)
 
-		if is_repeat && !key_repeat {
+		if isRepeat && !keyRepeat {
 			return
 		}
 
 		key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))
 		if OnKeyDown != nil {
-			OnKeyDown(key, is_repeat)
+			OnKeyDown(key, isRepeat)
 		}
 	case *sdl.KeyUpEvent:
 		key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))

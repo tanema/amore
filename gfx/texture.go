@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
+	// import all image packages to support them all
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -27,15 +28,15 @@ type (
 	}
 	// Texture is a struct to wrap the opengl texture object
 	Texture struct {
-		textureId     gl.Texture
+		textureID     gl.Texture
 		Width, Height int32
 		vertices      []float32
 		filter        Filter
 		wrap          Wrap
 		mipmaps       bool
 	}
-	// iTexture is an interface for any object that can be used like a texture.
-	iTexture interface {
+	// ITexture is an interface for any object that can be used like a texture.
+	ITexture interface {
 		getHandle() gl.Texture
 		GetWidth() int32
 		GetHeight() int32
@@ -46,62 +47,62 @@ type (
 // newFilter will create a Filter with default values
 func newFilter() Filter {
 	return Filter{
-		min:        FILTER_LINEAR,
-		mag:        FILTER_LINEAR,
-		mipmap:     FILTER_NONE,
+		min:        FilterLinear,
+		mag:        FilterLinear,
+		mipmap:     FilterNone,
 		anisotropy: 1.0,
 	}
 }
 
 // newTexture will return a new generated texture will not data uploaded to it.
 func newTexture(width, height int32, mipmaps bool) *Texture {
-	new_texture := &Texture{
-		textureId: gl.CreateTexture(),
+	newTexture := &Texture{
+		textureID: gl.CreateTexture(),
 		Width:     width,
 		Height:    height,
-		wrap:      Wrap{s: WRAP_CLAMP, t: WRAP_CLAMP},
+		wrap:      Wrap{s: WrapClamp, t: WrapClamp},
 		filter:    newFilter(),
 		mipmaps:   mipmaps,
 	}
 
-	new_texture.SetFilter(FILTER_NEAREST, FILTER_NEAREST)
-	new_texture.SetWrap(WRAP_CLAMP, WRAP_CLAMP)
+	newTexture.SetFilter(FilterNearest, FilterNearest)
+	newTexture.SetWrap(WrapClamp, WrapClamp)
 
-	if new_texture.mipmaps {
-		new_texture.filter.mipmap = states.back().defaultMipmapFilter
-		new_texture.SetMipmapSharpness(states.back().defaultMipmapSharpness)
+	if newTexture.mipmaps {
+		newTexture.filter.mipmap = states.back().defaultMipmapFilter
+		newTexture.SetMipmapSharpness(states.back().defaultMipmapSharpness)
 	}
 
-	if new_texture.mipmaps {
+	if newTexture.mipmaps {
 		// Auto-generate mipmaps every time the texture is modified, if glGenerateMipmap isn't supported.
 		setTexMipMap()
 	}
 
-	new_texture.generateVerticies()
+	newTexture.generateVerticies()
 
-	return new_texture
+	return newTexture
 }
 
 // newImageTexture will generate a texture from an image. It will automatically
 // upload the image data to the texture.
 func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
 	bounds := img.Bounds()
-	new_texture := newTexture(int32(bounds.Dx()), int32(bounds.Dy()), mipmaps)
+	newTexture := newTexture(int32(bounds.Dx()), int32(bounds.Dy()), mipmaps)
 	//generate a uniform image and upload to vram
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
-	bindTexture(new_texture.getHandle())
+	bindTexture(newTexture.getHandle())
 	gl.TexImage2D(gl.TEXTURE_2D, 0, bounds.Dx(), bounds.Dy(), gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
 
-	if new_texture.mipmaps {
-		new_texture.generateMipmaps()
+	if newTexture.mipmaps {
+		newTexture.generateMipmaps()
 	}
-	return new_texture, nil
+	return newTexture, nil
 }
 
 // getHandle will return the gl texutre handle
 func (texture *Texture) getHandle() gl.Texture {
-	return texture.textureId
+	return texture.textureID
 }
 
 // generate both the x, y coords at origin and the uv coords.
@@ -137,12 +138,12 @@ func (texture *Texture) generateMipmaps() {
 
 // SetWrap will set how the texture behaves when applies to a plane that is larger
 // than itself.
-func (texture *Texture) SetWrap(wrap_s, wrap_t WrapMode) {
-	texture.wrap.s = wrap_s
-	texture.wrap.t = wrap_t
+func (texture *Texture) SetWrap(wrapS, wrapT WrapMode) {
+	texture.wrap.s = wrapS
+	texture.wrap.t = wrapT
 	bindTexture(texture.getHandle())
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, int(wrap_s))
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int(wrap_t))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, int(wrapS))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int(wrapT))
 }
 
 // GetWrap will return the wrapping for how the texture behaves on a plane that
@@ -154,11 +155,10 @@ func (texture *Texture) GetWrap() Wrap {
 // SetFilter will set the min, mag filters for the texture filtering.
 func (texture *Texture) SetFilter(min, mag FilterMode) error {
 	if !texture.validateFilter() {
-		if texture.filter.mipmap != FILTER_NONE && !texture.mipmaps {
-			return fmt.Errorf("Non-mipmapped image cannot have mipmap filtering.")
-		} else {
-			return fmt.Errorf("Invalid texture filter.")
+		if texture.filter.mipmap != FilterNone && !texture.mipmaps {
+			return fmt.Errorf("non-mipmapped image cannot have mipmap filtering")
 		}
+		return fmt.Errorf("invalid texture filter")
 	}
 	texture.filter.min = min
 	texture.filter.mag = mag
@@ -173,20 +173,20 @@ func (texture *Texture) setTextureFilter() {
 
 	bindTexture(texture.getHandle())
 
-	if texture.filter.mipmap == FILTER_NONE {
-		if texture.filter.min == FILTER_NEAREST {
+	if texture.filter.mipmap == FilterNone {
+		if texture.filter.min == FilterNearest {
 			gmin = gl.NEAREST
-		} else { // f.min == FILTER_LINEAR
+		} else { // f.min == FilterLinear
 			gmin = gl.LINEAR
 		}
 	} else {
-		if texture.filter.min == FILTER_NEAREST && texture.filter.mipmap == FILTER_NEAREST {
+		if texture.filter.min == FilterNearest && texture.filter.mipmap == FilterNearest {
 			gmin = gl.NEAREST_MIPMAP_NEAREST
-		} else if texture.filter.min == FILTER_NEAREST && texture.filter.mipmap == FILTER_LINEAR {
+		} else if texture.filter.min == FilterNearest && texture.filter.mipmap == FilterLinear {
 			gmin = gl.NEAREST_MIPMAP_LINEAR
-		} else if texture.filter.min == FILTER_LINEAR && texture.filter.mipmap == FILTER_NEAREST {
+		} else if texture.filter.min == FilterLinear && texture.filter.mipmap == FilterNearest {
 			gmin = gl.LINEAR_MIPMAP_NEAREST
-		} else if texture.filter.min == FILTER_LINEAR && texture.filter.mipmap == FILTER_LINEAR {
+		} else if texture.filter.min == FilterLinear && texture.filter.mipmap == FilterLinear {
 			gmin = gl.LINEAR_MIPMAP_LINEAR
 		} else {
 			gmin = gl.LINEAR
@@ -194,9 +194,9 @@ func (texture *Texture) setTextureFilter() {
 	}
 
 	switch texture.filter.mag {
-	case FILTER_NEAREST:
+	case FilterNearest:
 		gmag = gl.NEAREST
-	case FILTER_LINEAR:
+	case FilterLinear:
 		fallthrough
 	default:
 		gmag = gl.LINEAR
@@ -214,19 +214,19 @@ func (texture *Texture) GetFilter() Filter {
 
 // validateFilter will the the near and far filters and makes sure that it is possible
 func (texture *Texture) validateFilter() bool {
-	if !texture.mipmaps && texture.filter.mipmap != FILTER_NONE {
+	if !texture.mipmaps && texture.filter.mipmap != FilterNone {
 		return false
 	}
 
-	if texture.filter.mag != FILTER_LINEAR && texture.filter.mag != FILTER_NEAREST {
+	if texture.filter.mag != FilterLinear && texture.filter.mag != FilterNearest {
 		return false
 	}
 
-	if texture.filter.min != FILTER_LINEAR && texture.filter.min != FILTER_NEAREST {
+	if texture.filter.min != FilterLinear && texture.filter.min != FilterNearest {
 		return false
 	}
 
-	if texture.filter.mipmap != FILTER_LINEAR && texture.filter.mipmap != FILTER_NEAREST && texture.filter.mipmap != FILTER_NONE {
+	if texture.filter.mipmap != FilterLinear && texture.filter.mipmap != FilterNearest && texture.filter.mipmap != FilterNone {
 		return false
 	}
 
@@ -258,7 +258,7 @@ func (texture *Texture) unloadVolatile() {
 	if texture != nil {
 		return
 	}
-	deleteTexture(texture.textureId)
+	deleteTexture(texture.textureID)
 	texture = nil
 }
 
@@ -267,10 +267,10 @@ func (texture *Texture) unloadVolatile() {
 func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	prepareDraw(model)
 	bindTexture(texture.getHandle())
-	useVertexAttribArrays(attribflag_pos | attribflag_texcoord)
+	useVertexAttribArrays(attribFlagPos | attribFlagTexCoord)
 
-	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 4*4, gl.Ptr(vertices))
-	gl.VertexAttribPointer(attrib_texcoord, 2, gl.FLOAT, false, 4*4, gl.Ptr(&vertices[2]))
+	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 4*4, gl.Ptr(vertices))
+	gl.VertexAttribPointer(attribTexCoord, 2, gl.FLOAT, false, 4*4, gl.Ptr(&vertices[2]))
 
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 }

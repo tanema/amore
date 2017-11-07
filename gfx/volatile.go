@@ -11,23 +11,23 @@ type volatile interface {
 }
 
 var (
-	all_volatile = []volatile{}
+	allVolatile = []volatile{}
 )
 
 // registerVolatile will put the volatile in the current object group and call
 // loadVolatile if the gl context is initialized.
-func registerVolatile(new_volatile volatile) {
-	all_volatile = append(all_volatile, new_volatile)
-	if gl_state.initialized {
-		new_volatile.loadVolatile()
-		runtime.SetFinalizer(new_volatile, func(vol volatile) {
+func registerVolatile(newVolatile volatile) {
+	allVolatile = append(allVolatile, newVolatile)
+	if glState.initialized {
+		newVolatile.loadVolatile()
+		runtime.SetFinalizer(newVolatile, func(vol volatile) {
 			vol.unloadVolatile()
 		})
 	}
 }
 
 func loadAllVolatile() {
-	for _, vol := range all_volatile {
+	for _, vol := range allVolatile {
 		vol.loadVolatile()
 		runtime.SetFinalizer(vol, func(vol volatile) {
 			vol.unloadVolatile()

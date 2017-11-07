@@ -1,4 +1,4 @@
-// The gfx Pacakge is used largly to simplify OpenGL calls and to manage state
+// Package gfx is used largly to simplify OpenGL calls and to manage state
 // of transformations. Anything meant to be drawn to screen will come from this
 // pacakge.
 package gfx
@@ -78,22 +78,22 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 		return
 	}
 
-	angle_shift := (angle2 - angle1) / float32(points)
+	angleShift := (angle2 - angle1) / float32(points)
 	// Bail on precision issues.
-	if angle_shift == 0.0 {
+	if angleShift == 0.0 {
 		return
 	}
 
 	phi := angle1
-	num_coords := (points + 3) * 2
-	coords := make([]float32, num_coords)
+	numCoords := (points + 3) * 2
+	coords := make([]float32, numCoords)
 	coords[0] = x
-	coords[num_coords-2] = x
+	coords[numCoords-2] = x
 	coords[1] = y
-	coords[num_coords-1] = y
+	coords[numCoords-1] = y
 
 	for i := 0; i <= points; i++ {
-		phi = phi + angle_shift
+		phi = phi + angleShift
 		coords[2*(i+1)] = x + radius*float32(math.Cos(float64(phi)))
 		coords[2*(i+1)+1] = y + radius*float32(math.Sin(float64(phi)))
 	}
@@ -102,9 +102,9 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 		PolyLine(coords)
 	} else {
 		prepareDraw(nil)
-		bindTexture(gl_state.defaultTexture)
-		useVertexAttribArrays(attribflag_pos)
-		gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+		bindTexture(glState.defaultTexture)
+		useVertexAttribArrays(attribFlagPos)
+		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 	}
 }
@@ -123,17 +123,17 @@ func Ellipse(mode DrawMode, x, y, radiusx, radiusy float32) {
 // If it is lower it will look jagged. If it is higher it will hit performace.
 // The drawmode specifies either a fill or line draw
 func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
-	two_pi := math.Pi * 2.0
+	twoPi := math.Pi * 2.0
 	if points <= 0 {
 		points = 1
 	}
 
-	angle_shift := float32(two_pi) / float32(points)
+	angleShift := float32(twoPi) / float32(points)
 	phi := float32(0.0)
 
 	coords := make([]float32, 2*(points+1))
 	for i := 0; i < points; i++ {
-		phi += angle_shift
+		phi += angleShift
 		coords[2*i+0] = x + radiusx*float32(math.Cos(float64(phi)))
 		coords[2*i+1] = y + radiusy*float32(math.Sin(float64(phi)))
 	}
@@ -145,20 +145,20 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 		PolyLine(coords)
 	} else {
 		prepareDraw(nil)
-		bindTexture(gl_state.defaultTexture)
-		useVertexAttribArrays(attribflag_pos)
-		gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+		bindTexture(glState.defaultTexture)
+		useVertexAttribArrays(attribFlagPos)
+		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 	}
 }
 
-// Point will draw a point on the screen at x, y position. The size of the point
+// Points will draw a point on the screen at x, y position. The size of the point
 // is dependant on the point size set with SetPointSize.
 func Points(coords ...float32) {
 	prepareDraw(nil)
-	bindTexture(gl_state.defaultTexture)
-	useVertexAttribArrays(attribflag_pos)
-	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+	bindTexture(glState.defaultTexture)
+	useVertexAttribArrays(attribFlagPos)
+	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 	gl.DrawArrays(gl.POINTS, 0, len(coords)/2)
 }
 
@@ -169,7 +169,7 @@ func Line(args ...float32) {
 
 // PolyLine will draw a line with an array in the form of x1, y1, x2, y2, x3, y3, ..... xn, yn
 func PolyLine(coords []float32) {
-	polyline := newPolyLine(states.back().line_join, states.back().line_style, states.back().line_width, states.back().pixelSize)
+	polyline := newPolyLine(states.back().lineJoin, states.back().lineStyle, states.back().lineWidth, states.back().pixelSize)
 	polyline.render(coords)
 }
 
@@ -188,9 +188,9 @@ func Polygon(mode DrawMode, coords []float32) {
 		PolyLine(coords)
 	} else {
 		prepareDraw(nil)
-		bindTexture(gl_state.defaultTexture)
-		useVertexAttribArrays(attribflag_pos)
-		gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+		bindTexture(glState.defaultTexture)
+		useVertexAttribArrays(attribFlagPos)
+		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 	}
 }
@@ -201,7 +201,7 @@ func NewScreenshot() image.Image {
 	canvases := GetCanvas()
 	SetCanvas()
 
-	w, h := int32(screen_width), int32(screen_height)
+	w, h := int32(screenWidth), int32(screenHeight)
 	screenshot := image.NewRGBA(image.Rect(0, 0, int(w), int(h)))
 	stride := int32(screenshot.Stride)
 	pixels := make([]byte, len(screenshot.Pix))
@@ -264,15 +264,15 @@ func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, 
 		return x, y, angle, sx, sy, ox, oy, kx, ky
 	}
 
-	args_length := len(args)
+	argsLength := len(args)
 
-	switch args_length {
+	switch argsLength {
 	case 9:
 		ky = args[8]
 		fallthrough
 	case 8:
 		kx = args[7]
-		if args_length == 8 {
+		if argsLength == 8 {
 			ky = kx
 		}
 		fallthrough
@@ -281,7 +281,7 @@ func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, 
 		fallthrough
 	case 6:
 		ox = args[5]
-		if args_length == 6 {
+		if argsLength == 6 {
 			oy = ox
 		}
 		fallthrough
@@ -290,7 +290,7 @@ func normalizeDrawCallArgs(args []float32) (float32, float32, float32, float32, 
 		fallthrough
 	case 4:
 		sx = args[3]
-		if args_length == 4 {
+		if argsLength == 4 {
 			sy = sx
 		}
 		fallthrough

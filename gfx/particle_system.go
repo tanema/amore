@@ -33,7 +33,7 @@ type (
 	// ParticleSystem generates and emits particles at set speeds and rotations.
 	ParticleSystem struct {
 		particles                 []*particle
-		texture                   iTexture
+		texture                   ITexture
 		insertMode                ParticleInsertion
 		areaSpreadDistribution    ParticleDistribution
 		active                    bool
@@ -75,27 +75,30 @@ type (
 	}
 )
 
-// calculate_variation is used to calculate the variation in starting spin on
+// upper limit of particles that can be created
+const maxParticles = math.MaxInt32 / 4
+
+// calculateVariation is used to calculate the variation in starting spin on
 // each particle
-func calculate_variation(inner, outer, v float32) float32 {
+func calculateVariation(inner, outer, v float32) float32 {
 	low := inner - (outer/2.0)*v
 	high := inner + (outer/2.0)*v
-	r := rng.Rand()
+	r := Rand()
 	return low*(1-r) + high*r
 }
 
 // NewParticleSystem will create a new system where the texture given (generally
 // an image) will be how each particle is represented and the size is the maximum
 // number of particles displayed at a time.
-func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
-	if size == 0 || size > MAX_PARTICLES {
+func NewParticleSystem(texture ITexture, size int) *ParticleSystem {
+	if size == 0 || size > maxParticles {
 		panic("Invalid ParticleSystem size.")
 	}
-	new_ps := &ParticleSystem{
+	return &ParticleSystem{
 		texture:                texture,
 		active:                 true,
-		insertMode:             INSERT_MODE_TOP,
-		areaSpreadDistribution: DISTRIBUTION_NONE,
+		insertMode:             InsertModeTop,
+		areaSpreadDistribution: DistributionNone,
 		lifetime:               -1,
 		offset:                 mgl32.Vec2{float32(texture.GetWidth()) * 0.5, float32(texture.GetHeight()) * 0.5},
 		defaultOffset:          true,
@@ -105,8 +108,6 @@ func NewParticleSystem(texture iTexture, size int) *ParticleSystem {
 		maxParticles:           size,
 		quadIndices:            newQuadIndices(size),
 	}
-
-	return new_ps
 }
 
 // resetOffset is called after that texture is set or a quad is set so that each
@@ -123,7 +124,7 @@ func (system *ParticleSystem) resetOffset() {
 // SetBufferSize resizes the maximum amount of particles the system can create
 // simultaneously.
 func (system *ParticleSystem) SetBufferSize(size int) {
-	if size == 0 || size > MAX_PARTICLES {
+	if size == 0 || size > maxParticles {
 		panic("Invalid buffer size")
 	}
 	if len(system.particles) > int(size) {
@@ -150,12 +151,12 @@ func (system *ParticleSystem) addParticle(t float32) {
 	// Gets a free particle and updates the allocation pointer.
 	p := system.initParticle(t)
 	switch system.insertMode {
-	case INSERT_MODE_TOP:
+	case InsertModeTop:
 		system.particles = append([]*particle{p}, system.particles...)
-	case INSERT_MODE_BOTTOM:
+	case InsertModeBottom:
 		system.particles = append(system.particles, p)
-	case INSERT_MODE_RANDOM:
-		i := int(rng.RandMax(float32(system.maxParticles - 1)))
+	case InsertModeRandom:
+		i := int(RandMax(float32(system.maxParticles - 1)))
 		system.particles = append(system.particles[:i], append([]*particle{p}, system.particles[i:]...)...)
 	}
 }
@@ -173,39 +174,39 @@ func (system *ParticleSystem) initParticle(t float32) *particle {
 	if system.particleLifeMin == system.particleLifeMax {
 		p.life = system.particleLifeMin
 	} else {
-		p.life = rng.RandRange(system.particleLifeMin, system.particleLifeMax)
+		p.life = RandRange(system.particleLifeMin, system.particleLifeMax)
 	}
 	p.lifetime = p.life
 
 	switch system.areaSpreadDistribution {
-	case DISTRIBUTION_UNIFORM:
-		p.position[0] += rng.RandRange(-system.areaSpread[0], system.areaSpread[0])
-		p.position[1] += rng.RandRange(-system.areaSpread[1], system.areaSpread[1])
-	case DISTRIBUTION_NORMAL:
-		p.position[0] += rng.RandomNormal(system.areaSpread[0])
-		p.position[1] += rng.RandomNormal(system.areaSpread[1])
-	case DISTRIBUTION_NONE:
+	case DistributionUniform:
+		p.position[0] += RandRange(-system.areaSpread[0], system.areaSpread[0])
+		p.position[1] += RandRange(-system.areaSpread[1], system.areaSpread[1])
+	case DistributionNormal:
+		p.position[0] += RandomNormal(system.areaSpread[0])
+		p.position[1] += RandomNormal(system.areaSpread[1])
+	case DistributionNone:
 		//done
 	}
 
 	p.origin = pos
 
-	speed := rng.RandRange(system.speedMin, system.speedMax)
-	dir := float64(rng.RandRange(system.direction-system.spread/2.0, system.direction+system.spread/2.0))
+	speed := RandRange(system.speedMin, system.speedMax)
+	dir := float64(RandRange(system.direction-system.spread/2.0, system.direction+system.spread/2.0))
 	p.velocity = mgl32.Vec2{float32(math.Cos(dir)), float32(math.Sin(dir))}.Mul(speed)
 
-	p.linearAcceleration[0] = rng.RandRange(system.linearAccelerationMin[0], system.linearAccelerationMax[0])
-	p.linearAcceleration[1] = rng.RandRange(system.linearAccelerationMin[1], system.linearAccelerationMax[1])
+	p.linearAcceleration[0] = RandRange(system.linearAccelerationMin[0], system.linearAccelerationMax[0])
+	p.linearAcceleration[1] = RandRange(system.linearAccelerationMin[1], system.linearAccelerationMax[1])
 
-	p.radialAcceleration = rng.RandRange(system.radialAccelerationMin, system.radialAccelerationMax)
-	p.tangentialAcceleration = rng.RandRange(system.tangentialAccelerationMin, system.tangentialAccelerationMax)
-	p.linearDamping = rng.RandRange(system.linearDampingMin, system.linearDampingMax)
-	p.sizeOffset = rng.RandMax(system.sizeVariation) // time offset for size change
-	p.sizeIntervalSize = (1.0 - rng.RandMax(system.sizeVariation)) - p.sizeOffset
+	p.radialAcceleration = RandRange(system.radialAccelerationMin, system.radialAccelerationMax)
+	p.tangentialAcceleration = RandRange(system.tangentialAccelerationMin, system.tangentialAccelerationMax)
+	p.linearDamping = RandRange(system.linearDampingMin, system.linearDampingMax)
+	p.sizeOffset = RandMax(system.sizeVariation) // time offset for size change
+	p.sizeIntervalSize = (1.0 - RandMax(system.sizeVariation)) - p.sizeOffset
 	p.size = system.sizes[int(p.sizeOffset-0.5)*(len(system.sizes)-1)]
-	p.spinStart = calculate_variation(system.spinStart, system.spinEnd, system.spinVariation)
-	p.spinEnd = calculate_variation(system.spinEnd, system.spinStart, system.spinVariation)
-	p.rotation = rng.RandRange(system.rotationMin, system.rotationMax)
+	p.spinStart = calculateVariation(system.spinStart, system.spinEnd, system.spinVariation)
+	p.spinEnd = calculateVariation(system.spinEnd, system.spinStart, system.spinVariation)
+	p.rotation = RandRange(system.rotationMin, system.rotationMax)
 	p.angle = p.rotation
 
 	if system.relativeRotation {
@@ -218,7 +219,7 @@ func (system *ParticleSystem) initParticle(t float32) *particle {
 }
 
 // SetTexture will change the texture for the particles being inserted into the system.
-func (system *ParticleSystem) SetTexture(tex iTexture) {
+func (system *ParticleSystem) SetTexture(tex ITexture) {
 	system.texture = tex
 	if system.defaultOffset {
 		system.resetOffset()
@@ -226,7 +227,7 @@ func (system *ParticleSystem) SetTexture(tex iTexture) {
 }
 
 // GetTexture will return the texture currently being used by this particle system.
-func (system *ParticleSystem) GetTexture() iTexture {
+func (system *ParticleSystem) GetTexture() ITexture {
 	return system.texture
 }
 
@@ -311,7 +312,7 @@ func (system *ParticleSystem) SetAreaSpread(distribution ParticleDistribution, x
 	system.areaSpreadDistribution = distribution
 }
 
-// GetAreaSpreadDistrobution will return the particle distrobution of the system.
+// GetAreaSpreadDistribution will return the particle distrobution of the system.
 func (system *ParticleSystem) GetAreaSpreadDistribution() ParticleDistribution {
 	return system.areaSpreadDistribution
 }
@@ -521,7 +522,7 @@ func (system *ParticleSystem) SetRelativeRotation(enable bool) {
 	system.relativeRotation = enable
 }
 
-// GetRelativeRotation returns whether particle angles and rotations are relative
+// HasRelativeRotation returns whether particle angles and rotations are relative
 // to their velocities. If enabled, particles are aligned to the angle of their
 // velocities and rotate relative to that angle.
 func (system *ParticleSystem) HasRelativeRotation() bool {
@@ -667,7 +668,7 @@ func (system *ParticleSystem) Update(dt float32) {
 		i := int(s)
 		k := i
 		if i != len(system.sizes)-1 {
-			k += 1 // boundary check (prevents failing on t = 1.0f)
+			k++ // boundary check (prevents failing on t = 1.0f)
 		}
 		s -= float32(i) // transpose s to be in interval [0:1]: i <= s < i + 1 ~> 0 <= s < 1
 		p.size = system.sizes[i]*(1.0-s) + system.sizes[k]*s
@@ -677,7 +678,7 @@ func (system *ParticleSystem) Update(dt float32) {
 		i = int(s)
 		k = i
 		if i != len(system.colors)-1 {
-			k += 1 // boundary check (prevents failing on t = 1.0f)
+			k++ // boundary check (prevents failing on t = 1.0f)
 		}
 		s -= float32(i) // 0 <= s <= 1
 		p.color = system.colors[i].Mul(1.0 - s).Add(system.colors[k])
@@ -733,7 +734,7 @@ func (system *ParticleSystem) Draw(args ...float32) {
 	useQuads := len(system.quads) > 0
 	particleVerts := make([]float32, 32*len(system.particles))
 	textureVerts := system.texture.getVerticies()
-	for particle_index, p := range system.particles {
+	for particleIndex, p := range system.particles {
 		if useQuads {
 			textureVerts = system.quads[p.quadIndex].getVertices()
 		}
@@ -746,7 +747,7 @@ func (system *ParticleSystem) Draw(args ...float32) {
 			system.offset[0], system.offset[1],
 		})
 
-		pvi := 32 * particle_index
+		pvi := 32 * particleIndex
 		for i := 0; i < 32; i += 8 {
 			j := (i / 2)
 			particleVerts[pvi+i+0] = (mat[0] * textureVerts[j+0]) + (mat[4] * textureVerts[j+1]) + mat[12]
@@ -763,10 +764,10 @@ func (system *ParticleSystem) Draw(args ...float32) {
 	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(system.texture.getHandle())
 
-	useVertexAttribArrays(attribflag_pos | attribflag_texcoord | attribflag_color)
-	gl.VertexAttribPointer(attrib_pos, 2, gl.FLOAT, false, 8*4, gl.Ptr(particleVerts))
-	gl.VertexAttribPointer(attrib_texcoord, 2, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[2]))
-	gl.VertexAttribPointer(attrib_color, 4, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[4]))
+	useVertexAttribArrays(attribFlagPos | attribFlagTexCoord | attribFlagColor)
+	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 8*4, gl.Ptr(particleVerts))
+	gl.VertexAttribPointer(attribTexCoord, 2, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[2]))
+	gl.VertexAttribPointer(attribColor, 4, gl.FLOAT, false, 8*4, gl.Ptr(&particleVerts[4]))
 
 	// We use a client-side index array instead of an Index Buffers, because
 	// at least one graphics driver (the one for Kepler nvidia GPUs in OS X

@@ -27,8 +27,8 @@ func init() {
 		if fi.IsDir() || strings.HasPrefix(fi.Name(), ".") {
 			return nil
 		}
-		simple_path := strings.Replace(path, "assets/", "", -1)
-		assetFiles[simple_path] = path
+		simplePath := strings.Replace(path, "assets/", "", -1)
+		assetFiles[simplePath] = path
 		return nil
 	})
 }

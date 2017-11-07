@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	config_file_name = "conf.toml" // default config file name.
+	configFileName = "conf.toml" // default config file name.
 )
 
 // windowConfig is the struct that the config file will unmarshalled into
@@ -44,18 +44,18 @@ type windowConfig struct {
 // permission errors.
 func loadConfig() (*windowConfig, error) {
 	var config windowConfig
-	path := path.Join(".", config_file_name)
+	path := path.Join(".", configFileName)
 
 	if _, err := file.NewFileData(path); os.IsNotExist(err) {
 		return &config, nil //no added config bail out early
 	}
 
-	config_file, file_err := file.NewFile(config_file_name)
-	if file_err != nil {
-		return nil, file_err
+	configFile, fileErr := file.NewFile(configFileName)
+	if fileErr != nil {
+		return nil, fileErr
 	}
 
-	if _, err := toml.DecodeReader(config_file, &config); err != nil {
+	if _, err := toml.DecodeReader(configFile, &config); err != nil {
 		return nil, err
 	}
 

@@ -7,6 +7,8 @@ import (
 // Key corresponds to a keyboard key.
 type Key sdl.Keycode
 
+// These describe which key is interacted with on the keyboard. There is a constant
+// for each key.
 const (
 	KeyUnknown            Key = Key(sdl.K_UNKNOWN)
 	KeyReturn             Key = Key(sdl.K_RETURN)
@@ -167,7 +169,7 @@ const (
 // ModifierKey corresponds to a modifier key.
 type ModifierKey sdl.Keymod
 
-//// Modifier keys
+// Modifier keys
 const (
 	ModNone     ModifierKey = ModifierKey(sdl.KMOD_NONE)
 	ModLShift   ModifierKey = ModifierKey(sdl.KMOD_LSHIFT)

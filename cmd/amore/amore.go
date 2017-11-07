@@ -24,11 +24,11 @@ func main() {
 		if args[0] == "bundle" {
 			bundle(args[1:]...)
 		} else if args[0] == "init" || args[0] == "new" {
-			project_name := ""
+			projectName := ""
 			if len(args) > 1 {
-				project_name = args[1]
+				projectName = args[1]
 			}
-			newProject(project_name)
+			newProject(projectName)
 		} else if args[0] == "version" {
 			printVersion()
 		} else {

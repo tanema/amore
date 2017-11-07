@@ -1,4 +1,4 @@
-// The touch Pacakge handles touch events in the gl context
+// Package touch handles touch events in the gl context
 // To capture events as they happen you can use the callbacks OnTouchPress,
 // OnTouchRelease, and OnTouchMove. Define them by calling touch.OnTouchPress =
 // func(x, y, dx, dy, pressure float32){}.
@@ -8,6 +8,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+// Touch represents a singel touch point
 type Touch struct {
 	ID int64
 	*sdl.TouchFingerEvent

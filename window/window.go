@@ -1,4 +1,4 @@
-// The window Pacakge creates and manages the window and gl context.
+// Package window creates and manages the window and gl context.
 package window
 
 import (
@@ -11,37 +11,36 @@ import (
 )
 
 var (
-	current_window *window
-	created        = false
-	initError      error
+	currentWindow *window
+	created       = false
+	initError     error
 )
 
 // MessageBoxType specifies the types of Message box to create
 type MessageBoxType uint32
 
+// MessageBoxTypes for opening an alert dialog
 const (
-	MESSAGEBOX_ERROR   MessageBoxType = sdl.MESSAGEBOX_ERROR
-	MESSAGEBOX_WARNING MessageBoxType = sdl.MESSAGEBOX_WARNING
-	MESSAGEBOX_INFO    MessageBoxType = sdl.MESSAGEBOX_INFORMATION
+	MessageBoxError   MessageBoxType = sdl.MESSAGEBOX_ERROR
+	MessageBoxWarning MessageBoxType = sdl.MESSAGEBOX_WARNING
+	MessageBoxInfo    MessageBoxType = sdl.MESSAGEBOX_INFORMATION
 )
 
 // Window contains the created window information
 type window struct {
-	sdl_window                *sdl.Window
-	context                   sdl.GLContext
-	pixel_width, pixel_height int
-	should_close              bool
-	Config                    *windowConfig
-	refresh_rate              int32
-	open                      bool
+	SDLWindow   *sdl.Window
+	context     sdl.GLContext
+	shouldClose bool
+	Config      *windowConfig
+	open        bool
 }
 
 // NewWindow will create a new sdl window with a gl context. It will also destroy
 // an old one if there is one already. Errors returned come straight from SDL so
 // errors will be indicitive of SDL errors
 func NewWindow() (*window, error) {
-	if current_window != nil || initError != nil {
-		return current_window, initError
+	if currentWindow != nil || initError != nil {
+		return currentWindow, initError
 	}
 
 	var config *windowConfig
@@ -119,18 +118,18 @@ func NewWindow() (*window, error) {
 		}
 	}
 
-	if current_window != nil {
+	if currentWindow != nil {
 		Destroy()
 	}
 
 	created = false
-	new_window, err := createWindowAndContext(config, sdlflags)
+	newWindow, err := createWindowAndContext(config, sdlflags)
 	if err != nil {
 		return nil, err
 	}
 	created = true
 
-	if new_window.Config.Icon != "" {
+	if newWindow.Config.Icon != "" {
 		SetIcon(config.Icon)
 	}
 
@@ -142,7 +141,7 @@ func NewWindow() (*window, error) {
 		SetPosition(config.X, config.Y)
 	}
 
-	getCurrent().sdl_window.Raise()
+	getCurrent().SDLWindow.Raise()
 
 	if config.Vsync {
 		sdl.GL_SetSwapInterval(1)
@@ -150,8 +149,8 @@ func NewWindow() (*window, error) {
 		sdl.GL_SetSwapInterval(0)
 	}
 
-	new_window.open = true
-	return new_window, nil
+	newWindow.open = true
+	return newWindow, nil
 }
 
 // createWindowAndContext is the actual interface with SDL to create window and context
@@ -160,23 +159,23 @@ func createWindowAndContext(config *windowConfig, windowflags uint32) (*window, 
 	_, debug := os.LookupEnv("AMORE_DEBUG")
 	setGLContextAttributes(2, 1, debug)
 
-	new_window, err := sdl.CreateWindow(config.Title, int(config.X), int(config.Y), int(config.Width), int(config.Height), windowflags)
+	newWindow, err := sdl.CreateWindow(config.Title, int(config.X), int(config.Y), int(config.Width), int(config.Height), windowflags)
 	if err != nil {
 		panic(err)
 	}
 
-	context, err := sdl.GL_CreateContext(new_window)
+	context, err := sdl.GL_CreateContext(newWindow)
 	if err != nil {
 		panic(err)
 	}
 
-	current_window = &window{
-		sdl_window:   new_window,
-		context:      context,
-		should_close: false,
-		Config:       config,
+	currentWindow = &window{
+		SDLWindow:   newWindow,
+		context:     context,
+		shouldClose: false,
+		Config:      config,
 	}
-	return current_window, nil
+	return currentWindow, nil
 }
 
 // Set hints on the sdl framebuffer
@@ -218,11 +217,11 @@ func setGLContextAttributes(versionMajor, versionMinor int, debug bool) {
 // is not it will create it. It also records if there were any errors for later
 // return from NewWindow
 func getCurrent() *window {
-	if current_window == nil {
-		current_window, initError = NewWindow()
+	if currentWindow == nil {
+		currentWindow, initError = NewWindow()
 	}
 
-	return current_window
+	return currentWindow
 }
 
 // GetDisplayCount gets the count of displays
@@ -258,7 +257,7 @@ func onSizeChanged(width, height int32) {
 
 // GetDrawableSize gets the size of pixels in view
 func GetDrawableSize() (int32, int32) {
-	w, h := sdl.GL_GetDrawableSize(getCurrent().sdl_window)
+	w, h := sdl.GL_GetDrawableSize(getCurrent().SDLWindow)
 	return int32(w), int32(h)
 }
 
@@ -277,7 +276,7 @@ func GetFullscreenSizes(displayindex int) [][]int32 {
 // SetTitle sets the title of the window displayed on the display bar and task bar
 func SetTitle(title string) {
 	win := getCurrent()
-	win.sdl_window.SetTitle(title)
+	win.SDLWindow.SetTitle(title)
 	win.Config.Title = title
 }
 
@@ -291,12 +290,12 @@ func GetTitle() string {
 func SetIcon(path string) error {
 	win := getCurrent()
 	win.Config.Icon = path
-	new_surface, err := surface.Load(path)
+	newSurface, err := surface.Load(path)
 	if err != nil {
 		return err
 	}
-	win.sdl_window.SetIcon(new_surface)
-	new_surface.Free()
+	win.SDLWindow.SetIcon(newSurface)
+	newSurface.Free()
 	return nil
 }
 
@@ -307,74 +306,74 @@ func GetIcon() string {
 
 // Minimize hides the program in the task bar
 func Minimize() {
-	getCurrent().sdl_window.Minimize()
+	getCurrent().SDLWindow.Minimize()
 }
 
 // Maximize unhides the program and sets it to max size
 func Maximize() {
-	getCurrent().sdl_window.Maximize()
+	getCurrent().SDLWindow.Maximize()
 }
 
 // ShouldClose returns if the window has beed told to close and is in the process
 // of shutting down
 func ShouldClose() bool {
-	return getCurrent().should_close
+	return getCurrent().shouldClose
 }
 
 // Close prepares the window to shut down gracefully
-func Close(should_close bool) {
-	getCurrent().should_close = should_close
+func Close(shouldClose bool) {
+	getCurrent().shouldClose = shouldClose
 }
 
 // SwapBuffers swaps the current frame buffer in the window. This is generally
 // only used by the engine but you could use it to roll your own game loop.
 func SwapBuffers() {
-	sdl.GL_SwapWindow(getCurrent().sdl_window)
+	sdl.GL_SwapWindow(getCurrent().SDLWindow)
 }
 
-// WindowToPixelCoords translates window coords to pixel coords for pixel perfect
+// ToPixelCoords translates window coords to pixel coords for pixel perfect
 // operations
-func WindowToPixelCoords(x, y float32) (float32, float32) {
+func ToPixelCoords(x, y float32) (float32, float32) {
 	config := getCurrent().Config
-	new_x := x * (float32(config.PixelWidth) / float32(config.Width))
-	new_y := y * (float32(config.PixelHeight) / float32(config.Height))
-	return new_x, new_y
+	newX := x * (float32(config.PixelWidth) / float32(config.Width))
+	newY := y * (float32(config.PixelHeight) / float32(config.Height))
+	return newX, newY
 }
 
 // PixelToWindowCoords translates pixel coords to window coords
 func PixelToWindowCoords(x, y float32) (float32, float32) {
 	config := getCurrent().Config
-	new_x := x * (float32(config.Width) / float32(config.PixelWidth))
-	new_y := y * (float32(config.Height) / float32(config.PixelHeight))
-	return new_x, new_y
+	newX := x * (float32(config.Width) / float32(config.PixelWidth))
+	newY := y * (float32(config.Height) / float32(config.PixelHeight))
+	return newX, newY
 }
 
 // GetMousePosition return the current position of the mouse
 func GetMousePosition() (float32, float32) {
 	getCurrent() // must call getCurrent to ensure there is a window
 	mx, my, _ := sdl.GetMouseState()
-	return WindowToPixelCoords(float32(mx), float32(my))
+	return ToPixelCoords(float32(mx), float32(my))
 }
 
 // SetMousePosition warps the mouse position to a new position x, y in the window
 func SetMousePosition(x, y float32) {
 	wx, wy := PixelToWindowCoords(x, y)
-	getCurrent().sdl_window.WarpMouseInWindow(int(wx), int(wy))
+	getCurrent().SDLWindow.WarpMouseInWindow(int(wx), int(wy))
 }
 
 // IsMouseGrabbed returns true if pointer lock is enabled and false otherwise
 func IsMouseGrabbed() bool {
-	return getCurrent().sdl_window.GetGrab() != false
+	return getCurrent().SDLWindow.GetGrab() != false
 }
 
 // SetMouseGrab enables or disables pointer lock on the window
 func SetMouseGrab(grabbed bool) {
-	getCurrent().sdl_window.SetGrab(grabbed)
+	getCurrent().SDLWindow.SetGrab(grabbed)
 }
 
 // IsVisible returns true if the window is not minimized
 func IsVisible() bool {
-	return (getCurrent().sdl_window.GetFlags() & sdl.WINDOW_SHOWN) != 0
+	return (getCurrent().SDLWindow.GetFlags() & sdl.WINDOW_SHOWN) != 0
 }
 
 // SetMouseVisible will hide the mouse if passed false, and show the mouse cursor
@@ -434,7 +433,7 @@ func SetMinimumSize(w, h int32) {
 	win := getCurrent()
 	win.Config.Minwidth = w
 	win.Config.Minheight = h
-	win.sdl_window.SetMinimumSize(int(w), int(h))
+	win.SDLWindow.SetMinimumSize(int(w), int(h))
 }
 
 // SetPosition will set the window position on screen
@@ -442,18 +441,18 @@ func SetPosition(x, y int32) {
 	win := getCurrent()
 	win.Config.X = x
 	win.Config.Y = y
-	win.sdl_window.SetPosition(int(x), int(y))
+	win.SDLWindow.SetPosition(int(x), int(y))
 }
 
 // GetPosition will return the position of the window on the screen
 func GetPosition() (int, int) {
-	return getCurrent().sdl_window.GetPosition()
+	return getCurrent().SDLWindow.GetPosition()
 }
 
 // HasFocus will return true if the user has the program focused and return false
 // if the user is focused on another program
 func HasFocus() bool {
-	return sdl.GetKeyboardFocus() == getCurrent().sdl_window
+	return sdl.GetKeyboardFocus() == getCurrent().SDLWindow
 }
 
 // RequestAttention makes the application flash for attention to the user. If
@@ -469,7 +468,7 @@ func RequestAttention(continuous bool) {
 // HasMouseFocus will return true if the user has clicked on the application and
 // has it focues. It will return false otherwise.
 func HasMouseFocus() bool {
-	return sdl.GetMouseFocus() == getCurrent().sdl_window
+	return sdl.GetMouseFocus() == getCurrent().SDLWindow
 }
 
 // IsOpen will return true if the window and been initialized. It will return false
@@ -484,7 +483,7 @@ func Destroy() {
 	win := getCurrent()
 	win.open = false
 	sdl.GL_DeleteContext(win.context)
-	win.sdl_window.Destroy()
+	win.SDLWindow.Destroy()
 	// The old window may have generated pending events which are no longer
 	// relevant. Destroy them all!
 	sdl.FlushEvent(sdl.WINDOWEVENT)
@@ -493,46 +492,46 @@ func Destroy() {
 // ShowSimpleMessageBox will present a confirm style message box at the top of the screen.
 // if attached to the window it will be attached to the top bar. the box type will style
 // the message box and icon
-func ShowSimpleMessageBox(title, message string, box_type MessageBoxType, attachtowindow bool) error {
+func ShowSimpleMessageBox(title, message string, boxType MessageBoxType, attachtowindow bool) error {
 	var sdlwindow *sdl.Window
 	if attachtowindow {
-		sdlwindow = getCurrent().sdl_window
+		sdlwindow = getCurrent().SDLWindow
 	}
-	return sdl.ShowSimpleMessageBox(uint32(box_type), title, message, sdlwindow)
+	return sdl.ShowSimpleMessageBox(uint32(boxType), title, message, sdlwindow)
 }
 
 // ShowMessageBox will present a message box at the top of the screen.
 // if attached to the window it will be attached to the top bar. the box type will style
 // the message box and icon. The first button will be the primary enter action, and
 // the last button will be the escape/cancel action
-func ShowMessageBox(title, message string, buttons []string, box_type MessageBoxType, attachtowindow bool) string {
+func ShowMessageBox(title, message string, buttons []string, boxType MessageBoxType, attachtowindow bool) string {
 	var sdlwindow *sdl.Window
 	if attachtowindow {
-		sdlwindow = getCurrent().sdl_window
+		sdlwindow = getCurrent().SDLWindow
 	}
 
-	sdl_buttons := []sdl.MessageBoxButtonData{}
-	for i, button_text := range buttons {
-		new_button := sdl.MessageBoxButtonData{
+	SDLButtons := []sdl.MessageBoxButtonData{}
+	for i, buttonText := range buttons {
+		newButton := sdl.MessageBoxButtonData{
 			ButtonId: int32(i),
-			Text:     button_text,
+			Text:     buttonText,
 		}
 		if i == 0 {
-			new_button.Flags |= sdl.MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT
+			newButton.Flags |= sdl.MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT
 		}
 		if i == len(buttons)-1 {
-			new_button.Flags |= sdl.MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT
+			newButton.Flags |= sdl.MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT
 		}
-		sdl_buttons = append(sdl_buttons, new_button)
+		SDLButtons = append(SDLButtons, newButton)
 	}
 
 	messageboxdata := sdl.MessageBoxData{
-		Flags:      uint32(box_type),
+		Flags:      uint32(boxType),
 		Window:     sdlwindow,
 		Title:      title,
 		Message:    message,
-		NumButtons: int32(len(sdl_buttons)),
-		Buttons:    sdl_buttons,
+		NumButtons: int32(len(SDLButtons)),
+		Buttons:    SDLButtons,
 	}
 
 	var _, buttonid = sdl.ShowMessageBox(&messageboxdata)
