@@ -77,16 +77,3 @@ func (img *Image) loadVolatile() bool {
 
 	return true
 }
-
-// Drawv will take raw verticies so that you can draw the image on a polygon, specifying
-// the image coords.
-func (img *Image) Drawv(vertices, textCoords []float32) {
-	prepareDraw(nil)
-	bindTexture(img.Texture.getHandle())
-	useVertexAttribArrays(attribFlagPos | attribFlagTexCoord)
-
-	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(vertices))
-	gl.VertexAttribPointer(attribTexCoord, 2, gl.FLOAT, false, 0, gl.Ptr(textCoords))
-
-	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
-}
