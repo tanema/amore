@@ -8,7 +8,6 @@ import (
 	_ "image/png"
 
 	"github.com/tanema/amore/file"
-	"github.com/tanema/amore/gfx/gl"
 )
 
 // Image is an image that is drawable to the screen
