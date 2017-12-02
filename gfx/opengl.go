@@ -127,7 +127,11 @@ func prepareDraw(model *mgl32.Mat4) {
 	glState.currentShader.SendMat4("ViewMat", glState.viewStack.Peek())
 	glState.currentShader.SendMat4("ModelMat", *model)
 	glState.currentShader.SendMat4("PreMulMat", pmMat)
-	glState.currentShader.SendFloat("ScreenSize", float32(screenWidth), float32(screenHeight), 0, 0)
+	if glState.currentCanvas != nil {
+		glState.currentShader.SendFloat("ScreenSize", float32(screenWidth), float32(screenHeight), 1, 0)
+	} else {
+		glState.currentShader.SendFloat("ScreenSize", float32(screenWidth), float32(screenHeight), -1, float32(screenHeight))
+	}
 	glState.currentShader.SendFloat("PointSize", states.back().pointSize)
 }
 
@@ -687,7 +691,7 @@ func GetFont() *Font {
 // until the next SetCanvas call will be redirected to the Canvas and not shown
 // on the screen. Call with a no params to enable drawing to screen again.
 func SetCanvas(canvases ...*Canvas) error {
-	if canvases == nil || len(canvases) < 0 {
+	if canvases == nil || len(canvases) <= 0 {
 		states.back().canvases = nil
 		if glState.currentCanvas != nil {
 			glState.currentCanvas.stopGrab(false)
@@ -785,4 +789,9 @@ func SetDefaultMipmapFilter(filter FilterMode, sharpness float32) {
 // all new images
 func GetDefaultMipmapFilter() (filter FilterMode, sharpness float32) {
 	return states.back().defaultMipmapFilter, states.back().defaultMipmapSharpness
+}
+
+// GetDebugInfo gets information on what version of opengl we are using.
+func GetDebugInfo() string {
+	return "OpenGL " + openglVersion + "\nVendor: " + openglVendor
 }
