@@ -98,6 +98,8 @@ func NewColorTextExt(font *Font, strs []string, colors []*Color, wrapLimit float
 		batches:   make(map[rasterizer]*SpriteBatch),
 	}
 
+	newText.load()
+
 	return newText, nil
 }
 
