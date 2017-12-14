@@ -164,19 +164,16 @@ func (rast *ttfFontRasterizer) loadVolatile() bool {
 		metric := rast.ttf.HMetric(rast.ttf.Index(ch))
 		vmetric := rast.ttf.VMetric(rast.ttf.Index(ch))
 
-		lsb := rast.context.FUnitToPixelRU(int(metric.LeftSideBearing))
-		aw := rast.context.FUnitToPixelRU(int(metric.AdvanceWidth))
-		tsb := rast.context.FUnitToPixelRU(int(vmetric.TopSideBearing))
-		ah := rast.context.FUnitToPixelRU(int(vmetric.AdvanceHeight))
-		descent := rast.height - ah
+		advanceHeight := rast.context.FUnitToPixelRU(int(vmetric.AdvanceHeight))
+		descent := rast.height - advanceHeight
 		ascent := rast.height - descent
 
 		rast.glyphs[ch] = glyphData{
 			rec:             NewQuad(int32(gx), int32(gy), int32(rast.advance), int32(rast.height), int32(imageWidth), int32(imageHeight)),
-			leftSideBearing: lsb,
-			advanceWidth:    aw,
-			topSideBearing:  tsb,
-			advanceHeight:   ah,
+			leftSideBearing: rast.context.FUnitToPixelRU(int(metric.LeftSideBearing)),
+			advanceWidth:    rast.context.FUnitToPixelRU(int(metric.AdvanceWidth)),
+			topSideBearing:  rast.context.FUnitToPixelRU(int(vmetric.TopSideBearing)),
+			advanceHeight:   advanceHeight,
 			ascent:          ascent,
 			descent:         descent,
 		}

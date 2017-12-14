@@ -137,7 +137,7 @@ func (text *Text) generateUnformatted() {
 					text.batches[rast].SetColor(text.colors[i])
 					glyph := rast.getGlyphData(char)
 					if prevChar != 0 {
-						gx += text.font.getKerning(char, prevChar)
+						gx += text.font.getKerning(prevChar, char)
 					}
 					text.batches[rast].Addq(glyph.rec, gx+float32(glyph.leftSideBearing-rast.getOffset()), gy+float32(glyph.topSideBearing-rast.getOffset()))
 					gx = gx + float32(glyph.advanceWidth)
@@ -236,7 +236,7 @@ func (text *Text) generateWords() []*word {
 				if rast.hasGlyph(char) {
 					var kern float32
 					if prevChar != 0 {
-						kern = text.font.getKerning(char, prevChar)
+						kern = text.font.getKerning(prevChar, char)
 					}
 					currentWord.add(rast.getGlyphData(char), text.colors[i], rast, kern)
 					break

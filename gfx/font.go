@@ -111,16 +111,13 @@ func (font *Font) findGlyph(g rune) glyphData {
 
 // getKerning will return the space between two characters
 func (font *Font) getKerning(first, second rune) float32 {
-	k := font.rasterizers[0].getKerning(first, second)
-
 	for _, r := range font.rasterizers {
 		if r.hasGlyph(first) && r.hasGlyph(second) {
-			k = r.getKerning(first, second)
-			break
+			return r.getKerning(first, second)
 		}
 	}
 
-	return k
+	return font.rasterizers[0].getKerning(first, second)
 }
 
 // SetFallbacks will add extra fonts in case some characters are not available
