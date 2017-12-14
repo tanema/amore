@@ -27,6 +27,7 @@ func registerVolatile(newVolatile volatile) {
 }
 
 func loadAllVolatile() {
+	println("loading all volatile")
 	for _, vol := range allVolatile {
 		vol.loadVolatile()
 		runtime.SetFinalizer(vol, func(vol volatile) {

@@ -98,12 +98,12 @@ func NewColorTextExt(font *Font, strs []string, colors []*Color, wrapLimit float
 		batches:   make(map[rasterizer]*SpriteBatch),
 	}
 
-	newText.load()
+	registerVolatile(newText)
 
 	return newText, nil
 }
 
-func (text *Text) load() bool {
+func (text *Text) loadVolatile() bool {
 	length := len(strings.Join(text.strings, ""))
 	for _, rast := range text.font.rasterizers {
 		text.batches[rast] = NewSpriteBatch(rast.getTexture(), length)
@@ -113,6 +113,8 @@ func (text *Text) load() bool {
 	text.generate()
 	return true
 }
+
+func (text *Text) unloadVolatile() {}
 
 func (text *Text) generate() {
 	for _, batch := range text.batches {
@@ -273,7 +275,7 @@ func (text *Text) GetFont() *Font {
 // string
 func (text *Text) SetFont(f *Font) {
 	text.font = f
-	text.load()
+	text.loadVolatile()
 }
 
 // Set will set the string to be rendered by this text object

@@ -129,6 +129,7 @@ func (rast *rasterizerBase) hasGlyphs(text string) bool {
 }
 
 func (rast *ttfFontRasterizer) loadVolatile() bool {
+	println("test")
 	fontBytes, err := file.Read(rast.filepath)
 	rast.ttf, err = freetype.ParseFont(fontBytes)
 	if err != nil {
