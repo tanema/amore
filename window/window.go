@@ -144,9 +144,9 @@ func NewWindow() (*window, error) {
 	getCurrent().SDLWindow.Raise()
 
 	if config.Vsync {
-		sdl.GL_SetSwapInterval(1)
+		sdl.GLSetSwapInterval(1)
 	} else {
-		sdl.GL_SetSwapInterval(0)
+		sdl.GLSetSwapInterval(0)
 	}
 
 	newWindow.open = true
@@ -159,12 +159,12 @@ func createWindowAndContext(config *windowConfig, windowflags uint32) (*window, 
 	_, debug := os.LookupEnv("AMORE_DEBUG")
 	setGLContextAttributes(2, 1, debug)
 
-	newWindow, err := sdl.CreateWindow(config.Title, int(config.X), int(config.Y), int(config.Width), int(config.Height), windowflags)
+	newWindow, err := sdl.CreateWindow(config.Title, config.X, config.Y, config.Width, config.Height, windowflags)
 	if err != nil {
 		panic(err)
 	}
 
-	context, err := sdl.GL_CreateContext(newWindow)
+	context, err := sdl.GLCreateContext(newWindow)
 	if err != nil {
 		panic(err)
 	}
@@ -181,20 +181,20 @@ func createWindowAndContext(config *windowConfig, windowflags uint32) (*window, 
 // Set hints on the sdl framebuffer
 func setGLFramebufferAttributes(msaa int, sRGB bool) {
 	// Set GL window / framebuffer attributes.
-	sdl.GL_SetAttribute(sdl.GL_RED_SIZE, 8)
-	sdl.GL_SetAttribute(sdl.GL_GREEN_SIZE, 8)
-	sdl.GL_SetAttribute(sdl.GL_BLUE_SIZE, 8)
-	sdl.GL_SetAttribute(sdl.GL_ALPHA_SIZE, 8)
-	sdl.GL_SetAttribute(sdl.GL_DOUBLEBUFFER, 1)
-	sdl.GL_SetAttribute(sdl.GL_STENCIL_SIZE, 1)
-	sdl.GL_SetAttribute(sdl.GL_RETAINED_BACKING, 0)
+	sdl.GLSetAttribute(sdl.GL_RED_SIZE, 8)
+	sdl.GLSetAttribute(sdl.GL_GREEN_SIZE, 8)
+	sdl.GLSetAttribute(sdl.GL_BLUE_SIZE, 8)
+	sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 8)
+	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
+	sdl.GLSetAttribute(sdl.GL_STENCIL_SIZE, 1)
+	sdl.GLSetAttribute(sdl.GL_RETAINED_BACKING, 0)
 
 	if msaa > 0 {
-		sdl.GL_SetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
-		sdl.GL_SetAttribute(sdl.GL_MULTISAMPLESAMPLES, msaa)
+		sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
+		sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, msaa)
 	} else {
-		sdl.GL_SetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 0)
-		sdl.GL_SetAttribute(sdl.GL_MULTISAMPLESAMPLES, 0)
+		sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 0)
+		sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 0)
 	}
 }
 
@@ -207,10 +207,10 @@ func setGLContextAttributes(versionMajor, versionMinor int, debug bool) {
 		contextflags = contextflags | sdl.GL_CONTEXT_DEBUG_FLAG
 	}
 
-	sdl.GL_SetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, versionMajor)
-	sdl.GL_SetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, versionMinor)
-	sdl.GL_SetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, profilemask)
-	sdl.GL_SetAttribute(sdl.GL_CONTEXT_FLAGS, contextflags)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, versionMajor)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, versionMinor)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, profilemask)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, contextflags)
 }
 
 // getCurrent is a singleton method. It makes sure there is a window and if there
@@ -232,7 +232,8 @@ func GetDisplayCount() int {
 
 // GetDisplayName gets the display name given an index
 func GetDisplayName(displayindex int) string {
-	return sdl.GetDisplayName(displayindex)
+	name, _ := sdl.GetDisplayName(displayindex)
+	return name
 }
 
 // GetDesktopDimensions gets the dimensions of a display for the given index
@@ -257,7 +258,7 @@ func onSizeChanged(width, height int32) {
 
 // GetDrawableSize gets the size of pixels in view
 func GetDrawableSize() (int32, int32) {
-	w, h := sdl.GL_GetDrawableSize(getCurrent().SDLWindow)
+	w, h := sdl.GLGetDrawableSize(getCurrent().SDLWindow)
 	return int32(w), int32(h)
 }
 
@@ -328,7 +329,7 @@ func Close(shouldClose bool) {
 // SwapBuffers swaps the current frame buffer in the window. This is generally
 // only used by the engine but you could use it to roll your own game loop.
 func SwapBuffers() {
-	sdl.GL_SwapWindow(getCurrent().SDLWindow)
+	sdl.GLSwapWindow(getCurrent().SDLWindow)
 }
 
 // ToPixelCoords translates window coords to pixel coords for pixel perfect
@@ -358,7 +359,7 @@ func GetMousePosition() (float32, float32) {
 // SetMousePosition warps the mouse position to a new position x, y in the window
 func SetMousePosition(x, y float32) {
 	wx, wy := PixelToWindowCoords(x, y)
-	getCurrent().SDLWindow.WarpMouseInWindow(int(wx), int(wy))
+	getCurrent().SDLWindow.WarpMouseInWindow(int32(wx), int32(wy))
 }
 
 // IsMouseGrabbed returns true if pointer lock is enabled and false otherwise
@@ -433,7 +434,7 @@ func SetMinimumSize(w, h int32) {
 	win := getCurrent()
 	win.Config.Minwidth = w
 	win.Config.Minheight = h
-	win.SDLWindow.SetMinimumSize(int(w), int(h))
+	win.SDLWindow.SetMinimumSize(w, h)
 }
 
 // SetPosition will set the window position on screen
@@ -441,11 +442,11 @@ func SetPosition(x, y int32) {
 	win := getCurrent()
 	win.Config.X = x
 	win.Config.Y = y
-	win.SDLWindow.SetPosition(int(x), int(y))
+	win.SDLWindow.SetPosition(x, y)
 }
 
 // GetPosition will return the position of the window on the screen
-func GetPosition() (int, int) {
+func GetPosition() (int32, int32) {
 	return getCurrent().SDLWindow.GetPosition()
 }
 
@@ -482,7 +483,7 @@ func IsOpen() bool {
 func Destroy() {
 	win := getCurrent()
 	win.open = false
-	sdl.GL_DeleteContext(win.context)
+	sdl.GLDeleteContext(win.context)
 	win.SDLWindow.Destroy()
 	// The old window may have generated pending events which are no longer
 	// relevant. Destroy them all!
@@ -513,7 +514,7 @@ func ShowMessageBox(title, message string, buttons []string, boxType MessageBoxT
 	SDLButtons := []sdl.MessageBoxButtonData{}
 	for i, buttonText := range buttons {
 		newButton := sdl.MessageBoxButtonData{
-			ButtonId: int32(i),
+			ButtonID: int32(i),
 			Text:     buttonText,
 		}
 		if i == 0 {
@@ -534,6 +535,10 @@ func ShowMessageBox(title, message string, buttons []string, boxType MessageBoxT
 		Buttons:    SDLButtons,
 	}
 
-	var _, buttonid = sdl.ShowMessageBox(&messageboxdata)
+	var buttonid, err = sdl.ShowMessageBox(&messageboxdata)
+	if err != nil {
+		return err.Error()
+	}
+
 	return buttons[buttonid]
 }

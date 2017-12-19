@@ -7,7 +7,7 @@ import (
 )
 
 // NewCursor creates a new hardware Cursor object from an image.
-func NewCursor(filename string, hx, hy int) (*sdl.Cursor, error) {
+func NewCursor(filename string, hx, hy int32) (*sdl.Cursor, error) {
 	newSurface, err := surface.Load(filename)
 	if err != nil {
 		return nil, err

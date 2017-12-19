@@ -182,7 +182,10 @@ func (joystick *Joystick) IsVibrationSupported() bool {
 		return false
 	}
 
-	features := joystick.haptic.Query()
+	features, err := joystick.haptic.Query()
+	if err != nil {
+		return false
+	}
 
 	if (features & sdl.HAPTIC_LEFTRIGHT) != 0 {
 		return true
@@ -213,15 +216,23 @@ func (joystick *Joystick) checkCreateHaptic() bool {
 		return false
 	}
 
-	if joystick.haptic != nil && sdl.HapticIndex(joystick.haptic) != -1 {
-		return true
+	if joystick.haptic != nil {
+		hapticIndex, err := sdl.HapticIndex(joystick.haptic)
+		if err == nil && hapticIndex != -1 {
+			return true
+		}
 	}
 
 	if joystick.haptic != nil {
 		joystick.haptic.Close()
 	}
 
-	joystick.haptic = sdl.HapticOpenFromJoystick(joystick.stick)
+	var err error
+	joystick.haptic, err = sdl.HapticOpenFromJoystick(joystick.stick)
+	if err != nil {
+		return false
+	}
+
 	joystick.vibration = &vibration{
 		ID:      -1,
 		Left:    0.0,
@@ -237,8 +248,8 @@ func (joystick *Joystick) checkCreateHaptic() bool {
 // if it was successful in running the vibration.
 func (joystick *Joystick) runVibrationEffect() bool {
 	if joystick.vibration.ID != -1 {
-		if joystick.haptic.UpdateEffect(joystick.vibration.ID, &joystick.vibration.Effect) == 0 {
-			if joystick.haptic.RunEffect(joystick.vibration.ID, 1) == 0 {
+		if joystick.haptic.UpdateEffect(joystick.vibration.ID, &joystick.vibration.Effect) == nil {
+			if joystick.haptic.RunEffect(joystick.vibration.ID, 1) == nil {
 				return true
 			}
 		}
@@ -248,9 +259,9 @@ func (joystick *Joystick) runVibrationEffect() bool {
 		joystick.vibration.ID = -1
 	}
 
-	joystick.vibration.ID = joystick.haptic.NewEffect(&joystick.vibration.Effect)
-
-	if joystick.vibration.ID != -1 && joystick.haptic.RunEffect(joystick.vibration.ID, 1) == 0 {
+	var err error
+	joystick.vibration.ID, err = joystick.haptic.NewEffect(&joystick.vibration.Effect)
+	if err == nil && joystick.vibration.ID != -1 && joystick.haptic.RunEffect(joystick.vibration.ID, 1) == nil {
 		return true
 	}
 
@@ -291,8 +302,14 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 	}
 
 	success := false
-	features := joystick.haptic.Query()
-	axes := joystick.haptic.NumAxes()
+	features, err := joystick.haptic.Query()
+	if err != nil {
+		return false
+	}
+	axes, err := joystick.haptic.NumAxes()
+	if err != nil {
+		return false
+	}
 
 	if (features & sdl.HAPTIC_LEFTRIGHT) != 0 {
 		joystick.vibration.Effect.SetType(sdl.HAPTIC_LEFTRIGHT)
@@ -359,8 +376,11 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 func (joystick *Joystick) stopVibration() bool {
 	success := true
 
-	if sdl.WasInit(sdl.INIT_HAPTIC) == 0 && joystick.haptic != nil && sdl.HapticIndex(joystick.haptic) != -1 {
-		success = (joystick.haptic.StopEffect(joystick.vibration.ID) == 0)
+	if sdl.WasInit(sdl.INIT_HAPTIC) == 0 && joystick.haptic != nil {
+		hapticIndex, err := sdl.HapticIndex(joystick.haptic)
+		if err == nil && hapticIndex != -1 {
+			success = (joystick.haptic.StopEffect(joystick.vibration.ID) == nil)
+		}
 	}
 
 	if success {
@@ -385,9 +405,12 @@ func (joystick *Joystick) GetVibration() (float32, float32) {
 	}
 
 	// Check if the haptic effect has stopped playing.
-	if joystick.haptic == nil || joystick.vibration.ID == -1 || joystick.haptic.GetEffectStatus(joystick.vibration.ID) != 1 {
-		joystick.vibration.Left = 0.0
-		joystick.vibration.Right = 0.0
+	if joystick.haptic == nil || joystick.vibration.ID == -1 {
+		status, err := joystick.haptic.GetEffectStatus(joystick.vibration.ID)
+		if err == nil && status != 1 {
+			joystick.vibration.Left = 0.0
+			joystick.vibration.Right = 0.0
+		}
 	}
 
 	return joystick.vibration.Left, joystick.vibration.Right

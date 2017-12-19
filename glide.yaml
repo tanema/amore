@@ -24,4 +24,5 @@ import:
   subpackages:
   - internal/mobileinit
 - package: github.com/jfreymuth/oggvorbis
+- package: github.com/golang/freetype
 - package: github.com/hajimehoshi/go-mp3

@@ -50,5 +50,15 @@ func Load(path string) (*sdl.Surface, error) {
 		amask = 0xFF000000
 	}
 
-	return sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&rgba.Pix[0]), bounds.Dx(), bounds.Dy(), 32, bounds.Dx()*4, rmask, gmask, bmask, amask)
+	return sdl.CreateRGBSurfaceFrom(
+		unsafe.Pointer(&rgba.Pix[0]),
+		int32(bounds.Dx()),
+		int32(bounds.Dy()),
+		32,
+		bounds.Dx()*4,
+		rmask,
+		gmask,
+		bmask,
+		amask,
+	)
 }

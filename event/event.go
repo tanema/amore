@@ -21,7 +21,7 @@ func Poll() {
 		switch e := event.(type) {
 		case *sdl.WindowEvent:
 			delegateWindowEvent(event, e)
-		case *sdl.KeyDownEvent, *sdl.KeyUpEvent, *sdl.TextEditingEvent, *sdl.TextInputEvent:
+		case *sdl.KeyboardEvent, *sdl.TextEditingEvent, *sdl.TextInputEvent:
 			keyboard.Delegate(e)
 		case *sdl.MouseMotionEvent, *sdl.MouseButtonEvent, *sdl.MouseWheelEvent:
 			mouse.Delegate(e)

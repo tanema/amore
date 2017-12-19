@@ -20,21 +20,23 @@ var (
 // also be useful to stub or fake events
 func Delegate(event sdl.Event) {
 	switch e := event.(type) {
-	case *sdl.KeyDownEvent:
-		isRepeat := (e.Repeat == 1)
+	case *sdl.KeyboardEvent:
+		if e.Type == sdl.KEYDOWN {
+			isRepeat := (e.Repeat == 1)
 
-		if isRepeat && !keyRepeat {
-			return
-		}
+			if isRepeat && !keyRepeat {
+				return
+			}
 
-		key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))
-		if OnKeyDown != nil {
-			OnKeyDown(key, isRepeat)
-		}
-	case *sdl.KeyUpEvent:
-		key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))
-		if OnKeyUp != nil {
-			OnKeyUp(key)
+			key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))
+			if OnKeyDown != nil {
+				OnKeyDown(key, isRepeat)
+			}
+		} else if e.Type == sdl.KEYUP {
+			key := GetKeyFromScancode(Scancode(e.Keysym.Scancode))
+			if OnKeyUp != nil {
+				OnKeyUp(key)
+			}
 		}
 	case *sdl.TextEditingEvent:
 		if OnTextEdit != nil {
