@@ -96,5 +96,4 @@ func draw() {
 
 ## TODO
 
-- [ ] font rendering, especially spacing is bad
 - [ ] audio seeking broken

@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
+	"github.com/tanema/amore/font"
 
 	"github.com/tanema/amore/gfx/gl"
 	"github.com/tanema/amore/window"
@@ -682,7 +683,10 @@ func SetFont(font *Font) {
 func GetFont() *Font {
 	//if no font set, use default font
 	if states.back().font == nil {
-		SetFont(NewFont("arialbd.ttf", 15))
+		f, err := font.Bold(20)
+		if err == nil {
+			SetFont(NewFont(f))
+		}
 	}
 	return states.back().font
 }

@@ -13,7 +13,7 @@ type (
 		colors    []*Color
 		wrapLimit float32
 		align     AlignMode
-		batches   map[rasterizer]*SpriteBatch
+		batches   map[*rasterizer]*SpriteBatch
 		width     float32
 		height    float32
 		spaceSize float32
@@ -95,7 +95,7 @@ func NewColorTextExt(font *Font, strs []string, colors []*Color, wrapLimit float
 		colors:    colors,
 		wrapLimit: wrapLimit,
 		align:     align,
-		batches:   make(map[rasterizer]*SpriteBatch),
+		batches:   make(map[*rasterizer]*SpriteBatch),
 	}
 
 	registerVolatile(newText)
@@ -106,10 +106,10 @@ func NewColorTextExt(font *Font, strs []string, colors []*Color, wrapLimit float
 func (text *Text) loadVolatile() bool {
 	length := len(strings.Join(text.strings, ""))
 	for _, rast := range text.font.rasterizers {
-		text.batches[rast] = NewSpriteBatch(rast.getTexture(), length)
+		text.batches[rast] = NewSpriteBatch(rast.texture, length)
 	}
 	spaceGlyph := text.getSpaceGlyph()
-	text.spaceSize = float32(spaceGlyph.advanceWidth)
+	text.spaceSize = float32(spaceGlyph.advance)
 	text.generate()
 	return true
 }
@@ -133,14 +133,13 @@ func (text *Text) generateUnformatted() {
 		var prevChar rune
 		for _, char := range st {
 			for _, rast := range text.font.rasterizers {
-				if rast.hasGlyph(char) {
+				if glyph, ok := rast.mapping[char]; ok {
 					text.batches[rast].SetColor(text.colors[i])
-					glyph := rast.getGlyphData(char)
 					if prevChar != 0 {
-						gx += text.font.getKerning(prevChar, char)
+						gx += text.font.Kern(prevChar, char)
 					}
-					text.batches[rast].Addq(glyph.rec, gx+float32(glyph.leftSideBearing-rast.getOffset()), gy+float32(glyph.topSideBearing-rast.getOffset()))
-					gx = gx + float32(glyph.advanceWidth)
+					text.batches[rast].Addq(glyph.quad, gx+glyph.lsb, gy+glyph.decent)
+					gx = gx + glyph.advance + glyph.lsb
 					break
 				}
 			}
@@ -195,8 +194,8 @@ func (text *Text) drawLine(currentLine []*word, lineWidth, gy float32) {
 			rast := w.rasts[i]
 			text.batches[rast].SetColor(w.colors[i])
 			gx += w.kern[i]
-			text.batches[rast].Addq(glyph.rec, gx+float32(glyph.leftSideBearing-rast.getOffset()), gy+float32(glyph.topSideBearing-rast.getOffset()))
-			gx += float32(glyph.advanceWidth)
+			text.batches[rast].Addq(glyph.quad, gx+glyph.lsb, gy+glyph.decent)
+			gx += glyph.advance + glyph.lsb
 		}
 		gx += spaceing
 	}
@@ -212,11 +211,11 @@ func (text *Text) compressBatches() {
 
 func (text *Text) getSpaceGlyph() glyphData {
 	for _, rast := range text.font.rasterizers {
-		if rast.hasGlyph(' ') {
-			return rast.getGlyphData(' ')
+		if glyph, ok := rast.mapping[' ']; ok {
+			return glyph
 		}
 	}
-	return text.font.rasterizers[0].getGlyphData(' ')
+	return text.font.rasterizers[0].mapping[' ']
 }
 
 func (text *Text) generateWords() []*word {
@@ -233,12 +232,8 @@ func (text *Text) generateWords() []*word {
 				continue
 			}
 			for _, rast := range text.font.rasterizers {
-				if rast.hasGlyph(char) {
-					var kern float32
-					if prevChar != 0 {
-						kern = text.font.getKerning(prevChar, char)
-					}
-					currentWord.add(rast.getGlyphData(char), text.colors[i], rast, kern)
+				if glyph, ok := rast.mapping[char]; ok {
+					currentWord.add(glyph, text.colors[i], rast, text.font.Kern(prevChar, char))
 					break
 				}
 			}
@@ -308,7 +303,7 @@ func (text *Text) Draw(args ...float32) {
 type word struct {
 	glyphs []glyphData
 	colors []*Color
-	rasts  []rasterizer
+	rasts  []*rasterizer
 	kern   []float32
 	size   int
 	width  float32
@@ -318,15 +313,15 @@ func newWord() *word {
 	return &word{
 		glyphs: []glyphData{},
 		colors: []*Color{},
-		rasts:  []rasterizer{},
+		rasts:  []*rasterizer{},
 	}
 }
 
-func (w *word) add(g glyphData, color *Color, rast rasterizer, kern float32) {
+func (w *word) add(g glyphData, color *Color, rast *rasterizer, kern float32) {
 	w.glyphs = append(w.glyphs, g)
 	w.colors = append(w.colors, color)
 	w.rasts = append(w.rasts, rast)
 	w.kern = append(w.kern, kern)
 	w.size++
-	w.width += float32(g.advanceWidth) + kern
+	w.width += float32(g.advance) + kern
 }
