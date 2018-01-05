@@ -29,6 +29,7 @@ func NewBitmapFace(filepath, glyphHints string) (font.Face, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer imgFile.Close()
 
 	img, _, err := image.Decode(imgFile)
 	if err != nil {
@@ -41,10 +42,10 @@ func NewBitmapFace(filepath, glyphHints string) (font.Face, error) {
 		File:    imgFile,
 		img:     img,
 		glyphs:  make(map[rune]glyphData),
-		advance: fixed.Int26_6(advance),
+		advance: fixed.I(advance),
 		metrics: font.Metrics{
-			Height:  fixed.Int26_6(img.Bounds().Dy()),
-			Ascent:  fixed.Int26_6(img.Bounds().Dy()),
+			Height:  fixed.I(img.Bounds().Dy()),
+			Ascent:  fixed.I(img.Bounds().Dy()),
 			Descent: 0,
 		},
 	}
@@ -52,7 +53,7 @@ func NewBitmapFace(filepath, glyphHints string) (font.Face, error) {
 	var gx int
 	for i, r := range glyphRuneHints {
 		newFace.glyphs[r] = glyphData{
-			rect: image.Rect(gx, 0, gx+advance, int(newFace.metrics.Height)),
+			rect: image.Rect(gx, 0, gx+advance, newFace.metrics.Height.Ceil()),
 			pt:   image.Pt(i*advance, 0),
 		}
 		gx += advance
@@ -76,10 +77,13 @@ func (face BitmapFace) Glyph(dot fixed.Point26_6, r rune) (dr image.Rectangle, m
 	if !ok {
 		return
 	}
-	dr.Min = image.Point{X: int(dot.X), Y: int(dot.Y)}
+	dr.Min = image.Point{
+		X: dot.X.Floor(),
+		Y: dot.Y.Floor() - face.metrics.Height.Floor(),
+	}
 	dr.Max = image.Point{
-		X: dr.Min.X + int(face.advance),
-		Y: dr.Min.Y + int(face.metrics.Height),
+		X: dr.Min.X + face.advance.Floor(),
+		Y: dr.Min.Y + face.metrics.Height.Floor(),
 	}
 	return dr, face.img, glyph.pt, face.advance, ok
 }
@@ -94,7 +98,7 @@ func (face BitmapFace) Glyph(dot fixed.Point26_6, r rune) (dr image.Rectangle, m
 // https://developer.apple.com/library/mac/documentation/TextFonts/Conceptual/CocoaTextArchitecture/Art/glyph_metrics_2x.png
 func (face BitmapFace) GlyphBounds(r rune) (bounds fixed.Rectangle26_6, advance fixed.Int26_6, ok bool) {
 	_, ok = face.glyphs[r]
-	return fixed.R(0, 0, int(face.advance), int(face.metrics.Height)), face.advance, ok
+	return fixed.R(0, 0, face.advance.Ceil(), face.metrics.Height.Ceil()), face.advance, ok
 }
 
 // GlyphAdvance returns the advance width of r's glyph.

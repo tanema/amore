@@ -60,6 +60,7 @@ func newDisplayState() displayState {
 		lineJoin:               LineJoinMiter,
 		lineStyle:              LineSmooth,
 		shader:                 defaultShader,
+		font:                   defaultFont,
 		defaultFilter:          newFilter(),
 		defaultMipmapFilter:    FilterNearest,
 		defaultMipmapSharpness: 0.0,

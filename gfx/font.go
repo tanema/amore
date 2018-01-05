@@ -1,9 +1,6 @@
 package gfx
 
 import (
-	"math"
-	"strings"
-
 	"github.com/tanema/amore/font"
 )
 
@@ -14,17 +11,21 @@ type Font struct {
 }
 
 // NewFont rasterizes a ttf font and returns a pointer to a new Font
-func NewFont(face font.Face) *Font {
-	return &Font{rasterizers: []*rasterizer{newRasterizer(face, font.ASCII, font.Latin)}}
+func NewFont(face font.Face, runeSets ...[]rune) *Font {
+	if runeSets == nil || len(runeSets) == 0 {
+		runeSets = append(runeSets, font.ASCII, font.Latin)
+	}
+	return &Font{rasterizers: []*rasterizer{newRasterizer(face, runeSets...)}}
 }
 
 // NewTTFFont rasterizes a ttf font and returns a pointer to a new Font
-func NewTTFFont(filename string, fontSize float32) (*Font, error) {
+func NewTTFFont(filename string, fontSize float32, runeSets ...[]rune) (*Font, error) {
 	face, err := font.NewTTFFace(filename, fontSize)
 	if err != nil {
 		return nil, err
 	}
-	return NewFont(face), nil
+	runeSets = append(runeSets, font.ASCII, font.Latin)
+	return NewFont(face, runeSets...), nil
 }
 
 // NewImageFont rasterizes an image using the glyphHints. The glyphHints should
@@ -36,7 +37,7 @@ func NewImageFont(filename, glyphHints string) (*Font, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewFont(face), nil
+	return NewFont(face, []rune(glyphHints)), nil
 }
 
 // SetLineHeight sets the height between lines
@@ -84,22 +85,19 @@ func (font *Font) GetBaseline() float32 {
 
 // HasGlyph checks if this font has a character for the given rune
 func (font *Font) HasGlyph(g rune) bool {
-	for _, rasterizer := range font.rasterizers {
-		if _, ok := rasterizer.mapping[g]; ok {
-			return true
-		}
-	}
-	return false
+	_, _, ok := font.findGlyph(g)
+	return ok
 }
 
 // findGlyph will fetch the glyphData for the given rune
-func (font *Font) findGlyph(r rune) glyphData {
+func (font *Font) findGlyph(r rune) (glyphData, *rasterizer, bool) {
 	for _, rasterizer := range font.rasterizers {
 		if g, ok := rasterizer.mapping[r]; ok {
-			return g
+			return g, rasterizer, ok
 		}
 	}
-	return font.rasterizers[0].mapping[r]
+	rasterizer := font.rasterizers[0]
+	return rasterizer.mapping[r], rasterizer, false
 }
 
 // Kern will return the space between two characters
@@ -134,52 +132,18 @@ func (font *Font) GetHeight() float32 {
 
 // GetWidth will get the width of a given string after rendering.
 func (font *Font) GetWidth(text string) float32 {
-	if len(text) == 0 {
-		return 0
-	}
-
-	var maxWidth float32
-	for _, line := range strings.Split(text, "\n") {
-		var width float32
-		var prevChar rune
-		for i, char := range string(line[:]) {
-			g := font.findGlyph(char)
-			width += float32(g.advance)
-			if i != 0 {
-				width += font.Kern(char, prevChar)
-			}
-			prevChar = char
-		}
-		maxWidth = float32(math.Max(float64(maxWidth), float64(width)))
-	}
-
-	return maxWidth
+	_, width, _ := generateLines(font, []string{text}, []*Color{GetColor()}, -1)
+	return width
 }
 
 // GetWrap will split a string given a wrap limit. It will return the max width
 // of the longest string and it will return the string split into the strings that
 // are smaller than the wrap limit.
 func (font *Font) GetWrap(text string, wrapLimit float32) (float32, []string) {
-	var width, currentWidth float32
-	var lines, currentLine []string
-
-	for _, word := range strings.Split(text, " ") {
-		wordWidth := font.GetWidth(word)
-		if currentWidth+wordWidth > wrapLimit {
-			if len(currentLine) > 0 {
-				lines = append(lines, strings.Join(currentLine, " "))
-				width = float32(math.Max(float64(currentWidth), float64(width)))
-			}
-			currentLine = []string{word}
-			currentWidth = wordWidth
-		} else {
-			currentLine = append(currentLine, word)
-			currentWidth += wordWidth
-		}
+	lines, width, _ := generateLines(font, []string{text}, []*Color{GetColor()}, wrapLimit)
+	stringLines := make([]string, len(lines))
+	for i, l := range lines {
+		stringLines[i] = string(l.chars)
 	}
-
-	lines = append(lines, strings.Join(currentLine, " "))
-	width = float32(math.Max(float64(currentWidth), float64(width)))
-
-	return width, lines
+	return width, stringLines
 }

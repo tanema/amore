@@ -24,6 +24,8 @@ var (
 	screenHeight           = int32(0)
 	modelIdent             = mgl32.Ident4()
 	defaultShader          *Shader
+	defaultFace, _         = font.Bold(20)
+	defaultFont            = NewFont(defaultFace)
 
 	glState = openglState{
 		viewport: make([]int32, 4),
@@ -675,19 +677,15 @@ func GetColor() *Color {
 
 // SetFont will set a font for the next print call
 func SetFont(font *Font) {
+	if font == nil {
+		font = defaultFont
+	}
 	states.back().font = font
 }
 
 // GetFont will return the currenly bound font or the frameworks font if none has
 // be bound.
 func GetFont() *Font {
-	//if no font set, use default font
-	if states.back().font == nil {
-		f, err := font.Bold(20)
-		if err == nil {
-			SetFont(NewFont(f))
-		}
-	}
 	return states.back().font
 }
 

@@ -23,8 +23,9 @@ type (
 	glyphData struct {
 		quad    *Quad
 		advance float32
-		decent  float32
+		descent float32
 		lsb     float32
+		rsb     float32
 	}
 )
 
@@ -43,8 +44,9 @@ func newRasterizer(face font.Face, runeSets ...[]rune) *rasterizer {
 		}
 		draw.Draw(atlasImg, rect, srcImg, srcPoint, draw.Src)
 		mapping[r] = glyphData{
-			decent: float32(rect.Min.Y - gy),
-			lsb:    float32(rect.Min.X - gx),
+			descent: float32(rect.Min.Y - gy),
+			lsb:     float32(rect.Min.X - gx),
+			rsb:     i2f(adv) - float32((rect.Max.X - gx)),
 			quad: NewQuad(
 				int32(rect.Min.X), int32(rect.Min.Y),
 				int32(rect.Dx()), int32(rect.Dy()),
@@ -68,6 +70,7 @@ func newRasterizer(face font.Face, runeSets ...[]rune) *rasterizer {
 		descent:    i2f(face.Metrics().Descent),
 		lineHeight: i2f(face.Metrics().Height),
 	}
+
 	registerVolatile(newRast)
 	return newRast
 }
