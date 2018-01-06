@@ -5,15 +5,16 @@ import (
 )
 
 type textLine struct {
-	chars     []rune
-	glyphs    []glyphData
-	colors    []*Color
-	rasts     []*rasterizer
-	kern      []float32
-	size      int
-	lastBreak int
-	width     float32
-	y         float32
+	chars      []rune
+	glyphs     []glyphData
+	colors     []*Color
+	rasts      []*rasterizer
+	kern       []float32
+	size       int
+	lastBreak  int
+	spaceCount int
+	width      float32
+	y          float32
 }
 
 func generateLines(font *Font, text []string, color []*Color, wrapLimit float32) ([]*textLine, float32, float32) {
@@ -69,6 +70,10 @@ func generateLines(font *Font, text []string, color []*Color, wrapLimit float32)
 func (l *textLine) add(char rune, g glyphData, color *Color, rast *rasterizer, kern float32) {
 	if char == ' ' {
 		l.lastBreak = l.size
+		l.spaceCount++
+		l.width += g.advance
+	} else {
+		l.width += g.advance + kern + g.lsb
 	}
 	l.chars = append(l.chars, char)
 	l.glyphs = append(l.glyphs, g)
@@ -76,7 +81,6 @@ func (l *textLine) add(char rune, g glyphData, color *Color, rast *rasterizer, k
 	l.rasts = append(l.rasts, rast)
 	l.kern = append(l.kern, kern+g.lsb)
 	l.size++
-	l.width += g.advance + kern + g.lsb
 }
 
 func (l *textLine) breakOff(immediate bool) *textLine {
@@ -119,5 +123,8 @@ func (l *textLine) trimLastChar() (rune, glyphData, *Color, *rasterizer, float32
 	l.kern = l.kern[:i]
 	l.size--
 	l.width -= float32(g.advance) + k
+	if ch == ' ' {
+		l.spaceCount--
+	}
 	return ch, g, cl, r, k
 }

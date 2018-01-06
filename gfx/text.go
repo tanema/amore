@@ -122,7 +122,14 @@ func (text *Text) generate() {
 	lines, text.width, text.height = generateLines(text.font, text.strings, text.colors, text.wrapLimit)
 
 	for _, l := range lines {
-		var gx float32
+		var gx, spacing float32
+
+		if spaceGlyph, _, ok := text.font.findGlyph(' '); ok {
+			spacing = spaceGlyph.advance
+		} else {
+			spacing = text.font.rasterizers[0].advance
+		}
+
 		switch text.align {
 		case AlignLeft:
 		case AlignRight:
@@ -130,15 +137,23 @@ func (text *Text) generate() {
 		case AlignCenter:
 			gx = (text.wrapLimit - l.width) / 2.0
 		case AlignJustify:
+			amountOfSpace := float32(l.spaceCount-1) * spacing
+			widthWithoutSpace := l.width - amountOfSpace
+			spacing = (text.wrapLimit - widthWithoutSpace) / float32(l.spaceCount)
 		}
 
 		for i := 0; i < l.size; i++ {
-			glyph := l.glyphs[i]
-			rast := l.rasts[i]
-			text.batches[rast].SetColor(l.colors[i])
-			gx += l.kern[i]
-			text.batches[rast].Addq(glyph.quad, gx, l.y+glyph.descent)
-			gx += glyph.advance
+			ch := l.chars[i]
+			if ch == ' ' {
+				gx += spacing
+			} else {
+				glyph := l.glyphs[i]
+				rast := l.rasts[i]
+				text.batches[rast].SetColor(l.colors[i])
+				gx += l.kern[i]
+				text.batches[rast].Addq(glyph.quad, gx, l.y+glyph.descent)
+				gx += glyph.advance
+			}
 		}
 	}
 

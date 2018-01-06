@@ -19,6 +19,7 @@ type (
 		lineHeight float32
 		ascent     float32
 		descent    float32
+		advance    float32
 	}
 	glyphData struct {
 		quad    *Quad
@@ -69,6 +70,7 @@ func newRasterizer(face font.Face, runeSets ...[]rune) *rasterizer {
 		ascent:     i2f(face.Metrics().Ascent),
 		descent:    i2f(face.Metrics().Descent),
 		lineHeight: i2f(face.Metrics().Height),
+		advance:    float32(advance),
 	}
 
 	registerVolatile(newRast)

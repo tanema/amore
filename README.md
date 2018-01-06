@@ -97,3 +97,4 @@ func draw() {
 ## TODO
 
 - [ ] audio seeking broken
+- [ ] first line height
