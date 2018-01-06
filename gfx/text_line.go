@@ -63,6 +63,7 @@ func generateLines(font *Font, text []string, color []*Color, wrapLimit float32)
 	}
 
 	lines = append(lines, currentLine)
+	width = float32(math.Max(float64(width), float64(currentLine.width)))
 
 	return lines, width, gy + font.GetLineHeight()
 }

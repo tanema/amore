@@ -69,7 +69,7 @@ func newRasterizer(face font.Face, runeSets ...[]rune) *rasterizer {
 		mapping:    mapping,
 		ascent:     i2f(face.Metrics().Ascent),
 		descent:    i2f(face.Metrics().Descent),
-		lineHeight: i2f(face.Metrics().Height),
+		lineHeight: i2f(face.Metrics().Height) * 1.25,
 		advance:    float32(advance),
 	}
 
