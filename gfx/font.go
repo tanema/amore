@@ -1,33 +1,43 @@
 package gfx
 
 import (
-	"math"
-	"strings"
+	"github.com/tanema/amore/font"
 )
 
 // Font is a rasterized font data
 type Font struct {
-	rasterizers []rasterizer
+	rasterizers []*rasterizer
 	lineHeight  float32
 }
 
 // NewFont rasterizes a ttf font and returns a pointer to a new Font
-func NewFont(filename string, fontSize float32) *Font {
-	rast := newTtfRasterizer(filename, fontSize)
-	return &Font{
-		rasterizers: []rasterizer{rast},
+func NewFont(face font.Face, runeSets ...[]rune) *Font {
+	if runeSets == nil || len(runeSets) == 0 {
+		runeSets = append(runeSets, font.ASCII, font.Latin)
 	}
+	return &Font{rasterizers: []*rasterizer{newRasterizer(face, runeSets...)}}
+}
+
+// NewTTFFont rasterizes a ttf font and returns a pointer to a new Font
+func NewTTFFont(filename string, fontSize float32, runeSets ...[]rune) (*Font, error) {
+	face, err := font.NewTTFFace(filename, fontSize)
+	if err != nil {
+		return nil, err
+	}
+	runeSets = append(runeSets, font.ASCII, font.Latin)
+	return NewFont(face, runeSets...), nil
 }
 
 // NewImageFont rasterizes an image using the glyphHints. The glyphHints should
 // list all characters in the image. The characters should all have equal width
 // and height. Using the glyphHints, the image is split up into equal rectangles
 // for rasterization. The function will return a pointer to a new Font
-func NewImageFont(filename, glyphHints string) *Font {
-	rast := newImageRasterizer(filename, glyphHints)
-	return &Font{
-		rasterizers: []rasterizer{rast},
+func NewImageFont(filename, glyphHints string) (*Font, error) {
+	face, err := font.NewBitmapFace(filename, glyphHints)
+	if err != nil {
+		return nil, err
 	}
+	return NewFont(face, []rune(glyphHints)), nil
 }
 
 // SetLineHeight sets the height between lines
@@ -38,7 +48,7 @@ func (font *Font) SetLineHeight(height float32) {
 // GetLineHeight will return the current line height of the font
 func (font *Font) GetLineHeight() float32 {
 	if font.lineHeight <= 0 {
-		return float32(font.rasterizers[0].getLineHeight())
+		return float32(font.rasterizers[0].lineHeight)
 	}
 	return font.lineHeight
 }
@@ -46,7 +56,7 @@ func (font *Font) GetLineHeight() float32 {
 // SetFilter sets the filtering on the font.
 func (font *Font) SetFilter(min, mag FilterMode) error {
 	for _, rasterizer := range font.rasterizers {
-		if err := rasterizer.getTexture().SetFilter(min, mag); err != nil {
+		if err := rasterizer.texture.SetFilter(min, mag); err != nil {
 			return err
 		}
 	}
@@ -55,69 +65,52 @@ func (font *Font) SetFilter(min, mag FilterMode) error {
 
 // GetFilter will return the filter of the font
 func (font *Font) GetFilter() Filter {
-	return font.rasterizers[0].getTexture().GetFilter()
+	return font.rasterizers[0].texture.GetFilter()
 }
 
 // GetAscent gets the height of the font from the baseline
-func (font *Font) GetAscent() int {
-	return font.rasterizers[0].getAscent()
+func (font *Font) GetAscent() float32 {
+	return font.rasterizers[0].ascent
 }
 
 // GetDescent gets the height of the font below the base line
-func (font *Font) GetDescent() int {
-	return font.rasterizers[0].getDescent()
+func (font *Font) GetDescent() float32 {
+	return font.rasterizers[0].descent
 }
 
 // GetBaseline returns the position of the base line.
-func (font *Font) GetBaseline() int {
-	return font.rasterizers[0].getLineHeight()
+func (font *Font) GetBaseline() float32 {
+	return font.rasterizers[0].lineHeight
 }
 
 // HasGlyph checks if this font has a character for the given rune
 func (font *Font) HasGlyph(g rune) bool {
-	for _, rasterizer := range font.rasterizers {
-		if rasterizer.hasGlyph(g) {
-			return true
-		}
-	}
-	return false
-}
-
-// HasGlyphs will check every glyph in the string and return if it has a character
-// for each character
-func (font *Font) HasGlyphs(text string) bool {
-	if len(text) == 0 {
-		return false
-	}
-
-	for _, c := range text {
-		if font.HasGlyph(c) {
-			return false
-		}
-	}
-
-	return true
+	_, _, ok := font.findGlyph(g)
+	return ok
 }
 
 // findGlyph will fetch the glyphData for the given rune
-func (font *Font) findGlyph(g rune) glyphData {
+func (font *Font) findGlyph(r rune) (glyphData, *rasterizer, bool) {
 	for _, rasterizer := range font.rasterizers {
-		if rasterizer.hasGlyph(g) {
-			return rasterizer.getGlyphData(g)
+		if g, ok := rasterizer.mapping[r]; ok {
+			return g, rasterizer, ok
 		}
 	}
-	return font.rasterizers[0].getGlyphData(g)
+	rasterizer := font.rasterizers[0]
+	return rasterizer.mapping[r], rasterizer, false
 }
 
-// getKerning will return the space between two characters
-func (font *Font) getKerning(first, second rune) float32 {
+// Kern will return the space between two characters
+func (font *Font) Kern(first, second rune) float32 {
 	for _, r := range font.rasterizers {
-		if r.hasGlyph(first) && r.hasGlyph(second) {
-			return r.getKerning(first, second)
+		_, hasFirst := r.mapping[first]
+		_, hasSecond := r.mapping[second]
+		if hasFirst && hasSecond {
+			return float32(r.face.Kern(first, second))
 		}
 	}
 
-	return font.rasterizers[0].getKerning(first, second)
+	return float32(font.rasterizers[0].face.Kern(first, second))
 }
 
 // SetFallbacks will add extra fonts in case some characters are not available
@@ -134,57 +127,23 @@ func (font *Font) SetFallbacks(fallbacks ...*Font) {
 
 // GetHeight will get the height of the font.
 func (font *Font) GetHeight() float32 {
-	return float32(font.rasterizers[0].getHeight())
+	return font.rasterizers[0].lineHeight
 }
 
 // GetWidth will get the width of a given string after rendering.
 func (font *Font) GetWidth(text string) float32 {
-	if len(text) == 0 {
-		return 0
-	}
-
-	var maxWidth float32
-	for _, line := range strings.Split(text, "\n") {
-		var width float32
-		var prevChar rune
-		for i, char := range string(line[:]) {
-			g := font.findGlyph(char)
-			width += float32(g.advanceWidth)
-			if i != 0 {
-				width += font.getKerning(char, prevChar)
-			}
-			prevChar = char
-		}
-		maxWidth = float32(math.Max(float64(maxWidth), float64(width)))
-	}
-
-	return maxWidth
+	_, width, _ := generateLines(font, []string{text}, []*Color{GetColor()}, -1)
+	return width
 }
 
 // GetWrap will split a string given a wrap limit. It will return the max width
 // of the longest string and it will return the string split into the strings that
 // are smaller than the wrap limit.
 func (font *Font) GetWrap(text string, wrapLimit float32) (float32, []string) {
-	var width, currentWidth float32
-	var lines, currentLine []string
-
-	for _, word := range strings.Split(text, " ") {
-		wordWidth := font.GetWidth(word)
-		if currentWidth+wordWidth > wrapLimit {
-			if len(currentLine) > 0 {
-				lines = append(lines, strings.Join(currentLine, " "))
-				width = float32(math.Max(float64(currentWidth), float64(width)))
-			}
-			currentLine = []string{word}
-			currentWidth = wordWidth
-		} else {
-			currentLine = append(currentLine, word)
-			currentWidth += wordWidth
-		}
+	lines, width, _ := generateLines(font, []string{text}, []*Color{GetColor()}, wrapLimit)
+	stringLines := make([]string, len(lines))
+	for i, l := range lines {
+		stringLines[i] = string(l.chars)
 	}
-
-	lines = append(lines, strings.Join(currentLine, " "))
-	width = float32(math.Max(float64(currentWidth), float64(width)))
-
-	return width, lines
+	return width, stringLines
 }
