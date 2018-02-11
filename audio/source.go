@@ -35,7 +35,6 @@ type Source struct {
 	maxDistance       float32
 	cone              al.Cone
 	staticBuffer      al.Buffer
-	streamBuffers     []al.Buffer
 	offsetBytes       int32
 }
 
@@ -85,8 +84,6 @@ func NewSource(filepath string, static bool) (*Source, error) {
 	if static {
 		newSource.staticBuffer = al.GenBuffers(1)[0]
 		newSource.staticBuffer.BufferData(decoder.Format, decoder.GetData(), decoder.SampleRate)
-	} else {
-		newSource.streamBuffers = []al.Buffer{} //al.GenBuffers(maxBuffers)
 	}
 
 	return newSource, nil
