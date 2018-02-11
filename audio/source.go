@@ -480,19 +480,22 @@ func (s *Source) Seek(offset time.Duration) {
 func (s *Source) Stop() {
 	if s.isValid() {
 		pool.mutex.Lock()
+		defer pool.mutex.Unlock()
 		al.StopSources(s.source)
+		s.offsetBytes = 0
 		if !s.isStatic {
 			queued := s.source.BuffersQueued()
 			for i := queued; i > 0; i-- {
 				buffer := s.source.UnqueueBuffer()
 				al.DeleteBuffers(buffer)
 			}
+			s.decoder.Seek(0)
+		} else {
+			s.source.SetOffsetBytes(0)
 		}
 		s.source.ClearBuffers()
 		pool.release(s)
-		pool.mutex.Unlock()
 	}
-	s.Rewind()
 }
 
 // Tell returns the currently playing position of the Source.
