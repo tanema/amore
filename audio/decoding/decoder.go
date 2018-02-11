@@ -74,9 +74,20 @@ func newDecoder(src io.ReadCloser, codec io.ReadSeeker, channels int16, sampleRa
 		bitDepth:   bitDepth,
 		dataSize:   dataSize,
 		currentPos: 0,
-		Format:     getFormatInfo(channels, bitDepth),
 		byteRate:   (sampleRate * int32(channels) * int32(bitDepth)) / 8,
 	}
+
+	switch {
+	case channels == 1 && bitDepth == 8:
+		decoder.Format = al.FormatMono8
+	case channels == 1 && bitDepth == 16:
+		decoder.Format = al.FormatMono16
+	case channels == 2 && bitDepth == 8:
+		decoder.Format = al.FormatStereo8
+	case channels == 2 && bitDepth == 16:
+		decoder.Format = al.FormatStereo16
+	}
+
 	return decoder
 }
 
@@ -123,19 +134,4 @@ func (decoder *Decoder) Seek(s int64) bool {
 	_, err := decoder.codec.Seek(decoder.currentPos, os.SEEK_SET)
 	decoder.eof = (err == io.EOF)
 	return err == nil || decoder.eof
-}
-
-func getFormatInfo(channels, depth int16) uint32 {
-	switch channels, depth := channels, depth; {
-	case channels == 1 && depth == 8:
-		return al.FormatMono8
-	case channels == 1 && depth == 16:
-		return al.FormatMono16
-	case channels == 2 && depth == 8:
-		return al.FormatStereo8
-	case channels == 2 && depth == 16:
-		return al.FormatStereo16
-	default:
-		return 0
-	}
 }

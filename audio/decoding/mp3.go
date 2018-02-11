@@ -62,7 +62,7 @@ func (d *mp3Reader) Read(b []byte) (int, error) {
 	if err := d.readUntil(d.pos + left); err != nil {
 		return 0, err
 	}
-	copy(b, d.data[d.pos:d.pos+left])
+	copy(b, d.data[d.pos:d.pos+left-1])
 	d.pos += left
 	if d.pos == int(d.decoder.Length()) {
 		return left, io.EOF

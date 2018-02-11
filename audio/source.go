@@ -457,22 +457,28 @@ func (s *Source) Rewind() { s.Seek(0) }
 
 // Seek sets the currently playing position of the Source.
 func (s *Source) Seek(offset time.Duration) {
-	if s.isValid() {
-		s.offsetBytes = s.decoder.DurToByteOffset(offset)
-		if !s.isStatic {
-			waspaused := s.paused
-			s.decoder.Seek(int64(s.offsetBytes))
-			// Because we still have old data from before the seek in the buffers let's empty them.
-			s.Stop()
-			s.Play()
-			if waspaused {
-				s.Pause()
+	if !s.isValid() {
+		return
+	}
+	s.offsetBytes = s.decoder.DurToByteOffset(offset)
+	if !s.isStatic {
+		al.StopSources(s.source)
+		s.decoder.Seek(int64(s.offsetBytes))
+		for i := s.source.BuffersQueued(); i > 0; i-- {
+			buffer := s.source.UnqueueBuffer()
+			if s.stream(buffer) > 0 {
+				s.source.QueueBuffers(buffer)
+			} else {
+				al.DeleteBuffers(buffer)
 			}
-		} else {
-			pool.mutex.Lock()
-			defer pool.mutex.Unlock()
-			s.source.SetOffsetBytes(s.offsetBytes)
 		}
+		if !s.paused {
+			al.PlaySources(s.source)
+		}
+	} else {
+		pool.mutex.Lock()
+		defer pool.mutex.Unlock()
+		s.source.SetOffsetBytes(s.offsetBytes)
 	}
 }
 
