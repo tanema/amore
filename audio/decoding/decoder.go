@@ -21,12 +21,12 @@ type (
 		eof        bool
 		dataSize   int32
 		currentPos int64
+		byteRate   int32
 
-		Channels    int16
-		SampleRate  int32
-		Buffer      []byte
-		Format      uint32
-		formatBytes int32
+		Channels   int16
+		SampleRate int32
+		Buffer     []byte
+		Format     uint32
 	}
 )
 
@@ -66,18 +66,29 @@ func Decode(filepath string) (*Decoder, error) {
 }
 
 func newDecoder(src io.ReadCloser, codec io.ReadSeeker, channels int16, sampleRate int32, bitDepth int16, dataSize int32) *Decoder {
-	format, bytes := getFormatInfo(channels, bitDepth)
-	return &Decoder{
-		src:         src,
-		codec:       codec,
-		Channels:    channels,
-		SampleRate:  sampleRate,
-		bitDepth:    bitDepth,
-		dataSize:    dataSize,
-		currentPos:  0,
-		Format:      format,
-		formatBytes: bytes,
+	decoder := &Decoder{
+		src:        src,
+		codec:      codec,
+		Channels:   channels,
+		SampleRate: sampleRate,
+		bitDepth:   bitDepth,
+		dataSize:   dataSize,
+		currentPos: 0,
+		byteRate:   (sampleRate * int32(channels) * int32(bitDepth)) / 8,
 	}
+
+	switch {
+	case channels == 1 && bitDepth == 8:
+		decoder.Format = al.FormatMono8
+	case channels == 1 && bitDepth == 16:
+		decoder.Format = al.FormatMono16
+	case channels == 2 && bitDepth == 8:
+		decoder.Format = al.FormatStereo8
+	case channels == 2 && bitDepth == 16:
+		decoder.Format = al.FormatStereo16
+	}
+
+	return decoder
 }
 
 // IsFinished returns is the decoder is finished decoding
@@ -98,18 +109,14 @@ func (decoder *Decoder) GetData() []byte {
 	return data
 }
 
-// func (decoder *Decoder) samplesPerOneSec() int {
-//	return decoder.SampleRate * decoder.Channels * decoder.formatBytes
-// }
-
 // ByteOffsetToDur will translate byte count to time duration
 func (decoder *Decoder) ByteOffsetToDur(offset int32) time.Duration {
-	return time.Duration((int64(offset) / int64(decoder.formatBytes) / int64(decoder.Channels))) * time.Second / time.Duration(decoder.SampleRate)
+	return time.Duration(offset/decoder.byteRate) * time.Second
 }
 
 // DurToByteOffset will translate time duration to a byte count
 func (decoder *Decoder) DurToByteOffset(dur time.Duration) int32 {
-	return int32((dur*time.Duration(decoder.SampleRate))/time.Second) * int32(decoder.Channels) * decoder.formatBytes
+	return int32(dur/time.Second) * decoder.byteRate
 }
 
 // Decode will read the next chunk into the buffer and return the amount of bytes read
@@ -127,19 +134,4 @@ func (decoder *Decoder) Seek(s int64) bool {
 	_, err := decoder.codec.Seek(decoder.currentPos, os.SEEK_SET)
 	decoder.eof = (err == io.EOF)
 	return err == nil || decoder.eof
-}
-
-func getFormatInfo(channels, depth int16) (format uint32, bytesInFormat int32) {
-	switch channels, depth := channels, depth; {
-	case channels == 1 && depth == 8:
-		return al.FormatMono8, 1
-	case channels == 1 && depth == 16:
-		return al.FormatMono16, 2
-	case channels == 2 && depth == 8:
-		return al.FormatStereo8, 2
-	case channels == 2 && depth == 16:
-		return al.FormatStereo16, 4
-	default:
-		return 0, 0
-	}
 }

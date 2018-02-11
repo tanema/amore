@@ -93,7 +93,3 @@ func draw() {
 - collision detection [https://github.com/tanema/ump](https://github.com/tanema/ump)
 - camera control [https://github.com/tanema/lense](https://github.com/tanema/lense)
 - tweening [https://github.com/tanema/gween](https://github.com/tanema/gween)
-
-## TODO
-
-- [ ] audio seeking broken
