@@ -41,7 +41,7 @@ func Read(path string) ([]byte, error) {
 func ReadString(filename string) string {
 	s, err := Read(filename)
 	if err != nil {
-		panic(err)
+		return ""
 	}
 	return string(s[:])
 }

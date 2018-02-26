@@ -372,7 +372,7 @@ func Rotate(angle float32) {
 // in different orders will change the outcome. Scaling lasts until drawing completes
 func Scale(args ...float32) {
 	if args == nil || len(args) == 0 {
-		panic("not enough params passed to scale call")
+		args = []float32{1}
 	}
 	var sx, sy float32
 	sx = args[0]
@@ -390,7 +390,7 @@ func Scale(args ...float32) {
 // Shear shears the coordinate system.
 func Shear(args ...float32) {
 	if args == nil || len(args) == 0 {
-		panic("not enough params passed to scale call")
+		args = []float32{0}
 	}
 	var kx, ky float32
 	kx = args[0]
@@ -443,8 +443,6 @@ func SetScissor(args ...int32) {
 		}
 		states.back().scissorBox = []int32{x, y, width, height}
 		states.back().scissor = true
-	} else {
-		panic("incorrect number of arguments to setscissor")
 	}
 }
 
