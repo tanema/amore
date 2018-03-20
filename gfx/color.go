@@ -23,6 +23,29 @@ func NewColor(r, g, b, a float32) *Color {
 	}
 }
 
+// NewHSLColor will create a color from HSL values, all between 0 and 1
+// This code is taken from github.com/gerow/go-color, credit goes to Mike Gerow gerow@mgerow.com
+func NewHSLColor(h, s, l, a float32) *Color {
+	if s == 0 { // it's gray
+		return &Color{l, l, l, a}
+	}
+
+	var v1, v2 float32
+	if l < 0.5 {
+		v2 = l * (1 + s)
+	} else {
+		v2 = (l + s) - (s * l)
+	}
+
+	v1 = 2*l - v2
+
+	r := hueToRGB(v1, v2, h+(1.0/3.0))
+	g := hueToRGB(v1, v2, h)
+	b := hueToRGB(v1, v2, h-(1.0/3.0))
+
+	return &Color{r, g, b, a}
+}
+
 // Sub will subtract one color from another and return the resulting color
 func (color *Color) Sub(c *Color) *Color {
 	return &Color{
@@ -92,4 +115,22 @@ func (color *Color) changeShade(percent float32) *Color {
 	}
 
 	return newColor
+}
+
+func hueToRGB(v1, v2, h float32) float32 {
+	if h < 0 {
+		h += 1
+	}
+	if h > 1 {
+		h -= 1
+	}
+	switch {
+	case 6*h < 1:
+		return (v1 + (v2-v1)*6*h)
+	case 2*h < 1:
+		return v2
+	case 3*h < 2:
+		return v1 + (v2-v1)*((2.0/3.0)-h)*6
+	}
+	return v1
 }
