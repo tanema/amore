@@ -13,6 +13,7 @@ import (
 // Image is an image that is drawable to the screen
 type Image struct {
 	*Texture
+	img      image.Image
 	filePath string
 	mipmaps  bool
 }
@@ -21,15 +22,9 @@ type Image struct {
 // file does not exist or cannot be decoded it will return an error.
 func NewImage(path string) (*Image, error) {
 	//we do this first time to check the image before volitile load
-	imgFile, newErr := file.NewFile(path)
-	defer imgFile.Close()
-	if newErr != nil {
-		return nil, newErr
-	}
-
-	decodedImg, _, imgErr := image.Decode(imgFile)
-	if imgErr != nil {
-		return nil, imgErr
+	decodedImg, err := loadImageFromPath(path)
+	if err != nil {
+		return nil, err
 	}
 
 	bounds := decodedImg.Bounds()
@@ -46,6 +41,21 @@ func NewImage(path string) (*Image, error) {
 	return newImage, nil
 }
 
+// NewImageFrom will create a new texture for this image and return the *Image.
+func NewImageFrom(img image.Image) *Image {
+	bounds := img.Bounds()
+	newImage := &Image{
+		img:     img,
+		mipmaps: false,
+		Texture: &Texture{
+			Width:  int32(bounds.Dx()),
+			Height: int32(bounds.Dy()),
+		},
+	}
+	registerVolatile(newImage)
+	return newImage
+}
+
 // NewMipmappedImage is like NewImage but the image is mipmapped
 func NewMipmappedImage(path string) *Image {
 	newImage := &Image{
@@ -58,21 +68,35 @@ func NewMipmappedImage(path string) *Image {
 
 // loadVolatile will create the volatile objects
 func (img *Image) loadVolatile() bool {
-	imgFile, newErr := file.NewFile(img.filePath)
+	var err error
+	decodedImg := img.img
+
+	if img.filePath != "" {
+		if decodedImg, err = loadImageFromPath(img.filePath); err != nil {
+			return false
+		}
+	}
+
+	if decodedImg == nil {
+		return false
+	}
+
+	if img.Texture, err = newImageTexture(decodedImg, img.mipmaps); err != nil {
+		return false
+	}
+
+	img.img = nil
+
+	return true
+}
+
+func loadImageFromPath(path string) (image.Image, error) {
+	imgFile, newErr := file.NewFile(path)
 	defer imgFile.Close()
 	if newErr != nil {
-		return false
+		return nil, newErr
 	}
 
 	decodedImg, _, imgErr := image.Decode(imgFile)
-	if imgErr != nil {
-		return false
-	}
-
-	img.Texture, imgErr = newImageTexture(decodedImg, img.mipmaps)
-	if imgErr != nil {
-		return false
-	}
-
-	return true
+	return decodedImg, imgErr
 }
