@@ -1,4 +1,4 @@
-// The mouse Package handles the mouse events from the gl context
+// Package mouse handles the mouse events from the gl context
 // To capture events as they happen you can use the callbacks OnButtonDown, OnButtonUp,
 // OnMove, and OnFocus. Define them by calling mouse.OnButtonDown = [callback]
 
