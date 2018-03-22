@@ -265,10 +265,14 @@ func SetViewport(x, y, w, h int32) {
 	screenWidth = w
 	screenHeight = h
 	// Set the viewport to top-left corner.
-	gl.Viewport(int(y), int(x), int(screenWidth), int(screenHeight))
-	glState.viewport = []int32{y, x, screenWidth, screenHeight}
-	glState.projectionStack.Load(mgl32.Ortho(float32(x), float32(screenWidth), float32(screenHeight), float32(y), -1, 1))
-	SetScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
+	if glState.currentCanvas == nil {
+		gl.Viewport(int(y), int(x), int(screenWidth), int(screenHeight))
+		glState.viewport = []int32{y, x, screenWidth, screenHeight}
+		glState.projectionStack.Load(mgl32.Ortho(float32(x), float32(screenWidth), float32(screenHeight), float32(y), -1, 1))
+		if states.back().scissor {
+			SetScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
+		}
+	}
 }
 
 // GetWidth will return the width of the rendering context.
