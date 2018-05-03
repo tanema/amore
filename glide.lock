@@ -1,5 +1,5 @@
-hash: 603f577420c77a8e6d91e57f33e0b778419476db89947888267817a236ebfa71
-updated: 2017-12-18T21:59:43.378156-05:00
+hash: 7f809f65d66cbdf9a78ac7e817277cb59d12b2d40214bfa1755d8ca95faa8608
+updated: 2018-05-03T09:47:20.162743-04:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
@@ -8,11 +8,11 @@ imports:
 - name: github.com/eaburns/flac
   version: 9a6fb92396d1ba6412b82819435dca0b46f959fb
 - name: github.com/go-gl/gl
-  version: ac0d3d2af0fe995e2bb09fa6619b716b0c0fc0fa
+  version: 68e2537930806bfcee1b92a0e14b4e9b8bb3a3e3
   subpackages:
   - v2.1/gl
 - name: github.com/go-gl/mathgl
-  version: 4c3fc6b4bf30179013667e5d0b926e024d9a13c1
+  version: 5ab0e04e1f55a10f3a71b1fccc60ca2ee9a0bc02
   subpackages:
   - mgl32
   - mgl32/matstack
@@ -22,7 +22,7 @@ imports:
   - raster
   - truetype
 - name: github.com/hajimehoshi/go-mp3
-  version: 551b228a29684c056919369a0c6516a63bb943e8
+  version: 3c185f92b8dbceefa913b64cae634ba47f452769
   subpackages:
   - internal/bits
   - internal/consts
@@ -40,23 +40,21 @@ imports:
   version: 75fb7ed4208cf72d323d7d02fd1a5964a7a9073c
   subpackages:
   - open
-- name: github.com/tanema/freetype-go
-  version: dc1e2b83a6a63e7740967c29ad64b3de5ed93495
-  subpackages:
-  - freetype
-  - freetype/truetype
 - name: github.com/veandco/go-sdl2
-  version: d1ebfcf49872383b6533ee2a51ae478ae3999c0c
+  version: 30f30965227962032c13bd0b12a89e6a5107c768
   subpackages:
   - sdl
 - name: golang.org/x/image
-  version: 12117c17ca67ffa1ce22e9409f3b0b0a93ac08c7
+  version: f315e440302883054d0c2bd85486878cb4f8572c
   subpackages:
   - font
+  - font/gofont/gobold
+  - font/gofont/goitalic
+  - font/gofont/goregular
   - math/f32
   - math/fixed
 - name: golang.org/x/mobile
-  version: 50b7067763308074f4c19e733ac7f867471de857
+  version: c909788f9903c3fa409bdba28f909907d69fb3d1
   subpackages:
   - internal/mobileinit
 testImports: []

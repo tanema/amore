@@ -7,7 +7,7 @@ import (
 )
 
 func newMp3Decoder(src io.ReadCloser) (*Decoder, error) {
-	r, err := mp3.Decode(src)
+	r, err := mp3.NewDecoder(src)
 	if err != nil {
 		return nil, err
 	}

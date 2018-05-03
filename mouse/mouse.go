@@ -76,7 +76,8 @@ func SetGrabbed(enabled bool) {
 
 // IsVisible checks if the cursor is visible.
 func IsVisible() bool {
-	return sdl.ShowCursor(sdl.QUERY) == sdl.ENABLE
+	status, err := sdl.ShowCursor(sdl.QUERY)
+	return status == sdl.ENABLE && err == nil
 }
 
 // SetVisible sets the current visibility of the cursor.
