@@ -16,13 +16,11 @@ func Delegate(event sdl.Event) {
 		case sdl.CONTROLLERBUTTONDOWN:
 		case sdl.CONTROLLERBUTTONUP:
 		}
-	case *sdl.JoyDeviceEvent:
-		switch e.Type {
-		case sdl.JOYDEVICEADDED:
-			addJoystick(int(e.Which))
-		case sdl.JOYDEVICEREMOVED:
-			removeJoystick(getJoystickFromID(int(e.Which)))
-		}
+
+	case *sdl.JoyDeviceAddedEvent:
+		addJoystick(int(e.Which))
+	case *sdl.JoyDeviceRemovedEvent:
+		removeJoystick(getJoystickFromID(int(e.Which)))
 	case *sdl.ControllerDeviceEvent:
 		switch e.Type {
 		case sdl.CONTROLLERDEVICEADDED:

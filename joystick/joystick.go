@@ -19,7 +19,8 @@ type vibration struct {
 // Joystick is an instance of any joystick or gamepad that is connected to the
 // program.
 type Joystick struct {
-	id         int
+	id         sdl.JoystickID
+	index      int
 	stick      *sdl.Joystick
 	controller *sdl.GameController
 	haptic     *sdl.Haptic
@@ -31,10 +32,10 @@ type Joystick struct {
 func (joystick *Joystick) open() bool {
 	joystick.close()
 
-	joystick.stick = sdl.JoystickOpen(joystick.id)
+	joystick.stick = sdl.JoystickOpen(joystick.index)
 
-	if joystick.stick != nil && sdl.IsGameController(joystick.id) {
-		joystick.controller = sdl.GameControllerOpen(joystick.id)
+	if joystick.stick != nil && sdl.IsGameController(joystick.index) {
+		joystick.controller = sdl.GameControllerOpen(joystick.index)
 	}
 
 	return joystick.IsConnected()
@@ -47,7 +48,7 @@ func (joystick *Joystick) IsGamepad() bool {
 
 // GetID Gets the joystick's unique identifier.
 func (joystick *Joystick) GetID() int {
-	return joystick.id
+	return joystick.index
 }
 
 // GetName the name of the joystick as it is identified on the os.

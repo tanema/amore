@@ -27,12 +27,12 @@ func init() {
 }
 
 // addJoystick will open the joystick and add it to our queue from usage in amore.
-func addJoystick(idx int) *Joystick {
-	if idx < 0 || idx >= sdl.NumJoysticks() {
+func addJoystick(index int) *Joystick {
+	if index < 0 || index >= sdl.NumJoysticks() {
 		return nil
 	}
 
-	guidstr := getDeviceGUID(idx)
+	guidstr := sdl.JoystickGetGUIDString(sdl.JoystickGetDeviceGUID(index))
 	var joystick *Joystick
 	reused := false
 
@@ -46,7 +46,10 @@ func addJoystick(idx int) *Joystick {
 	}
 
 	if joystick == nil {
-		joystick = &Joystick{id: idx}
+		joystick = &Joystick{
+			id:    sdl.JoystickGetDeviceInstanceID(index),
+			index: index,
+		}
 		joysticks = append(joysticks, joystick)
 	}
 
@@ -86,15 +89,6 @@ func removeJoystick(joystick *Joystick) {
 			break
 		}
 	}
-}
-
-// getDeviceGUID will return the device specific id for the device with the index id.
-func getDeviceGUID(idx int) string {
-	if idx < 0 || idx >= sdl.NumJoysticks() {
-		return ""
-	}
-
-	return sdl.JoystickGetGUIDString(sdl.JoystickGetDeviceGUID(idx))
 }
 
 // GetJoystickCount Gets the number of connected joysticks.

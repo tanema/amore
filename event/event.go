@@ -26,8 +26,8 @@ func Poll() {
 		case *sdl.MouseMotionEvent, *sdl.MouseButtonEvent, *sdl.MouseWheelEvent:
 			mouse.Delegate(e)
 		case *sdl.JoyAxisEvent, *sdl.JoyBallEvent, *sdl.JoyHatEvent,
-			*sdl.JoyButtonEvent, *sdl.JoyDeviceEvent, *sdl.ControllerAxisEvent,
-			*sdl.ControllerButtonEvent, *sdl.ControllerDeviceEvent:
+			*sdl.JoyButtonEvent, *sdl.ControllerAxisEvent, *sdl.JoyDeviceAddedEvent,
+			*sdl.JoyDeviceRemovedEvent, *sdl.ControllerButtonEvent, *sdl.ControllerDeviceEvent:
 			joystick.Delegate(e)
 		case *sdl.TouchFingerEvent:
 			touch.Delegate(e)
