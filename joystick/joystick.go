@@ -11,10 +11,8 @@ import (
 // vibration is a struct that keeps track of vibration patterns and lengths for
 // communication with sdl
 type vibration struct {
-	Left, Right float32
-	Effect      sdl.HapticEffect
-	Data        [4]uint16
 	ID          int
+	Left, Right float32
 	Endtime     uint32
 }
 
@@ -33,7 +31,7 @@ type Joystick struct {
 func (joystick *Joystick) open() bool {
 	joystick.close()
 
-	joystick.stick = sdl.JoystickOpen(sdl.JoystickID(joystick.id))
+	joystick.stick = sdl.JoystickOpen(joystick.id)
 
 	if joystick.stick != nil && sdl.IsGameController(joystick.id) {
 		joystick.controller = sdl.GameControllerOpen(joystick.id)
@@ -65,12 +63,12 @@ func (joystick *Joystick) GetName() string {
 
 // IsConnected gets whether the Joystick is connected.
 func (joystick *Joystick) IsConnected() bool {
-	return joystick.stick != nil && joystick.stick.GetAttached()
+	return joystick.stick != nil && joystick.stick.Attached()
 }
 
 // GetGUID gets a stable GUID unique to the type of the physical joystick.
 func (joystick *Joystick) GetGUID() string {
-	return sdl.JoystickGetGUIDString(joystick.stick.GetGUID())
+	return sdl.JoystickGetGUIDString(joystick.stick.GUID())
 }
 
 // getHandle gets the sdl instance id for this joystick
@@ -95,7 +93,7 @@ func (joystick *Joystick) IsDown(button int) bool {
 	if joystick.IsConnected() == false {
 		return false
 	}
-	return joystick.stick.GetButton(button) == 1
+	return joystick.stick.Button(button) == 1
 }
 
 // GetAxisCount gets the number of axes on the joystick.
@@ -128,7 +126,7 @@ func (joystick *Joystick) GetAxis(axisindex int) float32 {
 		return 0.0
 	}
 
-	return clampval(float32(joystick.stick.GetAxis(axisindex)) / 32768.0)
+	return clampval(float32(joystick.stick.Axis(axisindex)) / 32768.0)
 }
 
 // GetAxes gets the direction of each axis. Values are clamped.
@@ -141,7 +139,7 @@ func (joystick *Joystick) GetAxes() []float32 {
 	}
 
 	for i := 0; i < count; i++ {
-		axes = append(axes, clampval(float32(joystick.stick.GetAxis(i))/32768.0))
+		axes = append(axes, clampval(float32(joystick.stick.Axis(i))/32768.0))
 	}
 
 	return axes
@@ -153,7 +151,7 @@ func (joystick *Joystick) GetHat(hatindex int) byte {
 		return 0
 	}
 
-	return joystick.stick.GetHat(hatindex)
+	return joystick.stick.Hat(hatindex)
 }
 
 // GetGamepadAxis gets the direction of a virtual gamepad axis. Values are clamped.
@@ -162,7 +160,7 @@ func (joystick *Joystick) GetGamepadAxis(axis GameControllerAxis) float32 {
 		return 0.0
 	}
 
-	value := joystick.controller.GetAxis(sdl.GameControllerAxis(axis))
+	value := joystick.controller.Axis(sdl.GameControllerAxis(axis))
 
 	return clampval(float32(value) / 32768.0)
 }
@@ -173,7 +171,7 @@ func (joystick *Joystick) IsGamepadDown(button GameControllerButton) bool {
 		return false
 	}
 
-	return joystick.controller.GetButton(sdl.GameControllerButton(button)) == 1
+	return joystick.controller.Button(sdl.GameControllerButton(button)) == 1
 }
 
 // IsVibrationSupported gets whether the Joystick supports vibration.
@@ -233,22 +231,16 @@ func (joystick *Joystick) checkCreateHaptic() bool {
 		return false
 	}
 
-	joystick.vibration = &vibration{
-		ID:      -1,
-		Left:    0.0,
-		Right:   0.0,
-		Endtime: sdl.HAPTIC_INFINITY,
-		Effect:  sdl.HapticEffect{},
-	}
+	joystick.vibration = &vibration{ID: -1, Endtime: sdl.HAPTIC_INFINITY}
 
 	return joystick.haptic != nil
 }
 
 // runVibrationEffect will initiate the joysticks haptic vibration and will return
 // if it was successful in running the vibration.
-func (joystick *Joystick) runVibrationEffect() bool {
+func (joystick *Joystick) runVibrationEffect(effect sdl.HapticEffect) bool {
 	if joystick.vibration.ID != -1 {
-		if joystick.haptic.UpdateEffect(joystick.vibration.ID, &joystick.vibration.Effect) == nil {
+		if joystick.haptic.UpdateEffect(joystick.vibration.ID, effect) == nil {
 			if joystick.haptic.RunEffect(joystick.vibration.ID, 1) == nil {
 				return true
 			}
@@ -260,7 +252,7 @@ func (joystick *Joystick) runVibrationEffect() bool {
 	}
 
 	var err error
-	joystick.vibration.ID, err = joystick.haptic.NewEffect(&joystick.vibration.Effect)
+	joystick.vibration.ID, err = joystick.haptic.NewEffect(effect)
 	if err == nil && joystick.vibration.ID != -1 && joystick.haptic.RunEffect(joystick.vibration.ID, 1) == nil {
 		return true
 	}
@@ -312,12 +304,12 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 	}
 
 	if (features & sdl.HAPTIC_LEFTRIGHT) != 0 {
-		joystick.vibration.Effect.SetType(sdl.HAPTIC_LEFTRIGHT)
-		lr := joystick.vibration.Effect.LeftRight()
-		lr.Length = uint32(length)
-		lr.LargeMagnitude = uint16(left * math.MaxUint16)
-		lr.SmallMagnitude = uint16(right * math.MaxUint16)
-		success = joystick.runVibrationEffect()
+		success = joystick.runVibrationEffect(&sdl.HapticLeftRight{
+			Type:           sdl.HAPTIC_LEFTRIGHT,
+			Length:         uint32(length),
+			LargeMagnitude: uint16(left * math.MaxUint16),
+			SmallMagnitude: uint16(right * math.MaxUint16),
+		})
 	}
 
 	// Some gamepad drivers only give support for controlling individual motors
@@ -327,32 +319,33 @@ func (joystick *Joystick) SetVibration(args ...float32) bool {
 		// but aren't similar to https://github.com/d235j/360Controller .
 
 		// Custom effect data is clamped to 0x7FFF in SDL.
-		joystick.vibration.Data[0] = uint16(left * 0x7FFF)
-		joystick.vibration.Data[2] = uint16(left * 0x7FFF)
-		joystick.vibration.Data[1] = uint16(right * 0x7FFF)
-		joystick.vibration.Data[3] = uint16(right * 0x7FFF)
+		data := []uint16{
+			uint16(left * 0x7FFF),
+			uint16(left * 0x7FFF),
+			uint16(right * 0x7FFF),
+			uint16(right * 0x7FFF),
+		}
 
-		joystick.vibration.Effect.SetType(sdl.HAPTIC_CUSTOM)
-		custom := joystick.vibration.Effect.Custom()
-		custom.Length = uint32(length)
-		custom.Channels = 2
-		custom.Period = 10
-		custom.Samples = 2
-		custom.Data = &joystick.vibration.Data[0]
-
-		success = joystick.runVibrationEffect()
+		success = joystick.runVibrationEffect(&sdl.HapticCustom{
+			Type:     sdl.HAPTIC_CUSTOM,
+			Length:   uint32(length),
+			Channels: 2,
+			Period:   10,
+			Samples:  2,
+			Data:     &data[0],
+		})
 	}
 
 	//// Fall back to a simple sine wave if all else fails. This only supports a
 	//// single strength value.
 	if !success && (features&sdl.HAPTIC_SINE) != 0 {
-		joystick.vibration.Effect.SetType(sdl.HAPTIC_SINE)
-		periodic := joystick.vibration.Effect.Periodic()
-		periodic.Length = uint32(length)
-		periodic.Period = 10
 		strength := math.Max(float64(left), float64(right))
-		periodic.Magnitude = int16(strength * 0x7FFF)
-		success = joystick.runVibrationEffect()
+		success = joystick.runVibrationEffect(&sdl.HapticPeriodic{
+			Type:      sdl.HAPTIC_SINE,
+			Length:    uint32(length),
+			Period:    10,
+			Magnitude: int16(strength * 0x7FFF),
+		})
 	}
 
 	if success {
@@ -405,12 +398,10 @@ func (joystick *Joystick) GetVibration() (float32, float32) {
 	}
 
 	// Check if the haptic effect has stopped playing.
-	if joystick.haptic == nil || joystick.vibration.ID == -1 {
-		status, err := joystick.haptic.GetEffectStatus(joystick.vibration.ID)
-		if err == nil && status != 1 {
-			joystick.vibration.Left = 0.0
-			joystick.vibration.Right = 0.0
-		}
+	status, err := joystick.haptic.GetEffectStatus(joystick.vibration.ID)
+	if err == nil && status != 1 {
+		joystick.vibration.Left = 0.0
+		joystick.vibration.Right = 0.0
 	}
 
 	return joystick.vibration.Left, joystick.vibration.Right

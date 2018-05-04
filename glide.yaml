@@ -1,7 +1,7 @@
 package: github.com/tanema/amore
 import:
 - package: github.com/BurntSushi/toml
-  version: ^0.2.0
+  version: ^0.3.0
 - package: github.com/eaburns/flac
 - package: github.com/go-gl/gl
   subpackages:
@@ -10,19 +10,26 @@ import:
   subpackages:
   - mgl32
   - mgl32/matstack
+- package: github.com/golang/freetype
+  subpackages:
+  - truetype
+- package: github.com/hajimehoshi/go-mp3
+- package: github.com/jfreymuth/oggvorbis
+  version: ^1.0.0
 - package: github.com/skratchdot/open-golang
   subpackages:
   - open
-- package: github.com/tanema/freetype-go
-  subpackages:
-  - freetype
-  - freetype/truetype
 - package: github.com/veandco/go-sdl2
+  version: ^0.2.0
   subpackages:
   - sdl
+- package: golang.org/x/image
+  subpackages:
+  - font
+  - font/gofont/gobold
+  - font/gofont/goitalic
+  - font/gofont/goregular
+  - math/fixed
 - package: golang.org/x/mobile
   subpackages:
   - internal/mobileinit
-- package: github.com/jfreymuth/oggvorbis
-- package: github.com/golang/freetype
-- package: github.com/hajimehoshi/go-mp3

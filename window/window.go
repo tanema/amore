@@ -59,8 +59,7 @@ func NewWindow() (*window, error) {
 	config.Display = int(math.Min(math.Max(float64(config.Display), 0.0), float64(GetDisplayCount()-1)))
 
 	if config.Width == 0 || config.Height == 0 {
-		var mode sdl.DisplayMode
-		sdl.GetDesktopDisplayMode(config.Display, &mode)
+		mode, _ := sdl.GetDesktopDisplayMode(config.Display)
 		config.Width = mode.W
 		config.Height = mode.H
 	}
@@ -80,7 +79,7 @@ func NewWindow() (*window, error) {
 				// GetClosestDisplayMode will fail if we request a size larger
 				// than the largest available display mode, so we'll try to use
 				// the largest (first) mode in that case.
-				if err := sdl.GetDisplayMode(config.Display, 0, &mode); err != nil {
+				if mode, err = sdl.GetDisplayMode(config.Display, 0); err != nil {
 					return nil, err
 				}
 			}
@@ -104,8 +103,7 @@ func NewWindow() (*window, error) {
 
 	if config.Fullscreen {
 		// The position needs to be in the global coordinate space.
-		var displaybounds sdl.Rect
-		sdl.GetDisplayBounds(config.Display, &displaybounds)
+		displaybounds, _ := sdl.GetDisplayBounds(config.Display)
 		config.X += displaybounds.X
 		config.Y += displaybounds.Y
 	} else {
@@ -164,7 +162,7 @@ func createWindowAndContext(config *windowConfig, windowflags uint32) (*window, 
 		panic(err)
 	}
 
-	context, err := sdl.GLCreateContext(newWindow)
+	context, err := newWindow.GLCreateContext()
 	if err != nil {
 		panic(err)
 	}
@@ -240,8 +238,7 @@ func GetDisplayName(displayindex int) string {
 func GetDesktopDimensions(displayindex int) (int32, int32) {
 	var width, height int32
 	if displayindex >= 0 && displayindex < GetDisplayCount() {
-		var mode sdl.DisplayMode
-		sdl.GetDesktopDisplayMode(displayindex, &mode)
+		mode, _ := sdl.GetDesktopDisplayMode(displayindex)
 		width = mode.W
 		height = mode.H
 	}
@@ -258,7 +255,7 @@ func onSizeChanged(width, height int32) {
 
 // GetDrawableSize gets the size of pixels in view
 func GetDrawableSize() (int32, int32) {
-	w, h := sdl.GLGetDrawableSize(getCurrent().SDLWindow)
+	w, h := getCurrent().SDLWindow.GLGetDrawableSize()
 	return int32(w), int32(h)
 }
 
@@ -267,8 +264,7 @@ func GetFullscreenSizes(displayindex int) [][]int32 {
 	var sizes [][]int32
 	modes, _ := sdl.GetNumDisplayModes(displayindex)
 	for i := 0; i < modes; i++ {
-		var mode sdl.DisplayMode
-		sdl.GetDisplayMode(displayindex, i, &mode)
+		mode, _ := sdl.GetDisplayMode(displayindex, i)
 		sizes = append(sizes, []int32{mode.W, mode.H})
 	}
 	return sizes
@@ -329,7 +325,7 @@ func Close(shouldClose bool) {
 // SwapBuffers swaps the current frame buffer in the window. This is generally
 // only used by the engine but you could use it to roll your own game loop.
 func SwapBuffers() {
-	sdl.GLSwapWindow(getCurrent().SDLWindow)
+	getCurrent().SDLWindow.GLSwap()
 }
 
 // ToPixelCoords translates window coords to pixel coords for pixel perfect
@@ -392,7 +388,8 @@ func SetMouseVisible(visible bool) {
 // false otherwise
 func GetMouseVisible() bool {
 	getCurrent() // must call getCurrent to ensure there is a window
-	return sdl.ShowCursor(sdl.QUERY) == sdl.ENABLE
+	status, err := sdl.ShowCursor(sdl.QUERY)
+	return status == sdl.ENABLE && err == nil
 }
 
 // GetPixelDimensions will return the size of the window in pixels
