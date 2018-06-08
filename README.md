@@ -2,7 +2,9 @@
 
 [![GoDoc](https://godoc.org/github.com/tanema/amore?status.svg)](http://godoc.org/github.com/tanema/amore)
 
-A game library for Go, inspired by Love 2D. Currently in Beta. This is a hobby library and support should not be expected.
+A game library for Go, inspired by Love 2D. 
+
+**No longer being maintained** This was largley a learning project and now that Apple says they will no longer be supporting OpenGL, I do not see a point in maintainig it.
 
 ## Objectives
 
