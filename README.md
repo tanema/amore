@@ -2,7 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/tanema/amore?status.svg)](http://godoc.org/github.com/tanema/amore)
 
-A game library for Go, inspired by Love 2D. 
+A game library for Go, inspired by Love 2D.
 
 **No longer being maintained** This was largley a learning project and now that Apple says they will no longer be supporting OpenGL, I do not see a point in maintainig it.
 
@@ -20,26 +20,9 @@ A game library for Go, inspired by Love 2D.
 - **iOS**
 - **Android**
 
-## Installation
-
-It is recommended that you use [glide](https://github.com/Masterminds/glide) for working
-with this project so that it is certain which dependancies you are vendoring.
-
-You can get this project with glide by running
-
-```bash
-glide get github.com/tanema/amore
-```
-
-Or install the amore package by running the go get command
-
-```bash
-go get -u github.com/tanema/amore/...
-```
-
 ### Requirements
 
-Amore requires [SDL2](http://libsdl.org/download-2.0.php) to operate on PC. You can install it by doing the following.
+Amore requires go 1.11 or higher as well as [SDL2](http://libsdl.org/download-2.0.php) to operate on PC. You can install it by doing the following.
 
 __Ubuntu 14.04 and above__, type: `apt-get install libsdl2-dev`
 
