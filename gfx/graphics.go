@@ -198,8 +198,8 @@ func Polygon(mode DrawMode, coords []float32) {
 // NewScreenshot will take a screenshot of the screen and convert it to an image.Image
 func NewScreenshot() image.Image {
 	// Temporarily unbind the currently active canvas (glReadPixels reads the active framebuffer, not the main one.)
-	canvases := GetCanvas()
-	SetCanvas()
+	canvas := GetCanvas()
+	SetCanvas(nil)
 
 	w, h := int32(screenWidth), int32(screenHeight)
 	screenshot := image.NewRGBA(image.Rect(0, 0, int(w), int(h)))
@@ -214,7 +214,7 @@ func NewScreenshot() image.Image {
 	}
 
 	// Re-bind the active canvas, if necessary.
-	SetCanvas(canvases...)
+	SetCanvas(canvas)
 
 	return screenshot
 }

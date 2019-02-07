@@ -24,7 +24,7 @@ type displayState struct {
 	colorMask              ColorMask
 	wireframe              bool
 	pixelSize              float32
-	canvases               []*Canvas
+	canvas                 *Canvas
 	defaultFilter          Filter
 	defaultMipmapFilter    FilterMode
 	defaultMipmapSharpness float32
@@ -64,9 +64,9 @@ func newDisplayState() displayState {
 		defaultFilter:          newFilter(),
 		defaultMipmapFilter:    FilterNearest,
 		defaultMipmapSharpness: 0.0,
-		color:      NewColor(255, 255, 255, 255),
-		colorMask:  ColorMask{r: true, g: true, b: true, a: true},
-		scissorBox: make([]int32, 4),
+		color:                  NewColor(255, 255, 255, 255),
+		colorMask:              ColorMask{r: true, g: true, b: true, a: true},
+		scissorBox:             make([]int32, 4),
 	}
 }
 

@@ -302,10 +302,10 @@ func Present() {
 	}
 
 	// Make sure we don't have a canvas active.
-	canvases := states.back().canvases
-	SetCanvas()
+	canvas := states.back().canvas
+	SetCanvas(nil)
 	// Restore the currently active canvas, if there is one.
-	SetCanvas(canvases...)
+	SetCanvas(canvas)
 }
 
 // IsActive will return true of the context has been initialized and the window
@@ -688,23 +688,23 @@ func GetFont() *Font {
 // SetCanvas will set the render target to a specified Canvas. All drawing operations
 // until the next SetCanvas call will be redirected to the Canvas and not shown
 // on the screen. Call with a no params to enable drawing to screen again.
-func SetCanvas(canvases ...*Canvas) error {
-	if canvases == nil || len(canvases) <= 0 {
-		states.back().canvases = nil
-		if glState.currentCanvas != nil {
-			glState.currentCanvas.stopGrab(false)
-			glState.currentCanvas = nil
-		}
-	} else {
-		states.back().canvases = canvases
-		return states.back().canvases[0].startGrab(canvases[1:]...)
+func SetCanvas(canvas *Canvas) error {
+	states.back().canvas = canvas
+
+	if canvas != nil {
+		return canvas.startGrab()
+	}
+
+	if glState.currentCanvas != nil {
+		glState.currentCanvas.stopGrab(false)
+		glState.currentCanvas = nil
 	}
 	return nil
 }
 
 // GetCanvas returns the currently bound canvases
-func GetCanvas() []*Canvas {
-	return states.back().canvases
+func GetCanvas() *Canvas {
+	return states.back().canvas
 }
 
 // SetBlendMode sets the blending mode. Blending modes are different ways to do

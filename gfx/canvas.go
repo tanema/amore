@@ -135,7 +135,7 @@ func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
 		copy(screenshot.Pix[y*stride:], pixels[i:i+w*4])
 	}
 
-	SetCanvas(prevCanvas...)
+	SetCanvas(prevCanvas)
 
 	// The new ImageData now owns the pixel data, so we don't delete it here.
 	return screenshot, nil
