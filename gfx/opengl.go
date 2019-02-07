@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
-	"github.com/tanema/amore/font"
+	"github.com/tanema/amore/gfx/font"
 
 	"github.com/tanema/amore/gfx/gl"
 )

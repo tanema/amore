@@ -13,8 +13,8 @@ const (
 	configFileName = "conf.toml" // default config file name.
 )
 
-// windowConfig is the struct that the config file will unmarshalled into
-type windowConfig struct {
+// Config is the struct that the config file will unmarshalled into
+type Config struct {
 	Identity   string `toml:"identity"`       // The name of the save directory (string)
 	Title      string `toml:"title"`          // The window title (string)
 	Icon       string `toml:"icon"`           // Filepath to an image to use as the window's icon (string)
@@ -40,8 +40,8 @@ type windowConfig struct {
 // struct and the return it. If the config does not exist it will return a default
 // config. If there was an issue reading the file it will return the error, possibly
 // permission errors.
-func loadConfig() (*windowConfig, error) {
-	var config windowConfig
+func loadConfig() (*Config, error) {
+	var config Config
 	if configFile, err := file.NewFile(configFileName); err == nil {
 		if _, err := toml.DecodeReader(configFile, &config); err != nil {
 			return nil, err

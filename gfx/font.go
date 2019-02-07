@@ -1,7 +1,7 @@
 package gfx
 
 import (
-	"github.com/tanema/amore/font"
+	"github.com/tanema/amore/gfx/font"
 )
 
 // Font is a rasterized font data
