@@ -70,12 +70,6 @@ func newTexture(width, height int32, mipmaps bool) *Texture {
 
 	if newTexture.mipmaps {
 		newTexture.filter.mipmap = states.back().defaultMipmapFilter
-		newTexture.SetMipmapSharpness(states.back().defaultMipmapSharpness)
-	}
-
-	if newTexture.mipmaps {
-		// Auto-generate mipmaps every time the texture is modified, if glGenerateMipmap isn't supported.
-		setTexMipMap()
 	}
 
 	newTexture.generateVerticies()

@@ -12,12 +12,11 @@ import (
 // Canvas is an off-screen render target.
 type Canvas struct {
 	*Texture
-	fbo              gl.Framebuffer
-	depthStencil     gl.Renderbuffer
-	status           uint32
-	attachedCanvases []*Canvas
-	width, height    int32
-	systemViewport   []int32
+	fbo            gl.Framebuffer
+	depthStencil   gl.Renderbuffer
+	status         uint32
+	width, height  int32
+	systemViewport []int32
 }
 
 // NewCanvas creates a pointer to a new canvas with the privided width and height
@@ -71,33 +70,12 @@ func (canvas *Canvas) unLoadVolatile() {
 
 	canvas.fbo = gl.Framebuffer{}
 	canvas.depthStencil = gl.Renderbuffer{}
-
-	canvas.attachedCanvases = []*Canvas{}
 }
 
 // startGrab will bind this canvas to grab all drawing operations
-// multiple canvases can only be passed in on non mobile platforms
-func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
+func (canvas *Canvas) startGrab() error {
 	if glState.currentCanvas == canvas {
 		return nil // already grabbing
-	}
-
-	if canvases != nil && len(canvases) > 0 {
-		// Whether the new canvas list is different from the old one.
-		// A more thorough check is done below.
-		if maxRenderTargets < 4 {
-			return fmt.Errorf("multi-canvas rendering is not supported on this system")
-		}
-
-		if int32(len(canvases)+1) > maxRenderTargets {
-			return fmt.Errorf("this system can't simultaneously render to %v canvases", len(canvases)+1)
-		}
-
-		for i := 0; i < len(canvases); i++ {
-			if canvases[i].width != canvas.width || canvases[i].height != canvas.height {
-				return fmt.Errorf("all canvases must have the same dimensions")
-			}
-		}
 	}
 
 	// cleanup after previous Canvas
@@ -116,9 +94,6 @@ func (canvas *Canvas) startGrab(canvases ...*Canvas) error {
 	// Set up the projection matrix
 	glState.projectionStack.Push()
 	glState.projectionStack.Load(mgl32.Ortho(0.0, float32(screenWidth), 0.0, float32(screenHeight), -1, 1))
-
-	canvas.attacheExtra(canvases)
-	canvas.attachedCanvases = canvases
 
 	return nil
 }

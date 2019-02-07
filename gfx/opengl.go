@@ -12,8 +12,6 @@ import (
 )
 
 var (
-	openglVersion          string
-	openglVendor           string
 	maxAnisotropy          float32
 	maxTextureSize         int32
 	maxRenderTargets       int32
@@ -44,8 +42,6 @@ func InitContext(w, h int32) {
 	gl.ContextWatcher.OnMakeCurrent(nil)
 
 	//Get system info
-	openglVersion = gl.GetString(gl.VERSION)
-	openglVendor = gl.GetString(gl.VENDOR)
 	glState.defaultFBO = gl.GetBoundFramebuffer()
 	gl.GetIntegerv(gl.VIEWPORT, glState.viewport)
 	// And the current scissor - but we need to compensate for GL scissors
@@ -53,7 +49,9 @@ func InitContext(w, h int32) {
 	gl.GetIntegerv(gl.SCISSOR_BOX, states.back().scissorBox)
 	states.back().scissorBox[1] = glState.viewport[3] - (states.back().scissorBox[1] + states.back().scissorBox[3])
 
-	initMaxValues() //check shim code
+	maxTextureSize = int32(gl.GetInteger(gl.MAX_TEXTURE_SIZE))
+	maxTextureUnits = int32(gl.GetInteger(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
+	glState.textureCounters = make([]int, maxTextureUnits)
 
 	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
 	gl.VertexAttrib4fv(attribColor, glcolor)
@@ -65,8 +63,6 @@ func InitContext(w, h int32) {
 	SetBlendMode(BlendModeAlpha)
 	// Auto-generated mipmaps should be the best quality possible
 	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
-	// Make sure antialiasing works when set elsewhere
-	enableMultisample() //check shim code
 	// Set pixel row alignment
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
@@ -791,9 +787,4 @@ func SetDefaultMipmapFilter(filter FilterMode, sharpness float32) {
 // all new images
 func GetDefaultMipmapFilter() (filter FilterMode, sharpness float32) {
 	return states.back().defaultMipmapFilter, states.back().defaultMipmapSharpness
-}
-
-// GetDebugInfo gets information on what version of opengl we are using.
-func GetDebugInfo() string {
-	return "OpenGL " + openglVersion + "\nVendor: " + openglVendor
 }
