@@ -5,19 +5,19 @@ import (
 
 	"github.com/tanema/amore"
 	"github.com/tanema/amore/gfx"
-	"github.com/tanema/amore/timer"
 )
 
 func main() {
 	amore.Start(update, draw)
 }
 
-func update(deltaTime float32) {
+func update(dt float32) {
+	fmt.Println(dt)
 }
 
 func draw() {
 	gfx.SetColor(255, 0, 0, 255)
-	gfx.Rect("line", 50, 50, 100, 100)
+	gfx.Rect("fill", 50, 50, 100, 100)
 
-	gfx.Print(fmt.Sprintf("fps: %v", timer.GetFPS()), 0, 0)
+	gfx.Print(fmt.Sprintf("fps: %v", amore.GetFPS()), 0, 0)
 }

@@ -9,12 +9,19 @@ package amore
 
 import (
 	"runtime"
+	"time"
 
 	"github.com/goxjs/gl"
 	"github.com/goxjs/glfw"
 
 	"github.com/tanema/amore/gfx"
-	"github.com/tanema/amore/timer"
+)
+
+var (
+	fps               int       // frames per second
+	frames            int       // frames since last update freq
+	previousTime      time.Time // last frame time
+	previousFPSUpdate time.Time // last time fps was updated
 )
 
 func init() {
@@ -47,8 +54,7 @@ func Start(update func(float32), draw func()) error {
 	defer gfx.DeInit()
 
 	for !window.ShouldClose() {
-		timer.Step()
-		update(timer.GetDelta())
+		update(step())
 
 		gfx.ClearC(gfx.GetBackgroundColorC())
 		gfx.Origin()
@@ -60,6 +66,24 @@ func Start(update func(float32), draw func()) error {
 	}
 
 	return nil
+}
+
+func step() float32 {
+	frames++
+	dt := float32(time.Since(previousTime).Seconds())
+	previousTime = time.Now()
+	timeSinceLast := float32(time.Since(previousFPSUpdate).Seconds())
+	if timeSinceLast > 1 { //update 1 per second
+		fps = int((float32(frames) / timeSinceLast) + 0.5)
+		previousFPSUpdate = previousTime
+		frames = 0
+	}
+	return dt
+}
+
+// GetFPS returns the number of frames per second.
+func GetFPS() int {
+	return fps
 }
 
 // Quit will prepare the window to close at the end of the next game loop. This
