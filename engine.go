@@ -10,20 +10,16 @@ package amore
 import (
 	"runtime"
 
-	"github.com/tanema/amore/event"
+	"github.com/goxjs/gl"
+	"github.com/goxjs/glfw"
+
 	"github.com/tanema/amore/gfx"
 	"github.com/tanema/amore/timer"
-	"github.com/tanema/amore/window"
 )
-
-// OnLoad will be called after the context is all setup but before the game loop
-// has started. This is a good time to get information like screen size from
-// the window and setup environment. Set this variable with amore.OnLoad = func() {}
-var OnLoad func()
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	runtime.LockOSThread() //important SDL and OpenGl Demand it and stamp thier feet if you dont
+	runtime.LockOSThread() //important OpenGl Demand it and stamp thier feet if you dont
 }
 
 // Start creates a window and context for the game to run on and runs the game
@@ -31,31 +27,42 @@ func init() {
 // update and draw will be called synchronously because calls to OpenGL that are
 // not on the main thread will crash your program.
 func Start(update func(float32), draw func()) error {
-	currentWindow, windowErr := window.NewWindow()
-	defer window.Destroy()
-	if windowErr != nil {
-		return windowErr
+	if err := glfw.Init(gl.ContextWatcher); err != nil {
+		return err
 	}
-	gfx.InitContext(currentWindow.Config.Width, currentWindow.Config.Height)
+	defer glfw.Terminate()
+
+	config, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	window, err := glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
+	if err != nil {
+		return err
+	}
+	window.MakeContextCurrent()
+
+	gfx.InitContext(int32(config.Width), int32(config.Height))
 	defer gfx.DeInit()
-	if OnLoad != nil {
-		OnLoad()
-	}
+
 	for !window.ShouldClose() {
 		timer.Step()
 		update(timer.GetDelta())
+
 		gfx.ClearC(gfx.GetBackgroundColorC())
 		gfx.Origin()
 		draw()
 		gfx.Present()
-		event.Poll()
+
+		window.SwapBuffers()
+		glfw.PollEvents()
 	}
+
 	return nil
 }
 
 // Quit will prepare the window to close at the end of the next game loop. This
-// will allow a nice clean destruction of all object that are allocated in OpenGL,
-// SDL, and OpenAl
+// will allow a nice clean destruction of all object that are allocated in OpenGL
 func Quit() {
-	window.Close(true)
 }

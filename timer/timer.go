@@ -3,7 +3,7 @@
 package timer
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
+	"time"
 )
 
 const (
@@ -11,35 +11,27 @@ const (
 )
 
 var (
-	fps               int     // frames per second
-	frames            int     // frames since last update freq
-	currentTime       float32 //current frame time
-	previousTime      float32 // last frame time
-	previousFPSUpdate float32 // last time fps was updated
-	dt                float32 // change in time since last step
-	averageDelta      float32 // average change in time over update frequency
+	fps               int       // frames per second
+	frames            int       // frames since last update freq
+	previousTime      time.Time // last frame time
+	previousFPSUpdate time.Time // last time fps was updated
+	dt                float32   // change in time since last step
+	averageDelta      float32   // average change in time over update frequency
 )
 
 // Step should be called every game loop if rolling your own to keep track of time
 // for the update function. It calculates fps and average fps.
 func Step() {
 	frames++
-	previousTime = currentTime
-	currentTime = GetTime()
-	dt = currentTime - previousTime
-
-	timeSinceLast := currentTime - previousFPSUpdate
+	dt = float32(time.Since(previousTime).Seconds())
+	timeSinceLast := float32(time.Since(previousFPSUpdate).Seconds())
 	if timeSinceLast > fpsUpdateFrequency {
 		fps = int((float32(frames) / timeSinceLast) + 0.5)
 		averageDelta = timeSinceLast / float32(frames)
-		previousFPSUpdate = currentTime
+		previousFPSUpdate = previousTime
 		frames = 0
 	}
-}
-
-// GetTime get the current time from the length that the application has been running.
-func GetTime() float32 {
-	return float32(sdl.GetTicks()) / 1000.0
+	previousTime = time.Now()
 }
 
 // GetDelta returns the difference of time between the current frame and the last frame.

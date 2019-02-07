@@ -9,7 +9,6 @@ import (
 	"github.com/tanema/amore/font"
 
 	"github.com/tanema/amore/gfx/gl"
-	"github.com/tanema/amore/window"
 )
 
 var (
@@ -309,7 +308,6 @@ func Present() {
 	// Make sure we don't have a canvas active.
 	canvases := states.back().canvases
 	SetCanvas()
-	window.SwapBuffers()
 	// Restore the currently active canvas, if there is one.
 	SetCanvas(canvases...)
 }
@@ -319,7 +317,7 @@ func Present() {
 func IsActive() bool {
 	// The graphics module is only completely 'active' if there's a window, a
 	// context, and the active variable is set.
-	return glState.active && IsCreated() && window.IsOpen()
+	return glState.active && IsCreated()
 }
 
 // SetActive will enable or disable the rendering of the the game. Mainly this is
