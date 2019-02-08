@@ -10,7 +10,7 @@ type (
 	Text struct {
 		font      *Font
 		strings   []string
-		colors    []*Color
+		colors    [][]float32
 		wrapLimit float32
 		align     AlignMode
 		batches   map[*rasterizer]*SpriteBatch
@@ -29,7 +29,7 @@ func Print(fs string, argv ...float32) {
 }
 
 // Printc will print out a colored string. It accepts the normal drawable arguments
-func Printc(strs []string, colors []*Color, argv ...float32) {
+func Printc(strs []string, colors [][]float32, argv ...float32) {
 	text, err := NewColorText(GetFont(), strs, colors)
 	if err != nil {
 		return
@@ -49,7 +49,7 @@ func Printf(fs string, wrapLimit float32, align AlignMode, argv ...float32) {
 
 // Printfc will print out a colored string with a wrap limit and alignment. It
 // accepts the normal drawable arguments
-func Printfc(strs []string, colors []*Color, wrapLimit float32, align AlignMode, argv ...float32) {
+func Printfc(strs []string, colors [][]float32, wrapLimit float32, align AlignMode, argv ...float32) {
 	text, err := NewColorTextExt(GetFont(), strs, colors, wrapLimit, align)
 	if err != nil {
 		return
@@ -68,18 +68,18 @@ func NewTextExt(font *Font, text string, wrapLimit float32, align AlignMode) (*T
 	if text == "" {
 		return nil, fmt.Errorf("Cannot create an text object with blank string")
 	}
-	return NewColorTextExt(font, []string{text}, []*Color{NewColor(255, 255, 255, 255)}, wrapLimit, align)
+	return NewColorTextExt(font, []string{text}, [][]float32{{1, 1, 1, 1}}, wrapLimit, align)
 }
 
 // NewColorText will create a left aligned colored string
-func NewColorText(font *Font, strs []string, colors []*Color) (*Text, error) {
+func NewColorText(font *Font, strs []string, colors [][]float32) (*Text, error) {
 	return NewColorTextExt(font, strs, colors, -1, AlignLeft)
 }
 
 // NewColorTextExt will create a colored text object with the provided font and
 // text. A wrap and alignment can be provided as well. If wrapLimit is < 0 it will
 // not wrap
-func NewColorTextExt(font *Font, strs []string, colors []*Color, wrapLimit float32, align AlignMode) (*Text, error) {
+func NewColorTextExt(font *Font, strs []string, colors [][]float32, wrapLimit float32, align AlignMode) (*Text, error) {
 	if len(strs) == 0 {
 		return nil, fmt.Errorf("Nothing to print")
 	}
@@ -149,7 +149,7 @@ func (text *Text) generate() {
 			} else {
 				glyph := l.glyphs[i]
 				rast := l.rasts[i]
-				text.batches[rast].SetColor(l.colors[i])
+				text.batches[rast].SetColor(l.colors[i]...)
 				gx += l.kern[i]
 				text.batches[rast].Addq(glyph.quad, gx, l.y+glyph.descent)
 				gx += glyph.advance
@@ -193,11 +193,11 @@ func (text *Text) SetFont(f *Font) {
 
 // Set will set the string to be rendered by this text object
 func (text *Text) Set(t string) {
-	text.Setc([]string{t}, []*Color{NewColor(255, 255, 255, 255)})
+	text.Setc([]string{t}, [][]float32{{1, 1, 1, 1}})
 }
 
 // Setc will set the string and colors for this text object to be rendered.
-func (text *Text) Setc(strs []string, colors []*Color) {
+func (text *Text) Setc(strs []string, colors [][]float32) {
 	text.strings = strs
 	text.colors = colors
 	text.generate()

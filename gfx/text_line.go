@@ -7,7 +7,7 @@ import (
 type textLine struct {
 	chars      []rune
 	glyphs     []glyphData
-	colors     []*Color
+	colors     [][]float32
 	rasts      []*rasterizer
 	kern       []float32
 	size       int
@@ -17,7 +17,7 @@ type textLine struct {
 	y          float32
 }
 
-func generateLines(font *Font, text []string, color []*Color, wrapLimit float32) ([]*textLine, float32, float32) {
+func generateLines(font *Font, text []string, color [][]float32, wrapLimit float32) ([]*textLine, float32, float32) {
 	var lines []*textLine
 	var prevChar rune
 	var width, gy float32
@@ -68,7 +68,7 @@ func generateLines(font *Font, text []string, color []*Color, wrapLimit float32)
 	return lines, width, gy + font.GetLineHeight()
 }
 
-func (l *textLine) add(char rune, g glyphData, color *Color, rast *rasterizer, kern float32) {
+func (l *textLine) add(char rune, g glyphData, color []float32, rast *rasterizer, kern float32) {
 	if char == ' ' {
 		l.lastBreak = l.size
 		l.spaceCount++
@@ -96,7 +96,7 @@ func (l *textLine) breakOff(immediate bool) *textLine {
 		ch, g, cl, r, k := l.trimLastChar()
 		newLine.chars = append([]rune{ch}, newLine.chars...)
 		newLine.glyphs = append([]glyphData{g}, newLine.glyphs...)
-		newLine.colors = append([]*Color{cl}, newLine.colors...)
+		newLine.colors = append([][]float32{cl}, newLine.colors...)
 		newLine.rasts = append([]*rasterizer{r}, newLine.rasts...)
 		newLine.kern = append([]float32{k}, newLine.kern...)
 		newLine.size++
@@ -114,7 +114,7 @@ func (l *textLine) breakOff(immediate bool) *textLine {
 	return newLine
 }
 
-func (l *textLine) trimLastChar() (rune, glyphData, *Color, *rasterizer, float32) {
+func (l *textLine) trimLastChar() (rune, glyphData, []float32, *rasterizer, float32) {
 	i := l.size - 1
 	ch, g, cl, r, k := l.chars[i], l.glyphs[i], l.colors[i], l.rasts[i], l.kern[i]
 	l.chars = l.chars[:i]

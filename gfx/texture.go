@@ -263,8 +263,12 @@ func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	bindTexture(texture.getHandle())
 	useVertexAttribArrays(attribFlagPos | attribFlagTexCoord)
 
-	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 4*4, gl.Ptr(vertices))
-	gl.VertexAttribPointer(attribTexCoord, 2, gl.FLOAT, false, 4*4, gl.Ptr(&vertices[2]))
+	buffer := newVertexBuffer(len(vertices), vertices, UsageStatic)
+	buffer.bind()
+	defer buffer.unbind()
+
+	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 4*4, nil)
+	gl.VertexAttribPointer(attribTexCoord, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
 
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 }

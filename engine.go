@@ -44,6 +44,7 @@ func Start(update func(float32), draw func()) error {
 		return err
 	}
 
+	glfw.WindowHint(glfw.Samples, config.Msaa)
 	window, err := glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
 	if err != nil {
 		return err
@@ -56,7 +57,7 @@ func Start(update func(float32), draw func()) error {
 	for !window.ShouldClose() {
 		update(step())
 
-		gfx.ClearC(gfx.GetBackgroundColorC())
+		gfx.Clear(gfx.GetBackgroundColor()...)
 		gfx.Origin()
 		draw()
 		gfx.Present()

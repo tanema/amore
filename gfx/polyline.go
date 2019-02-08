@@ -3,50 +3,51 @@ package gfx
 import (
 	"math"
 
-	"github.com/go-gl/mathgl/mgl32"
-
 	"github.com/tanema/amore/gfx/gl"
 )
 
 // treat adjacent segments with angles between their directions <5 degree as straight
 const linesParallelEPS float32 = 0.05
 
-type (
-	polyLine struct {
-		style     LineStyle
-		join      LineJoin
-		overdraw  bool
-		halfwidth float32
-		pixelSize float32
-		coord     []float32
-		normals   []mgl32.Vec2
-		vertices  []mgl32.Vec2
-	}
-)
+type polyLine struct {
+	join      LineJoin
+	halfwidth float32
+	pixelSize float32
+}
 
-func determinant(vec1, vec2 mgl32.Vec2) float32 {
+func determinant(vec1, vec2 []float32) float32 {
 	return vec1[0]*vec2[1] - vec1[1]*vec2[0]
 }
 
-func getNormal(v1 mgl32.Vec2, scale float32) mgl32.Vec2 {
-	return mgl32.Vec2{-v1[1] * scale, v1[0] * scale}
+func getNormal(v1 []float32, scale float32) []float32 {
+	return []float32{-v1[1] * scale, v1[0] * scale}
 }
 
-func normalize(v1 mgl32.Vec2, length float32) mgl32.Vec2 {
-	lengthCurrent := v1.Len()
-
+func normalize(v1 []float32, length float32) []float32 {
+	lengthCurrent := vecLen(v1)
 	if lengthCurrent > 0 {
-		v1 = v1.Mul(length / lengthCurrent)
+		scale := length / lengthCurrent
+		return []float32{v1[0] * scale, v1[1] * scale}
 	}
-
 	return v1
 }
 
-func newPolyLine(join LineJoin, style LineStyle, lineWidth, pixelSize float32) polyLine {
+func vecLen(v1 []float32) float32 {
+	return float32(math.Hypot(float64(v1[0]), float64(v1[1])))
+}
+
+func abs(a float32) float32 {
+	if a < 0 {
+		return -a
+	} else if a == 0 {
+		return 0
+	}
+	return a
+}
+
+func newPolyLine(join LineJoin, lineWidth, pixelSize float32) polyLine {
 	newPolyline := polyLine{
-		style:     style,
 		join:      join,
-		overdraw:  style == LineSmooth,
 		halfwidth: lineWidth * 0.5,
 		pixelSize: pixelSize,
 	}
@@ -54,71 +55,56 @@ func newPolyLine(join LineJoin, style LineStyle, lineWidth, pixelSize float32) p
 }
 
 func (polyline *polyLine) render(coords []float32) {
-	var sleeve, current, next mgl32.Vec2
-	polyline.vertices = []mgl32.Vec2{}
-	polyline.normals = []mgl32.Vec2{}
+	var sleeve, current, next []float32
+	vertices := []float32{}
 
 	coordsCount := len(coords)
 	isLooping := (coords[0] == coords[coordsCount-2]) && (coords[1] == coords[coordsCount-1])
 	if !isLooping { // virtual starting point at second point mirrored on first point
-		sleeve = mgl32.Vec2{coords[2] - coords[0], coords[3] - coords[1]}
+		sleeve = []float32{coords[2] - coords[0], coords[3] - coords[1]}
 	} else { // virtual starting point at last vertex
-		sleeve = mgl32.Vec2{coords[0] - coords[coordsCount-4], coords[1] - coords[coordsCount-3]}
+		sleeve = []float32{coords[0] - coords[coordsCount-4], coords[1] - coords[coordsCount-3]}
 	}
 
 	for i := 0; i+3 < coordsCount; i += 2 {
-		current = mgl32.Vec2{coords[i], coords[i+1]}
-		next = mgl32.Vec2{coords[i+2], coords[i+3]}
-		polyline.renderEdge(sleeve, current, next)
-		sleeve = next.Sub(current)
+		current = []float32{coords[i], coords[i+1]}
+		next = []float32{coords[i+2], coords[i+3]}
+		vertices = append(vertices, polyline.renderEdge(sleeve, current, next)...)
+		sleeve = []float32{next[0] - current[0], next[1] - current[1]}
 	}
 
 	if isLooping {
-		polyline.renderEdge(sleeve, next, mgl32.Vec2{coords[2], coords[3]})
+		vertices = append(vertices, polyline.renderEdge(sleeve, next, []float32{coords[2], coords[3]})...)
 	} else {
-		polyline.renderEdge(sleeve, next, next.Add(sleeve))
+		vertices = append(vertices, polyline.renderEdge(sleeve, next, []float32{next[0] + sleeve[0], next[1] + sleeve[1]})...)
 	}
 
-	if polyline.join == LineJoinNone {
-		polyline.vertices = polyline.vertices[2 : len(polyline.vertices)-2]
-	}
+	prepareDraw(nil)
+	bindTexture(glState.defaultTexture)
+	useVertexAttribArrays(attribFlagPos)
 
-	polyline.draw(isLooping)
+	buffer := newVertexBuffer(len(vertices), vertices, UsageStatic)
+	buffer.bind()
+	defer buffer.unbind()
+
+	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
+	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, len(vertices)/2)
 }
 
-func (polyline *polyLine) renderEdge(sleeve, current, next mgl32.Vec2) {
-	switch polyline.join {
-	case LineJoinMiter:
-		polyline.renderMiterEdge(sleeve, current, next)
-	case LineJoinBevel:
-		polyline.renderBevelEdge(sleeve, current, next)
-	case LineJoinNone:
-		fallthrough
-	default:
-		polyline.renderNoEdge(sleeve, current, next)
+func (polyline *polyLine) renderEdge(sleeve, current, next []float32) []float32 {
+	if polyline.join == LineJoinBevel {
+		return polyline.renderBevelEdge(sleeve, current, next)
 	}
+	return polyline.renderMiterEdge(sleeve, current, next)
 }
 
-func (polyline *polyLine) generateEdges(current mgl32.Vec2, count int) {
-	normalCount := len(polyline.normals)
-	for i := count; i > 0; i-- {
-		polyline.vertices = append(polyline.vertices, current.Add(polyline.normals[normalCount-i]))
+func (polyline *polyLine) generateEdges(current []float32, normals ...float32) []float32 {
+	verts := make([]float32, len(normals))
+	for i := 0; i < len(normals); i += 2 {
+		verts[i] = current[0] + normals[i]
+		verts[i+1] = current[1] + normals[i+1]
 	}
-}
-
-func (polyline *polyLine) renderNoEdge(sleeve, current, next mgl32.Vec2) {
-	sleeveNormal := getNormal(sleeve, polyline.halfwidth/sleeve.Len())
-
-	polyline.normals = append(polyline.normals, sleeveNormal)
-	polyline.normals = append(polyline.normals, sleeveNormal.Mul(-1))
-
-	sleeve = next.Sub(current)
-	sleeveNormal = getNormal(sleeve, polyline.halfwidth/sleeve.Len())
-
-	polyline.normals = append(polyline.normals, sleeveNormal.Mul(-1))
-	polyline.normals = append(polyline.normals, sleeveNormal)
-
-	polyline.generateEdges(current, 4)
+	return verts
 }
 
 /** Calculate line boundary points.
@@ -158,26 +144,22 @@ func (polyline *polyLine) renderNoEdge(sleeve, current, next mgl32.Vec2) {
  *
  * the intersection points can be efficiently calculated using Cramer's rule.
  */
-func (polyline *polyLine) renderMiterEdge(sleeve, current, next mgl32.Vec2) {
-	sleeveNormal := getNormal(sleeve, polyline.halfwidth/sleeve.Len())
-	t := next.Sub(current)
-	lenT := t.Len()
+func (polyline *polyLine) renderMiterEdge(sleeve, current, next []float32) []float32 {
+	sleeveNormal := getNormal(sleeve, polyline.halfwidth/vecLen(sleeve))
+	t := []float32{next[0] - current[0], next[1] - current[1]}
+	lenT := vecLen(t)
 
 	det := determinant(sleeve, t)
 	// lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
-	if mgl32.Abs(det)/(sleeve.Len()*lenT) < linesParallelEPS && sleeve.Dot(t) > 0 {
-		polyline.normals = append(polyline.normals, sleeveNormal)
-		polyline.normals = append(polyline.normals, sleeveNormal.Mul(-1))
-	} else {
-		// cramers rule
-		nt := getNormal(t, polyline.halfwidth/lenT)
-		lambda := determinant(nt.Sub(sleeveNormal), t) / det
-		d := sleeveNormal.Add(sleeve.Mul(lambda))
-
-		polyline.normals = append(polyline.normals, d)
-		polyline.normals = append(polyline.normals, d.Mul(-1))
+	if abs(det)/(vecLen(sleeve)*lenT) < linesParallelEPS && (sleeve[0]*t[0]+sleeve[1]*t[1]) > 0 {
+		return polyline.generateEdges(current, sleeveNormal[0], sleeveNormal[1], sleeveNormal[0]*-1, sleeveNormal[1]*-1)
 	}
-	polyline.generateEdges(current, 2)
+	// cramers rule
+	nt := getNormal(t, polyline.halfwidth/lenT)
+	lambda := determinant([]float32{nt[0] - sleeveNormal[0], nt[1] - sleeveNormal[1]}, t) / det
+	sleeveChange := []float32{sleeve[0] * lambda, sleeve[1] * lambda}
+	d := []float32{sleeveNormal[0] + sleeveChange[0], sleeveNormal[1] + sleeveChange[1]}
+	return polyline.generateEdges(current, d[0], d[1], d[0]*-1, d[1]*-1)
 }
 
 /** Calculate line boundary points.
@@ -197,191 +179,37 @@ func (polyline *polyLine) renderMiterEdge(sleeve, current, next mgl32.Vec2) {
  *
  * uh1 = q + ns * w/2, uh2 = q + nt * w/2
  */
-func (polyline *polyLine) renderBevelEdge(sleeve, current, next mgl32.Vec2) {
-	t := next.Sub(current)
-	lenT := t.Len()
+func (polyline *polyLine) renderBevelEdge(sleeve, current, next []float32) []float32 {
+	t := []float32{next[0] - current[0], next[1] - current[1]}
+	lenT := vecLen(t)
 
 	det := determinant(sleeve, t)
-	if mgl32.Abs(det)/(sleeve.Len()*lenT) < linesParallelEPS && sleeve.Dot(t) > 0 {
+	if abs(det)/(vecLen(sleeve)*lenT) < linesParallelEPS && (sleeve[0]*t[0]+sleeve[1]*t[1]) > 0 {
 		// lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
 		n := getNormal(t, polyline.halfwidth/lenT)
-		polyline.normals = append(polyline.normals, n)
-		polyline.normals = append(polyline.normals, n.Mul(-1))
-		polyline.generateEdges(current, 2)
-		return // early out
+		return polyline.generateEdges(current, n[0], n[1], n[0]*-1, n[1]*-1)
 	}
 
 	// cramers rule
-	sleeveNormal := getNormal(sleeve, polyline.halfwidth/sleeve.Len())
+	sleeveNormal := getNormal(sleeve, polyline.halfwidth/vecLen(sleeve))
 	nt := getNormal(t, polyline.halfwidth/lenT)
-	lambda := determinant(nt.Sub(sleeveNormal), t) / det
-	d := sleeveNormal.Add(sleeve.Mul(lambda))
+	lambda := determinant([]float32{nt[0] - sleeveNormal[0], nt[1] - sleeveNormal[1]}, t) / det
+	sleeveChange := []float32{sleeve[0] * lambda, sleeve[1] * lambda}
+	d := []float32{sleeveNormal[0] + sleeveChange[0], sleeveNormal[1] + sleeveChange[1]}
 
 	if det > 0 { // 'left' turn -> intersection on the top
-		polyline.normals = append(polyline.normals, d)
-		polyline.normals = append(polyline.normals, sleeveNormal.Mul(-1))
-		polyline.normals = append(polyline.normals, d)
-		polyline.normals = append(polyline.normals, nt.Mul(-1))
-	} else {
-		polyline.normals = append(polyline.normals, sleeveNormal)
-		polyline.normals = append(polyline.normals, d.Mul(-1))
-		polyline.normals = append(polyline.normals, nt)
-		polyline.normals = append(polyline.normals, d.Mul(-1))
-	}
-	polyline.generateEdges(current, 4)
-}
-
-func (polyline *polyLine) renderOverdraw(isLooping bool) []mgl32.Vec2 {
-	switch polyline.join {
-	case LineJoinNone:
-		return polyline.renderTrianglesOverdraw()
-	case LineJoinMiter:
-		fallthrough
-	case LineJoinBevel:
-		fallthrough
-	default:
-		return polyline.renderTriangleStripOverdraw(isLooping)
-	}
-}
-
-func (polyline *polyLine) renderTriangleStripOverdraw(isLooping bool) []mgl32.Vec2 {
-	overdrawVertexCount := 2 * len(polyline.vertices)
-	if !isLooping {
-		overdrawVertexCount += 2
-	}
-	overdraw := make([]mgl32.Vec2, overdrawVertexCount)
-	for i := 0; i+1 < len(polyline.vertices); i += 2 {
-		// upper segment
-		overdraw[i] = polyline.vertices[i]
-		overdraw[i+1] = polyline.vertices[i].Add(polyline.normals[i].Mul(polyline.pixelSize / polyline.normals[i].Len()))
-		// lower segment
-		k := len(polyline.vertices) - i - 1
-		overdraw[len(polyline.vertices)+i] = polyline.vertices[k]
-		overdraw[len(polyline.vertices)+i+1] = polyline.vertices[k].Add(polyline.normals[k].Mul(polyline.pixelSize / polyline.normals[i].Len()))
+		return polyline.generateEdges(current,
+			d[0], d[1],
+			sleeveNormal[0]*-1, sleeveNormal[1]*-1,
+			d[0], d[1],
+			nt[0]*-1, nt[1]*-1,
+		)
 	}
 
-	// if not looping, the outer overdraw vertices need to be displaced
-	// to cover the line endings, i.e.:
-	// +- - - - //- - +         +- - - - - //- - - +
-	// +-------//-----+         : +-------//-----+ :
-	// | core // line |   -->   : | core // line | :
-	// +-----//-------+         : +-----//-------+ :
-	// +- - //- - - - +         +- - - //- - - - - +
-	if !isLooping {
-		// left edge
-		spacer := overdraw[1].Sub(overdraw[3])
-		spacer = normalize(spacer, polyline.pixelSize)
-		overdraw[1] = overdraw[1].Add(spacer)
-		overdraw[overdrawVertexCount-3] = overdraw[overdrawVertexCount-3].Add(spacer)
-
-		// right edge
-		spacer = overdraw[len(polyline.vertices)-1].Sub(overdraw[len(polyline.vertices)-3])
-		spacer = normalize(spacer, polyline.pixelSize)
-		overdraw[len(polyline.vertices)-1] = overdraw[len(polyline.vertices)-1].Add(spacer)
-		overdraw[len(polyline.vertices)+1] = overdraw[len(polyline.vertices)+1].Add(spacer)
-
-		// we need to draw two more triangles to close the
-		// overdraw at the line start.
-		overdraw[overdrawVertexCount-2] = overdraw[0]
-		overdraw[overdrawVertexCount-1] = overdraw[1]
-	}
-	return overdraw
-}
-
-func (polyline *polyLine) renderTrianglesOverdraw() []mgl32.Vec2 {
-	overdrawVertexCount := 4 * (len(polyline.vertices) - 2) // less than ideal
-	overdraw := make([]mgl32.Vec2, overdrawVertexCount)
-	for i := 2; i+3 < len(polyline.vertices); i += 4 {
-		s := normalize(polyline.vertices[i].Sub(polyline.vertices[i+3]), polyline.pixelSize)
-		t := normalize(polyline.vertices[i].Sub(polyline.vertices[i+1]), polyline.pixelSize)
-
-		k := 4 * (i - 2)
-		overdraw[k] = polyline.vertices[i]
-		overdraw[k+1] = polyline.vertices[i].Add(s.Add(t))
-		overdraw[k+2] = polyline.vertices[i+1].Add(s.Sub(t))
-		overdraw[k+3] = polyline.vertices[i+1]
-
-		overdraw[k+4] = polyline.vertices[i+1]
-		overdraw[k+5] = polyline.vertices[i+1].Add(s.Sub(t))
-		overdraw[k+6] = polyline.vertices[i+2].Sub(s.Sub(t))
-		overdraw[k+7] = polyline.vertices[i+2]
-
-		overdraw[k+8] = polyline.vertices[i+2]
-		overdraw[k+9] = polyline.vertices[i+2].Sub(s.Sub(t))
-		overdraw[k+10] = polyline.vertices[i+3].Sub(s.Add(t))
-		overdraw[k+11] = polyline.vertices[i+3]
-
-		overdraw[k+12] = polyline.vertices[i+3]
-		overdraw[k+13] = polyline.vertices[i+3].Sub(s.Add(t))
-		overdraw[k+14] = polyline.vertices[i].Add(s.Add(t))
-		overdraw[k+15] = polyline.vertices[i]
-	}
-	return overdraw
-}
-
-func (polyline *polyLine) generateColorArray(count int, c *Color) []Color {
-	colors := make([]Color, count)
-	for i := 0; i < count; i++ {
-		colors[i] = *c
-		if i%2 == 1 || (polyline.join == LineJoinNone && (i%4 == 2 || i%4 == 1)) {
-			colors[i][3] = 0
-		}
-	}
-	return colors
-}
-
-func (polyline *polyLine) draw(isLooping bool) {
-	switch polyline.join {
-	case LineJoinNone:
-		polyline.drawTriangles(isLooping)
-	case LineJoinMiter:
-		fallthrough
-	case LineJoinBevel:
-		fallthrough
-	default:
-		polyline.drawTriangleStrip(isLooping)
-	}
-}
-
-func (polyline *polyLine) drawTriangles(isLooping bool) {
-	var overdraw []mgl32.Vec2
-	if polyline.overdraw {
-		overdraw = polyline.renderOverdraw(isLooping)
-	}
-
-	numindices := int(math.Max(float64(len(polyline.vertices)/4), float64(len(overdraw)/4)))
-	indices := newAltQuadIndices(numindices)
-
-	prepareDraw(nil)
-	bindTexture(glState.defaultTexture)
-	useVertexAttribArrays(attribFlagPos)
-	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
-	gl.DrawElements(gl.TRIANGLES, (len(polyline.vertices)/4)*6, gl.UNSIGNED_SHORT, gl.Ptr(indices))
-	if polyline.overdraw {
-		c := GetColor()
-		colors := polyline.generateColorArray(len(overdraw), c)
-		useVertexAttribArrays(attribFlagPos | attribFlagColor)
-		gl.VertexAttribPointer(attribColor, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
-		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
-		gl.DrawElements(gl.TRIANGLES, (len(overdraw)/4)*6, gl.UNSIGNED_SHORT, gl.Ptr(indices))
-		SetColorC(c)
-	}
-}
-
-func (polyline *polyLine) drawTriangleStrip(isLooping bool) {
-	prepareDraw(nil)
-	bindTexture(glState.defaultTexture)
-	useVertexAttribArrays(attribFlagPos)
-	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(polyline.vertices))
-	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, len(polyline.vertices))
-	if polyline.overdraw { // prepare colors:
-		c := GetColor()
-		overdraw := polyline.renderOverdraw(isLooping)
-		colors := polyline.generateColorArray(len(overdraw), c)
-		useVertexAttribArrays(attribFlagPos | attribFlagColor)
-		gl.VertexAttribPointer(attribColor, 4, gl.UNSIGNED_BYTE, true, 0, gl.Ptr(colors))
-		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(overdraw))
-		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, len(overdraw))
-		SetColorC(c)
-	}
+	return polyline.generateEdges(current,
+		sleeveNormal[0], sleeveNormal[1],
+		d[0]*-1, d[1]*-1,
+		nt[0], nt[1],
+		d[0]*-1, d[1]*-1,
+	)
 }

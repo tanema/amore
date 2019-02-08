@@ -71,7 +71,7 @@ func InitContext(w, h int32) {
 	glState.viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
 
 	SetViewportSize(w, h)
-	SetBackgroundColor(0, 0, 0, 255)
+	SetBackgroundColor(0, 0, 0, 1)
 
 	glState.boundTextures = make([]gl.Texture, maxTextureUnits)
 	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
@@ -282,14 +282,8 @@ func GetHeight() float32 {
 
 // Clear will clear everything already rendered to the screen and set is all to
 // the r, g, b, a provided.
-func Clear(r, g, b, a float32) {
-	ClearC(NewColor(r, g, b, a))
-}
-
-// ClearC will clear everything already rendered to the screen and set is all to
-// the *Color provided.
-func ClearC(c *Color) {
-	gl.ClearColor(c[0], c[1], c[2], c[3])
+func Clear(vals ...float32) {
+	gl.ClearColor(padColor(vals))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
@@ -297,7 +291,7 @@ func ClearC(c *Color) {
 // the next rendered frame. This is normally used by the game loop and should not
 // be used unless rolling your own game loop.
 func Present() {
-	if !IsActive() {
+	if !glState.initialized {
 		return
 	}
 
@@ -306,31 +300,9 @@ func Present() {
 	SetCanvas(nil)
 	// Restore the currently active canvas, if there is one.
 	SetCanvas(canvas)
-}
 
-// IsActive will return true of the context has been initialized and the window
-// is open.
-func IsActive() bool {
-	// The graphics module is only completely 'active' if there's a window, a
-	// context, and the active variable is set.
-	return glState.active && IsCreated()
-}
-
-// SetActive will enable or disable the rendering of the the game. Mainly this is
-// used by the framework to disable rendering when not in view.
-func SetActive(enable bool) {
-	// Make sure all pending OpenGL commands have fully executed before
-	// returning, when going from active to inactive. This is required on iOS.
-	if IsCreated() && glState.active && !enable {
-		gl.Finish()
-	}
-
-	glState.active = enable
-}
-
-// IsCreated checks if the opengl context has be initialized.
-func IsCreated() bool {
-	return glState.initialized
+	// Cleanup after each loop
+	cleanupVolatile()
 }
 
 // Origin will reset all translations and transformations back to defaults.
@@ -478,7 +450,7 @@ func ClearScissor() {
 // The stencil values of pixels can act like a mask / stencil - SetStencilTest can
 // be used afterward to determine how further rendering is affected by the stencil
 // values in each pixel. Each Canvas has its own per-pixel stencil values. Stencil
-// values are within the range of [0, 255]. This stencil has the defaults of
+// values are within the range of [0, 1]. This stencil has the defaults of
 // StencilAction: STENCIL_REPLACE, value: 1, keepvalues: true
 func Stencil(stencilFunc func()) {
 	StencilExt(stencilFunc, StencilReplace, 1, false)
@@ -491,7 +463,7 @@ func Stencil(stencilFunc func()) {
 // drawn in the stencil function.
 //
 // value: The new stencil value to use for pixels if the "replace" stencil action
-// is used. Has no effect with other stencil actions. Must be between 0 and 255.
+// is used. Has no effect with other stencil actions. Must be between 0 and 1.
 //
 // keepvalues: True to preserve old stencil values of pixels, false to re-set
 // every pixel's stencil value to 0 before executing the stencil function. Clear
@@ -574,11 +546,6 @@ func SetLineWidth(width float32) {
 	states.back().lineWidth = width
 }
 
-// SetLineStyle will set the line style either smooth (overdraw) or rough.
-func SetLineStyle(style LineStyle) {
-	states.back().lineStyle = style
-}
-
 // SetLineJoin will change how each line joins. options are None, Bevel or Miter.
 func SetLineJoin(join LineJoin) {
 	states.back().lineJoin = join
@@ -587,11 +554,6 @@ func SetLineJoin(join LineJoin) {
 // GetLineWidth will return the current line width. Default line width is 1
 func GetLineWidth() float32 {
 	return states.back().lineWidth
-}
-
-// GetLineStyle will return the current line style. Default line style is smooth
-func GetLineStyle() LineStyle {
-	return states.back().lineStyle
 }
 
 // GetLineJoin will return the current line join. Default line join is miter.
@@ -629,45 +591,24 @@ func SetShader(shader *Shader) {
 }
 
 // SetBackgroundColor sets the background color.
-func SetBackgroundColor(r, g, b, a float32) {
-	states.back().backgroundColor = NewColor(r, g, b, a)
-}
-
-// SetBackgroundColorC sets the background color.
-func SetBackgroundColorC(c *Color) {
-	states.back().backgroundColor = c
+func SetBackgroundColor(vals ...float32) {
+	states.back().backgroundColor = vals
 }
 
 // GetBackgroundColor gets the background color.
-func GetBackgroundColor() (r, g, b, a float32) {
-	bc := states.back().backgroundColor
-	return bc[0], bc[1], bc[2], bc[3]
-}
-
-// GetBackgroundColorC gets the background color.
-func GetBackgroundColorC() *Color {
+func GetBackgroundColor() []float32 {
 	return states.back().backgroundColor
 }
 
-// setColor translates r,g,b,a to Color
-func setColor(r, g, b, a float32) {
-	SetColorC(&Color{r, g, b, a})
-}
-
 // SetColor will sets the color used for drawing.
-func SetColor(r, g, b, a float32) {
-	setColor(r/255.0, g/255.0, b/255.0, a/255.0)
-}
-
-// SetColorC will sets the color used for drawing.
-func SetColorC(c *Color) {
-	states.back().color = c
-
-	gl.VertexAttrib4f(attribConstantColor, c[0], c[1], c[2], c[3])
+func SetColor(vals ...float32) {
+	states.back().color = vals
+	r, g, b, a := padColor(vals)
+	gl.VertexAttrib4f(attribConstantColor, r, g, b, a)
 }
 
 // GetColor returns the current drawing color.
-func GetColor() *Color {
+func GetColor() []float32 {
 	return states.back().color
 }
 

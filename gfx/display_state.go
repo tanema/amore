@@ -8,11 +8,10 @@ import (
 
 // displayState track a certain point in transformations
 type displayState struct {
-	color                  *Color
-	backgroundColor        *Color
+	color                  []float32
+	backgroundColor        []float32
 	blendMode              BlendMode
 	lineWidth              float32
-	lineStyle              LineStyle
 	lineJoin               LineJoin
 	pointSize              float32
 	scissor                bool
@@ -33,7 +32,6 @@ type displayState struct {
 // glState keeps track of the context attributes
 type openglState struct {
 	initialized            bool
-	active                 bool
 	boundTextures          []gl.Texture
 	curTextureUnit         int
 	viewport               []int32
@@ -58,13 +56,12 @@ func newDisplayState() displayState {
 		stencilCompare:         CompareAlways,
 		lineWidth:              1,
 		lineJoin:               LineJoinMiter,
-		lineStyle:              LineSmooth,
 		shader:                 defaultShader,
 		font:                   defaultFont,
 		defaultFilter:          newFilter(),
 		defaultMipmapFilter:    FilterNearest,
 		defaultMipmapSharpness: 0.0,
-		color:                  NewColor(255, 255, 255, 255),
+		color:                  []float32{1, 1, 1, 1},
 		colorMask:              ColorMask{r: true, g: true, b: true, a: true},
 		scissorBox:             make([]int32, 4),
 	}

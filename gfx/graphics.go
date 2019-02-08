@@ -104,7 +104,12 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 		prepareDraw(nil)
 		bindTexture(glState.defaultTexture)
 		useVertexAttribArrays(attribFlagPos)
-		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+
+		buffer := newVertexBuffer(len(coords), coords, UsageStatic)
+		buffer.bind()
+		defer buffer.unbind()
+
+		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 	}
 }
@@ -147,7 +152,12 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 		prepareDraw(nil)
 		bindTexture(glState.defaultTexture)
 		useVertexAttribArrays(attribFlagPos)
-		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+
+		buffer := newVertexBuffer(len(coords), coords, UsageStatic)
+		buffer.bind()
+		defer buffer.unbind()
+
+		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 	}
 }
@@ -158,7 +168,12 @@ func Points(coords ...float32) {
 	prepareDraw(nil)
 	bindTexture(glState.defaultTexture)
 	useVertexAttribArrays(attribFlagPos)
-	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+
+	buffer := newVertexBuffer(len(coords), coords, UsageStatic)
+	buffer.bind()
+	defer buffer.unbind()
+
+	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
 	gl.DrawArrays(gl.POINTS, 0, len(coords)/2)
 }
 
@@ -169,7 +184,7 @@ func Line(args ...float32) {
 
 // PolyLine will draw a line with an array in the form of x1, y1, x2, y2, x3, y3, ..... xn, yn
 func PolyLine(coords []float32) {
-	polyline := newPolyLine(states.back().lineJoin, states.back().lineStyle, states.back().lineWidth, states.back().pixelSize)
+	polyline := newPolyLine(states.back().lineJoin, states.back().lineWidth, states.back().pixelSize)
 	polyline.render(coords)
 }
 
@@ -190,7 +205,12 @@ func Polygon(mode DrawMode, coords []float32) {
 		prepareDraw(nil)
 		bindTexture(glState.defaultTexture)
 		useVertexAttribArrays(attribFlagPos)
-		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, gl.Ptr(coords))
+
+		buffer := newVertexBuffer(len(coords), coords, UsageStatic)
+		buffer.bind()
+		defer buffer.unbind()
+
+		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 	}
 }
@@ -329,4 +349,29 @@ func generateModelMatFromArgs(args []float32) *mgl32.Mat4 {
 	mat[13] = y - ox*mat[1] - oy*mat[5]
 
 	return &mat
+}
+
+func padColor(args []float32) (float32, float32, float32, float32) {
+	var r, g, b, a float32 = 1, 1, 1, 1
+
+	if args == nil || len(args) == 0 {
+		return r, g, b, a
+	}
+
+	argsLength := len(args)
+	switch argsLength {
+	case 4:
+		a = args[3]
+		fallthrough
+	case 3:
+		b = args[2]
+		fallthrough
+	case 2:
+		g = args[1]
+		fallthrough
+	case 1:
+		r = args[0]
+	}
+
+	return r, g, b, a
 }

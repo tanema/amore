@@ -52,6 +52,7 @@ func loadConfig() (*Config, error) {
 
 	config.Minwidth = int32(math.Max(float64(config.Minwidth), 1.0))
 	config.Minheight = int32(math.Max(float64(config.Minheight), 1.0))
+	config.Msaa = int(math.Max(float64(config.Msaa), 10.0))
 	if config.Width == 0 || config.Height == 0 {
 		config.Width = 800
 		config.Height = 600

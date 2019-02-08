@@ -13,7 +13,7 @@ import (
 type SpriteBatch struct {
 	size        int
 	count       int
-	color       *Color // Current color. This color, if present, will be applied to the next added sprite.
+	color       []float32 // Current color. This color, if present, will be applied to the next added sprite.
 	arrayBuf    *vertexBuffer
 	quadIndices *quadIndices
 	usage       Usage
@@ -33,7 +33,7 @@ func NewSpriteBatchExt(texture ITexture, size int, usage Usage) *SpriteBatch {
 		size:        size,
 		texture:     texture,
 		usage:       usage,
-		color:       &Color{1, 1, 1, 1},
+		color:       []float32{1, 1, 1, 1},
 		arrayBuf:    newVertexBuffer(size*4*8, []float32{}, usage),
 		quadIndices: newQuadIndices(size),
 		rangeMin:    -1,
@@ -88,17 +88,17 @@ func (spriteBatch *SpriteBatch) GetTexture() ITexture {
 }
 
 // SetColor will set the color that will be used for the next add or set operations.
-func (spriteBatch *SpriteBatch) SetColor(color *Color) {
-	spriteBatch.color = color
+func (spriteBatch *SpriteBatch) SetColor(vals ...float32) {
+	spriteBatch.color = vals
 }
 
 // ClearColor will reset the color back to white
 func (spriteBatch *SpriteBatch) ClearColor() {
-	spriteBatch.color = &Color{1, 1, 1, 1}
+	spriteBatch.color = []float32{1, 1, 1, 1}
 }
 
 // GetColor will return the currently used color.
-func (spriteBatch *SpriteBatch) GetColor() *Color {
+func (spriteBatch *SpriteBatch) GetColor() []float32 {
 	return spriteBatch.color
 }
 
@@ -111,7 +111,7 @@ func (spriteBatch *SpriteBatch) GetCount() int {
 // to this batch.
 func (spriteBatch *SpriteBatch) SetBufferSize(newsize int) error {
 	if newsize <= 0 {
-		fmt.Errorf("invalid SpriteBatch size")
+		return fmt.Errorf("invalid SpriteBatch size")
 	} else if newsize == spriteBatch.size {
 		return nil
 	}

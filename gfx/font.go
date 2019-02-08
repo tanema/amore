@@ -132,7 +132,7 @@ func (font *Font) GetHeight() float32 {
 
 // GetWidth will get the width of a given string after rendering.
 func (font *Font) GetWidth(text string) float32 {
-	_, width, _ := generateLines(font, []string{text}, []*Color{GetColor()}, -1)
+	_, width, _ := generateLines(font, []string{text}, [][]float32{GetColor()}, -1)
 	return width
 }
 
@@ -140,7 +140,7 @@ func (font *Font) GetWidth(text string) float32 {
 // of the longest string and it will return the string split into the strings that
 // are smaller than the wrap limit.
 func (font *Font) GetWrap(text string, wrapLimit float32) (float32, []string) {
-	lines, width, _ := generateLines(font, []string{text}, []*Color{GetColor()}, wrapLimit)
+	lines, width, _ := generateLines(font, []string{text}, [][]float32{GetColor()}, wrapLimit)
 	stringLines := make([]string, len(lines))
 	for i, l := range lines {
 		stringLines[i] = string(l.chars)

@@ -19,8 +19,6 @@ type (
 	// The pixels of an object will be drawn if the comparison succeeds, for each
 	// pixel that the object touches.
 	CompareMode uint32
-	// LineStyle specifies if the line drawing is smooth or rough
-	LineStyle int
 	// LineJoin specifies how each lines are joined together
 	LineJoin int
 	// UniformType is the data type of a uniform
@@ -36,6 +34,11 @@ type (
 	// AlignMode is the normal text align, center, left and right
 	AlignMode int
 )
+
+// ColorMask contains an rgba color mask
+type ColorMask struct {
+	r, g, b, a bool
+}
 
 var (
 	//opengl attribute variables
@@ -114,16 +117,9 @@ const (
 	CompareAlways   CompareMode = 0x0207
 )
 
-//line styles for overdraw
-const (
-	LineRough LineStyle = iota
-	LineSmooth
-)
-
 //line joins for nicer corners
 const (
-	LineJoinNone LineJoin = iota
-	LineJoinMiter
+	LineJoinMiter LineJoin = iota
 	LineJoinBevel
 )
 
@@ -139,37 +135,11 @@ const (
 	UniformMat
 )
 
-//mesh draw modes
-const (
-	// DRAWMODE_POINTS will draw a point at every point provided
-	DrawmodePoints MeshDrawMode = 0x0000
-	// DRAWMODE_TRIANGLES will connect the points in triangles
-	DrawmodeTriangles MeshDrawMode = 0x0004
-	// DRAWMODE_STRIP will connect the points in a triangle strip, reusing points.
-	DrawmodeStrip MeshDrawMode = 0x0005
-	// DRAWMODE_FAN will fan out from a start point
-	DrawmodeFan MeshDrawMode = 0x0006
-)
-
-//mesh and spritebatch usage
+// spritebatch usage
 const (
 	UsageStream  Usage = 0x88E0
 	UsageStatic  Usage = 0x88E4
 	UsageDynamic Usage = 0x88E8
-)
-
-//particle distrobution
-const (
-	DistributionNone ParticleDistribution = iota
-	DistributionUniform
-	DistributionNormal
-)
-
-//particle insertion
-const (
-	InsertModeTop ParticleInsertion = iota
-	InsertModeBottom
-	InsertModeRandom
 )
 
 // text align
