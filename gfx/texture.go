@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
 )
 
 type (
@@ -86,7 +86,7 @@ func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
 	bindTexture(newTexture.getHandle())
-	gl.TexImage2D(gl.TEXTURE_2D, 0, bounds.Dx(), bounds.Dy(), gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgba.Pix))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, bounds.Dx(), bounds.Dy(), gl.RGBA, gl.UNSIGNED_BYTE, rgba.Pix)
 
 	if newTexture.mipmaps {
 		newTexture.generateMipmaps()
@@ -267,8 +267,8 @@ func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	buffer.bind()
 	defer buffer.unbind()
 
-	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 4*4, nil)
-	gl.VertexAttribPointer(attribTexCoord, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
+	gl.VertexAttribPointer(shaderPos, 2, gl.FLOAT, false, 4*4, 0)
+	gl.VertexAttribPointer(shaderTexCoord, 2, gl.FLOAT, false, 4*4, 2*4)
 
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 }

@@ -3,7 +3,7 @@ package gfx
 import (
 	"math"
 
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
 )
 
 // treat adjacent segments with angles between their directions <5 degree as straight
@@ -87,7 +87,7 @@ func (polyline *polyLine) render(coords []float32) {
 	buffer.bind()
 	defer buffer.unbind()
 
-	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
+	gl.VertexAttribPointer(gl.Attrib{Value: 0}, 2, gl.FLOAT, false, 0, 0)
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, len(vertices)/2)
 }
 

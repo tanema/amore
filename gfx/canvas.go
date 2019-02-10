@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
 )
 
 // Canvas is an off-screen render target.

@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
 )
 
 // SpriteBatch is a collection of images/quads/textures all drawn with a single draw call
@@ -206,9 +206,9 @@ func (spriteBatch *SpriteBatch) Draw(args ...float32) {
 	spriteBatch.arrayBuf.bind()
 	defer spriteBatch.arrayBuf.unbind()
 
-	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(0))
-	gl.VertexAttribPointer(attribTexCoord, 2, gl.FLOAT, false, 8*4, gl.PtrOffset(2*4))
-	gl.VertexAttribPointer(attribColor, 4, gl.FLOAT, false, 8*4, gl.PtrOffset(4*4))
+	gl.VertexAttribPointer(gl.Attrib{Value: 0}, 2, gl.FLOAT, false, 8*4, 0)
+	gl.VertexAttribPointer(gl.Attrib{Value: 1}, 2, gl.FLOAT, false, 8*4, 2*4)
+	gl.VertexAttribPointer(gl.Attrib{Value: 2}, 4, gl.FLOAT, false, 8*4, 4*4)
 
 	min, max := spriteBatch.GetDrawRange()
 	spriteBatch.quadIndices.drawElements(gl.TRIANGLES, min, max-min+1)

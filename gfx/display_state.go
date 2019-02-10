@@ -3,7 +3,7 @@ package gfx
 import (
 	"github.com/go-gl/mathgl/mgl32/matstack"
 
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
 )
 
 // displayState track a certain point in transformations

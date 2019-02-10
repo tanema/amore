@@ -1,8 +1,6 @@
 package gfx
 
-import (
-	"github.com/tanema/amore/gfx/gl"
-)
+import "github.com/goxjs/gl"
 
 // uniform represents a uniform in the shaders
 type uniform struct {

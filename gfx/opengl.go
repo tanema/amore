@@ -8,7 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32/matstack"
 	"github.com/tanema/amore/gfx/font"
 
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
 )
 
 var (
@@ -54,8 +54,8 @@ func InitContext(w, h int32) {
 	glState.textureCounters = make([]int, maxTextureUnits)
 
 	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
-	gl.VertexAttrib4fv(attribColor, glcolor)
-	gl.VertexAttrib4fv(attribConstantColor, glcolor)
+	gl.VertexAttrib4fv(shaderColor, glcolor)
+	gl.VertexAttrib4fv(shaderConstantColor, glcolor)
 	useVertexAttribArrays(0)
 
 	// Enable blending
@@ -103,14 +103,11 @@ func InitContext(w, h int32) {
 func createDefaultTexture() {
 	glState.defaultTexture = gl.CreateTexture()
 	bindTexture(glState.defaultTexture)
-
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
-
-	pix := []byte{255, 255, 255, 255}
-	gl.TexImage2D(gl.TEXTURE_2D, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pix))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, []byte{255, 255, 255, 255})
 }
 
 // prepareDraw will upload all the transformations to the current shader
@@ -163,7 +160,7 @@ func useVertexAttribArrays(arraybits uint32) {
 	// white when no per-vertex color is used, so we set it here.
 	// FIXME: Is there a better place to do this?
 	if (diff&attribFlagColor) > 0 && (arraybits&attribFlagColor) == 0 {
-		gl.VertexAttrib4f(attribColor, 1.0, 1.0, 1.0, 1.0)
+		gl.VertexAttrib4f(shaderColor, 1.0, 1.0, 1.0, 1.0)
 	}
 }
 
@@ -564,7 +561,6 @@ func GetLineJoin() LineJoin {
 // SetPointSize will set the size of points drawn by Point
 func SetPointSize(size float32) {
 	states.back().pointSize = size
-	gl.PointSize(size)
 }
 
 // GetPointSize will return the current point size
@@ -604,7 +600,7 @@ func GetBackgroundColor() []float32 {
 func SetColor(vals ...float32) {
 	states.back().color = vals
 	r, g, b, a := padColor(vals)
-	gl.VertexAttrib4f(attribConstantColor, r, g, b, a)
+	gl.VertexAttrib4f(shaderConstantColor, r, g, b, a)
 }
 
 // GetColor returns the current drawing color.

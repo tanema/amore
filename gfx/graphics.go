@@ -9,7 +9,14 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
+)
+
+var (
+	shaderPos           = gl.Attrib{Value: 0}
+	shaderTexCoord      = gl.Attrib{Value: 1}
+	shaderColor         = gl.Attrib{Value: 2}
+	shaderConstantColor = gl.Attrib{Value: 3}
 )
 
 type (
@@ -109,7 +116,7 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 		buffer.bind()
 		defer buffer.unbind()
 
-		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
+		gl.VertexAttribPointer(shaderPos, 2, gl.FLOAT, false, 0, 0)
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 	}
 }
@@ -157,7 +164,7 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 		buffer.bind()
 		defer buffer.unbind()
 
-		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
+		gl.VertexAttribPointer(shaderPos, 2, gl.FLOAT, false, 0, 0)
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 	}
 }
@@ -173,7 +180,7 @@ func Points(coords ...float32) {
 	buffer.bind()
 	defer buffer.unbind()
 
-	gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
+	gl.VertexAttribPointer(shaderPos, 2, gl.FLOAT, false, 0, 0)
 	gl.DrawArrays(gl.POINTS, 0, len(coords)/2)
 }
 
@@ -210,7 +217,7 @@ func Polygon(mode DrawMode, coords []float32) {
 		buffer.bind()
 		defer buffer.unbind()
 
-		gl.VertexAttribPointer(attribPos, 2, gl.FLOAT, false, 0, nil)
+		gl.VertexAttribPointer(shaderPos, 2, gl.FLOAT, false, 0, 0)
 		gl.DrawArrays(gl.TRIANGLE_FAN, 0, len(coords)/2-1)
 	}
 }

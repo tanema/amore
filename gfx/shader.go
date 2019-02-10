@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/goxjs/gl"
 
 	"github.com/tanema/amore/file"
-	"github.com/tanema/amore/gfx/gl"
 )
 
 // Shader is a glsl program that can be applied while drawing.
@@ -43,10 +43,10 @@ func (shader *Shader) loadVolatile() bool {
 	gl.AttachShader(shader.program, vert)
 	gl.AttachShader(shader.program, frag)
 
-	gl.BindAttribLocation(shader.program, attribPos, "VertexPosition")
-	gl.BindAttribLocation(shader.program, attribTexCoord, "VertexTexCoord")
-	gl.BindAttribLocation(shader.program, attribColor, "VertexColor")
-	gl.BindAttribLocation(shader.program, attribConstantColor, "ConstantColor")
+	gl.BindAttribLocation(shader.program, shaderPos, "VertexPosition")
+	gl.BindAttribLocation(shader.program, shaderTexCoord, "VertexTexCoord")
+	gl.BindAttribLocation(shader.program, shaderColor, "VertexColor")
+	gl.BindAttribLocation(shader.program, shaderConstantColor, "ConstantColor")
 
 	gl.LinkProgram(shader.program)
 	gl.DeleteShader(vert)
