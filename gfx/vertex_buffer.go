@@ -1,9 +1,11 @@
 package gfx
 
 import (
+	"encoding/binary"
 	"math"
 
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
+	"golang.org/x/mobile/exp/f32"
 )
 
 type vertexBuffer struct {
@@ -32,14 +34,11 @@ func (buffer *vertexBuffer) bufferStatic() {
 		return
 	}
 	// Upload the mapped data to the buffer.
-	gl.BufferSubData(gl.ARRAY_BUFFER, buffer.modifiedOffset*4, buffer.modifiedSize*4, gl.Ptr(&buffer.data[buffer.modifiedOffset]))
+	f32.Bytes(binary.LittleEndian, buffer.data[buffer.modifiedOffset:buffer.modifiedSize]...)
 }
 
 func (buffer *vertexBuffer) bufferStream() {
-	// "orphan" current buffer to avoid implicit synchronisation on the GPU:
-	// http://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-AsynchronousBufferTransfers.pdf
-	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.data)*4, gl.Ptr(nil), uint32(buffer.usage))
-	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.data)*4, gl.Ptr(buffer.data), uint32(buffer.usage))
+	gl.BufferData(gl.ARRAY_BUFFER, f32.Bytes(binary.LittleEndian, buffer.data...), gl.Enum(buffer.usage))
 }
 
 func (buffer *vertexBuffer) bufferData() {
@@ -103,7 +102,7 @@ func (buffer *vertexBuffer) loadVolatile() bool {
 	buffer.vbo = gl.CreateBuffer()
 	buffer.bind()
 	defer buffer.unbind()
-	gl.BufferData(gl.ARRAY_BUFFER, len(buffer.data)*4, gl.Ptr(buffer.data), uint32(buffer.usage))
+	gl.BufferData(gl.ARRAY_BUFFER, f32.Bytes(binary.LittleEndian, buffer.data...), gl.Enum(buffer.usage))
 	return true
 }
 
