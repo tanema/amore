@@ -159,7 +159,7 @@ func useVertexAttribArrays(arraybits uint32) {
 	// attribute undefined. We rely on the per-vertex color attribute being
 	// white when no per-vertex color is used, so we set it here.
 	// FIXME: Is there a better place to do this?
-	if (diff&attribFlagColor) > 0 && (arraybits&attribFlagColor) == 0 {
+	if (diff&shaderColorFlag) > 0 && (arraybits&shaderColorFlag) == 0 {
 		gl.VertexAttrib4f(shaderColor, 1.0, 1.0, 1.0, 1.0)
 	}
 }

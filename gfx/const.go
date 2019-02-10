@@ -1,7 +1,7 @@
 package gfx
 
 import (
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
 )
 
 type (
@@ -42,15 +42,15 @@ type ColorMask struct {
 
 var (
 	//opengl attribute variables
-	attribPos           = gl.Attrib{Value: 0}
-	attribTexCoord      = gl.Attrib{Value: 1}
-	attribColor         = gl.Attrib{Value: 2}
-	attribConstantColor = gl.Attrib{Value: 3}
+	shaderPos           = gl.Attrib{Value: 0}
+	shaderTexCoord      = gl.Attrib{Value: 1}
+	shaderColor         = gl.Attrib{Value: 2}
+	shaderConstantColor = gl.Attrib{Value: 3}
 
-	attribFlagPos           = uint32(1 << attribPos.Value)
-	attribFlagTexCoord      = uint32(1 << attribTexCoord.Value)
-	attribFlagColor         = uint32(1 << attribColor.Value)
-	attribFlagConstantColor = uint32(1 << attribConstantColor.Value)
+	shaderPosFlag           = uint32(1 << shaderPos.Value)
+	shaderTexCoordFlag      = uint32(1 << shaderTexCoord.Value)
+	shaderColorFlag         = uint32(1 << shaderColor.Value)
+	shaderConstantColorFlag = uint32(1 << shaderConstantColor.Value)
 )
 
 // Draw modes

@@ -12,13 +12,6 @@ import (
 	"github.com/goxjs/gl"
 )
 
-var (
-	shaderPos           = gl.Attrib{Value: 0}
-	shaderTexCoord      = gl.Attrib{Value: 1}
-	shaderColor         = gl.Attrib{Value: 2}
-	shaderConstantColor = gl.Attrib{Value: 3}
-)
-
 type (
 	// Drawable interface defines all objects that can be drawn. Inputs are as follows
 	// x, y, r, sx, sy, ox, oy, kx, ky
@@ -110,7 +103,7 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 	} else {
 		prepareDraw(nil)
 		bindTexture(glState.defaultTexture)
-		useVertexAttribArrays(attribFlagPos)
+		useVertexAttribArrays(shaderPosFlag)
 
 		buffer := newVertexBuffer(len(coords), coords, UsageStatic)
 		buffer.bind()
@@ -158,7 +151,7 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 	} else {
 		prepareDraw(nil)
 		bindTexture(glState.defaultTexture)
-		useVertexAttribArrays(attribFlagPos)
+		useVertexAttribArrays(shaderPosFlag)
 
 		buffer := newVertexBuffer(len(coords), coords, UsageStatic)
 		buffer.bind()
@@ -174,7 +167,7 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 func Points(coords ...float32) {
 	prepareDraw(nil)
 	bindTexture(glState.defaultTexture)
-	useVertexAttribArrays(attribFlagPos)
+	useVertexAttribArrays(shaderPosFlag)
 
 	buffer := newVertexBuffer(len(coords), coords, UsageStatic)
 	buffer.bind()
@@ -211,7 +204,7 @@ func Polygon(mode DrawMode, coords []float32) {
 	} else {
 		prepareDraw(nil)
 		bindTexture(glState.defaultTexture)
-		useVertexAttribArrays(attribFlagPos)
+		useVertexAttribArrays(shaderPosFlag)
 
 		buffer := newVertexBuffer(len(coords), coords, UsageStatic)
 		buffer.bind()

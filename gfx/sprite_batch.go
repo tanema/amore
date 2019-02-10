@@ -201,7 +201,7 @@ func (spriteBatch *SpriteBatch) Draw(args ...float32) {
 
 	prepareDraw(generateModelMatFromArgs(args))
 	bindTexture(spriteBatch.texture.getHandle())
-	useVertexAttribArrays(attribFlagPos | attribFlagTexCoord | attribFlagColor)
+	useVertexAttribArrays(shaderPosFlag | shaderTexCoordFlag | shaderColorFlag)
 
 	spriteBatch.arrayBuf.bind()
 	defer spriteBatch.arrayBuf.unbind()
