@@ -44,14 +44,15 @@ func Start(update func(float32), draw func()) error {
 		return err
 	}
 
-	glfw.WindowHint(glfw.Samples, config.Msaa)
 	window, err := glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
 	if err != nil {
 		return err
 	}
 	window.MakeContextCurrent()
 
-	gfx.InitContext(int32(config.Width), int32(config.Height))
+	glfw.WindowHint(glfw.Samples, config.Msaa)
+	bufferW, bufferH := window.GetFramebufferSize()
+	gfx.InitContext(int32(bufferW), int32(bufferH))
 	defer gfx.DeInit()
 
 	for !window.ShouldClose() {

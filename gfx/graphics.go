@@ -375,3 +375,26 @@ func padColor(args []float32) (float32, float32, float32, float32) {
 
 	return r, g, b, a
 }
+
+func f32Bytes(values []float32) []byte {
+	b := make([]byte, 4*len(values))
+	for i, v := range values {
+		u := math.Float32bits(v)
+		b[4*i+0] = byte(u >> 0)
+		b[4*i+1] = byte(u >> 8)
+		b[4*i+2] = byte(u >> 16)
+		b[4*i+3] = byte(u >> 24)
+	}
+	return b
+}
+
+func ui32Bytes(values []uint32) []byte {
+	b := make([]byte, 4*len(values))
+	for i, v := range values {
+		b[4*i+0] = byte(v)
+		b[4*i+1] = byte(v >> 8)
+		b[4*i+2] = byte(v >> 16)
+		b[4*i+3] = byte(v >> 24)
+	}
+	return b
+}

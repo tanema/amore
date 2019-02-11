@@ -1,11 +1,9 @@
 package gfx
 
 import (
-	"encoding/binary"
 	"math"
 
 	"github.com/goxjs/gl"
-	"golang.org/x/mobile/exp/f32"
 )
 
 type vertexBuffer struct {
@@ -34,11 +32,11 @@ func (buffer *vertexBuffer) bufferStatic() {
 		return
 	}
 	// Upload the mapped data to the buffer.
-	f32.Bytes(binary.LittleEndian, buffer.data[buffer.modifiedOffset:buffer.modifiedSize]...)
+	gl.BufferSubData(gl.ARRAY_BUFFER, buffer.modifiedOffset*4, f32Bytes(buffer.data))
 }
 
 func (buffer *vertexBuffer) bufferStream() {
-	gl.BufferData(gl.ARRAY_BUFFER, f32.Bytes(binary.LittleEndian, buffer.data...), gl.Enum(buffer.usage))
+	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(buffer.data), gl.Enum(buffer.usage))
 }
 
 func (buffer *vertexBuffer) bufferData() {
@@ -102,7 +100,7 @@ func (buffer *vertexBuffer) loadVolatile() bool {
 	buffer.vbo = gl.CreateBuffer()
 	buffer.bind()
 	defer buffer.unbind()
-	gl.BufferData(gl.ARRAY_BUFFER, f32.Bytes(binary.LittleEndian, buffer.data...), gl.Enum(buffer.usage))
+	gl.BufferData(gl.ARRAY_BUFFER, f32Bytes(buffer.data), gl.Enum(buffer.usage))
 	return true
 }
 

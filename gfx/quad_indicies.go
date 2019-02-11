@@ -1,7 +1,7 @@
 package gfx
 
 import (
-	"github.com/tanema/amore/gfx/gl"
+	"github.com/goxjs/gl"
 )
 
 type indexBuffer struct {
@@ -31,18 +31,14 @@ func (buffer *indexBuffer) unbind() {
 func (buffer *indexBuffer) drawElements(mode uint32, offset, size int) {
 	buffer.bind()
 	defer buffer.unbind()
-	gl.DrawElements(gl.Enum(mode), size, gl.UNSIGNED_INT, gl.PtrOffset(offset*4))
-}
-
-func (buffer *indexBuffer) drawElementsLocal(mode uint32, offset, size int) {
-	gl.DrawElements(gl.Enum(mode), size, gl.UNSIGNED_INT, gl.Ptr(&buffer.data[offset]))
+	gl.DrawElements(gl.Enum(mode), size, gl.UNSIGNED_INT, offset*4)
 }
 
 func (buffer *indexBuffer) loadVolatile() bool {
 	buffer.ibo = gl.CreateBuffer()
 	buffer.bind()
 	defer buffer.unbind()
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(buffer.data)*4, gl.Ptr(buffer.data), uint32(gl.STATIC_DRAW))
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, ui32Bytes(buffer.data), gl.STATIC_DRAW)
 	return true
 }
 
@@ -118,8 +114,4 @@ func newAltQuadIndices(size int) *quadIndices {
 
 func (qi *quadIndices) drawElements(mode uint32, offset, size int) {
 	qi.indexBuffer.drawElements(mode, offset*6, size*6)
-}
-
-func (qi *quadIndices) drawElementsLocal(mode uint32, offset, size int) {
-	qi.indexBuffer.drawElementsLocal(mode, offset*6, size*6)
 }
