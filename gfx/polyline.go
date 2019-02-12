@@ -12,7 +12,6 @@ const linesParallelEPS float32 = 0.05
 type polyLine struct {
 	join      LineJoin
 	halfwidth float32
-	pixelSize float32
 }
 
 func determinant(vec1, vec2 []float32) float32 {
@@ -45,11 +44,10 @@ func abs(a float32) float32 {
 	return a
 }
 
-func newPolyLine(join LineJoin, lineWidth, pixelSize float32) polyLine {
+func newPolyLine(join LineJoin, lineWidth float32) polyLine {
 	newPolyline := polyLine{
 		join:      join,
 		halfwidth: lineWidth * 0.5,
-		pixelSize: pixelSize,
 	}
 	return newPolyline
 }

@@ -184,7 +184,7 @@ func Line(args ...float32) {
 
 // PolyLine will draw a line with an array in the form of x1, y1, x2, y2, x3, y3, ..... xn, yn
 func PolyLine(coords []float32) {
-	polyline := newPolyLine(states.back().lineJoin, states.back().lineWidth, states.back().pixelSize)
+	polyline := newPolyLine(states.back().lineJoin, states.back().lineWidth)
 	polyline.render(coords)
 }
 

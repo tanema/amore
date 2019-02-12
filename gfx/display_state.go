@@ -8,25 +8,21 @@ import (
 
 // displayState track a certain point in transformations
 type displayState struct {
-	color                  []float32
-	backgroundColor        []float32
-	blendMode              BlendMode
-	lineWidth              float32
-	lineJoin               LineJoin
-	pointSize              float32
-	scissor                bool
-	scissorBox             []int32
-	stencilCompare         CompareMode
-	stencilTestValue       int32
-	font                   *Font
-	shader                 *Shader
-	colorMask              ColorMask
-	wireframe              bool
-	pixelSize              float32
-	canvas                 *Canvas
-	defaultFilter          Filter
-	defaultMipmapFilter    FilterMode
-	defaultMipmapSharpness float32
+	color            []float32
+	backgroundColor  []float32
+	blendMode        BlendMode
+	lineWidth        float32
+	lineJoin         LineJoin
+	pointSize        float32
+	scissor          bool
+	scissorBox       []int32
+	stencilCompare   CompareMode
+	stencilTestValue int32
+	font             *Font
+	shader           *Shader
+	colorMask        ColorMask
+	canvas           *Canvas
+	defaultFilter    Filter
 }
 
 // glState keeps track of the context attributes
@@ -50,20 +46,17 @@ type openglState struct {
 // newDisplayState initializes a display states default values
 func newDisplayState() displayState {
 	return displayState{
-		blendMode:              BlendModeAlpha,
-		pointSize:              5,
-		pixelSize:              1,
-		stencilCompare:         CompareAlways,
-		lineWidth:              1,
-		lineJoin:               LineJoinMiter,
-		shader:                 defaultShader,
-		font:                   defaultFont,
-		defaultFilter:          newFilter(),
-		defaultMipmapFilter:    FilterNearest,
-		defaultMipmapSharpness: 0.0,
-		color:                  []float32{1, 1, 1, 1},
-		colorMask:              ColorMask{r: true, g: true, b: true, a: true},
-		scissorBox:             make([]int32, 4),
+		blendMode:      BlendModeAlpha,
+		pointSize:      5,
+		stencilCompare: CompareAlways,
+		lineWidth:      1,
+		lineJoin:       LineJoinMiter,
+		shader:         defaultShader,
+		font:           defaultFont,
+		defaultFilter:  newFilter(),
+		color:          []float32{1, 1, 1, 1},
+		colorMask:      ColorMask{r: true, g: true, b: true, a: true},
+		scissorBox:     make([]int32, 4),
 	}
 }
 

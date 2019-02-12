@@ -22,6 +22,7 @@ var (
 	frames            int       // frames since last update freq
 	previousTime      time.Time // last frame time
 	previousFPSUpdate time.Time // last time fps was updated
+	currentWindow     *glfw.Window
 )
 
 func init() {
@@ -44,18 +45,19 @@ func Start(update func(float32), draw func()) error {
 		return err
 	}
 
-	window, err := glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
+	currentWindow, err := glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
 	if err != nil {
 		return err
 	}
-	window.MakeContextCurrent()
+	currentWindow.MakeContextCurrent()
 
 	glfw.WindowHint(glfw.Samples, config.Msaa)
-	bufferW, bufferH := window.GetFramebufferSize()
+	gl.SampleCoverage(1, false)
+	bufferW, bufferH := currentWindow.GetFramebufferSize()
 	gfx.InitContext(int32(bufferW), int32(bufferH))
 	defer gfx.DeInit()
 
-	for !window.ShouldClose() {
+	for !currentWindow.ShouldClose() {
 		update(step())
 
 		gfx.Clear(gfx.GetBackgroundColor()...)
@@ -63,7 +65,7 @@ func Start(update func(float32), draw func()) error {
 		draw()
 		gfx.Present()
 
-		window.SwapBuffers()
+		currentWindow.SwapBuffers()
 		glfw.PollEvents()
 	}
 
@@ -91,4 +93,5 @@ func GetFPS() int {
 // Quit will prepare the window to close at the end of the next game loop. This
 // will allow a nice clean destruction of all object that are allocated in OpenGL
 func Quit() {
+	currentWindow.SetShouldClose(true)
 }

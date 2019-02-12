@@ -69,7 +69,7 @@ func newTexture(width, height int32, mipmaps bool) *Texture {
 	newTexture.SetWrap(WrapClamp, WrapClamp)
 
 	if newTexture.mipmaps {
-		newTexture.filter.mipmap = states.back().defaultMipmapFilter
+		newTexture.filter.mipmap = FilterNearest
 	}
 
 	newTexture.generateVerticies()

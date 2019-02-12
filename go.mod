@@ -4,7 +4,7 @@ require (
 	github.com/BurntSushi/toml v0.3.0
 	github.com/eaburns/bit v0.0.0-20131029213740-7bd5cd37375d // indirect
 	github.com/eaburns/flac v0.0.0-20171003200620-9a6fb92396d1
-	github.com/go-gl/gl v0.0.0-20180407155706-68e253793080
+	github.com/go-gl/gl v0.0.0-20180407155706-68e253793080 // indirect
 	github.com/go-gl/glfw v0.0.0-20181213070059-819e8ce5125f // indirect
 	github.com/go-gl/mathgl v0.0.0-20180319210751-5ab0e04e1f55
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0

@@ -15,4 +15,3 @@ TODO:
 - [ ] cross compile https://github.com/karalabe/xgo
 
 These changes will reduce functionality but make it more portable.
-

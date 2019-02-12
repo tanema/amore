@@ -307,7 +307,6 @@ func Present() {
 // Shear or Translate.
 func Origin() {
 	glState.viewStack.LoadIdent()
-	states.back().pixelSize = 1.0
 }
 
 // Translate will translate the rendering origin to the point x, y.
@@ -350,8 +349,6 @@ func Scale(args ...float32) {
 	}
 
 	glState.viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
-
-	states.back().pixelSize *= (2.0 / (mgl32.Abs(sx) + mgl32.Abs(sy)))
 }
 
 // Shear shears the coordinate system.
@@ -568,12 +565,6 @@ func GetPointSize() float32 {
 	return states.back().pointSize
 }
 
-// IsWireframe will return true if wirefame is current enabled. Wireframe is only
-// available in non ES enviroments.
-func IsWireframe() bool {
-	return states.back().wireframe
-}
-
 // SetShader sets or resets a Shader as the current pixel effect or vertex shaders.
 // All drawing operations until the next SetShader will be drawn using the Shader
 // object specified.
@@ -711,17 +702,4 @@ func SetDefaultFilterF(f Filter) {
 // GetDefaultFilter returns the scaling filters used with Images, Canvases, and Fonts.
 func GetDefaultFilter() Filter {
 	return states.back().defaultFilter
-}
-
-// SetDefaultMipmapFilter will set the default mipmap filters for when new images
-// are created
-func SetDefaultMipmapFilter(filter FilterMode, sharpness float32) {
-	states.back().defaultMipmapFilter = filter
-	states.back().defaultMipmapSharpness = sharpness
-}
-
-// GetDefaultMipmapFilter will return the default filtermode and sharpness for
-// all new images
-func GetDefaultMipmapFilter() (filter FilterMode, sharpness float32) {
-	return states.back().defaultMipmapFilter, states.back().defaultMipmapSharpness
 }
