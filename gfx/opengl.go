@@ -6,9 +6,10 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
-	"github.com/tanema/amore/gfx/font"
-
 	"github.com/goxjs/gl"
+	"github.com/goxjs/glfw"
+
+	"github.com/tanema/amore/gfx/font"
 )
 
 var (
@@ -33,7 +34,7 @@ var (
 // InitContext will initiate the opengl context with a viewport in the size of
 // w x h. This is generally called from the game loop and wont generally need to
 // be called unless you are rolling your own game loop.
-func InitContext(w, h int32) {
+func InitContext(window *glfw.Window) {
 	if glState.initialized {
 		return
 	}
@@ -70,7 +71,8 @@ func InitContext(w, h int32) {
 	glState.projectionStack = matstack.NewMatStack()
 	glState.viewStack = matstack.NewMatStack() //stacks are initialized with ident matricies on top
 
-	SetViewportSize(w, h)
+	w, h := window.GetFramebufferSize()
+	SetViewportSize(int32(w), int32(h))
 	SetBackgroundColor(0, 0, 0, 1)
 
 	glState.boundTextures = make([]gl.Texture, maxTextureUnits)
@@ -90,10 +92,25 @@ func InitContext(w, h int32) {
 
 	glState.initialized = true
 
+	callbackHandlers(window)
 	loadAllVolatile()
 
 	//have to set this after loadallvolatile() so we are sure the  default shader is loaded
 	SetShader(nil)
+}
+
+func deInit(w *glfw.Window) {
+	gl.DeleteTexture(glState.defaultTexture)
+	glState.defaultTexture = gl.Texture{}
+	glState.initialized = false
+	gl.ContextWatcher.OnDetach()
+}
+
+func callbackHandlers(window *glfw.Window) {
+	window.SetCloseCallback(deInit)
+	window.SetFramebufferSizeCallback(func(w *glfw.Window, width int, height int) {
+		SetViewport(0, 0, int32(width), int32(height))
+	})
 }
 
 // Set the 'default' texture (id 0) as a repeating white pixel. Otherwise,
@@ -221,19 +238,11 @@ func deleteTexture(texture gl.Texture) {
 	// was bound to before deletion.
 	for i, texid := range glState.boundTextures {
 		if texid == texture {
-			glState.boundTextures[i] = gl.Texture{Value: 0}
+			glState.boundTextures[i] = gl.Texture{}
 		}
 	}
 
 	gl.DeleteTexture(texture)
-}
-
-// DeInit will do the clean up for the context.
-func DeInit() {
-	gl.DeleteTexture(glState.defaultTexture)
-	glState.defaultTexture = gl.Texture{}
-	glState.initialized = false
-	gl.ContextWatcher.OnDetach()
 }
 
 // GetViewport will return the x, y, w, h of the opengl viewport. This is interfaced

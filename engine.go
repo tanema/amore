@@ -45,27 +45,33 @@ func Start(update func(float32), draw func()) error {
 		return err
 	}
 
-	currentWindow, err := glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
+	currentWindow, err = glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
 	if err != nil {
 		return err
 	}
 	currentWindow.MakeContextCurrent()
 
-	glfw.WindowHint(glfw.Samples, config.Msaa)
-	gl.SampleCoverage(1, false)
-	bufferW, bufferH := currentWindow.GetFramebufferSize()
-	gfx.InitContext(int32(bufferW), int32(bufferH))
-	defer gfx.DeInit()
+	windowActive := true
+	currentWindow.SetFocusCallback(func(w *glfw.Window, focused bool) { windowActive = focused })
+	currentWindow.SetIconifyCallback(func(w *glfw.Window, iconified bool) { windowActive = !iconified })
+	if !config.MouseShown {
+		currentWindow.SetInputMode(glfw.CursorMode, glfw.CursorHidden)
+	}
+
+	gfx.InitContext(currentWindow)
+	captureInput(currentWindow)
 
 	for !currentWindow.ShouldClose() {
 		update(step())
 
-		gfx.Clear(gfx.GetBackgroundColor()...)
-		gfx.Origin()
-		draw()
-		gfx.Present()
+		if windowActive {
+			gfx.Clear(gfx.GetBackgroundColor()...)
+			gfx.Origin()
+			draw()
+			gfx.Present()
+			currentWindow.SwapBuffers()
+		}
 
-		currentWindow.SwapBuffers()
 		glfw.PollEvents()
 	}
 

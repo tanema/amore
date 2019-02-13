@@ -1,12 +1,10 @@
-package audio
+package openal
 
 import (
 	"time"
 
-	"github.com/go-gl/mathgl/mgl32"
-
-	"github.com/tanema/amore/audio/al"
-	"github.com/tanema/amore/audio/decoding"
+	"github.com/tanema/amore/audio/openal/al"
+	"github.com/tanema/amore/audio/openal/decoding"
 )
 
 const (
@@ -17,25 +15,15 @@ const (
 // Source manages decoding sound data, creates an openal sound and manages the
 // data associated with the source.
 type Source struct {
-	decoder           *decoding.Decoder
-	source            al.Source
-	isStatic          bool
-	pitch             float32
-	volume            float32
-	position          al.Vector
-	velocity          al.Vector
-	direction         al.Vector
-	relative          bool
-	looping           bool
-	paused            bool
-	minVolume         float32
-	maxVolume         float32
-	referenceDistance float32
-	rolloffFactor     float32
-	maxDistance       float32
-	cone              al.Cone
-	staticBuffer      al.Buffer
-	offsetBytes       int32
+	decoder      *decoding.Decoder
+	source       al.Source
+	isStatic     bool
+	pitch        float32
+	volume       float32
+	looping      bool
+	paused       bool
+	staticBuffer al.Buffer
+	offsetBytes  int32
 }
 
 // State indicates the current playing state of the source.
@@ -67,18 +55,10 @@ func NewSource(filepath string, static bool) (*Source, error) {
 	}
 
 	newSource := &Source{
-		decoder:           decoder,
-		isStatic:          static,
-		pitch:             1,
-		volume:            1,
-		maxVolume:         1,
-		referenceDistance: 1,
-		rolloffFactor:     1,
-		maxDistance:       maxAttenuationDistance,
-		cone:              al.Cone{0, 0, 0},
-		position:          al.Vector{},
-		velocity:          al.Vector{},
-		direction:         al.Vector{},
+		decoder:  decoder,
+		isStatic: static,
+		pitch:    1,
+		volume:   1,
 	}
 
 	if static {
@@ -138,57 +118,15 @@ func (s *Source) reset() {
 		return
 	}
 	s.source.SetGain(s.volume)
-	s.source.SetPosition(s.position)
-	s.source.SetVelocity(s.velocity)
-	s.source.SetDirection(s.direction)
 	s.source.SetPitch(s.pitch)
-	s.source.SetMinGain(s.minVolume)
-	s.source.SetMaxGain(s.maxVolume)
-	s.source.SetReferenceDistance(s.referenceDistance)
-	s.source.SetMaxDistance(s.maxDistance)
-	s.source.SetRolloff(s.rolloffFactor)
-	s.source.SetRelative(s.relative)
-	s.source.SetCone(s.cone)
 	if s.isStatic {
 		s.source.SetLooping(s.looping)
 	}
 }
 
-// GetAttenuationDistances returns the reference and maximum attenuation distances of the Source.
-func (s *Source) GetAttenuationDistances() (float32, float32) {
-	if s.isValid() {
-		return s.source.ReferenceDistance(), s.source.MaxDistance()
-	}
-	return s.referenceDistance, s.maxDistance
-}
-
-// GetChannels returns the number of channels in the Source.
-func (s *Source) GetChannels() int16 {
-	return s.decoder.Channels
-}
-
 // GetDuration returns the total duration of the source.
 func (s *Source) GetDuration() time.Duration {
 	return s.decoder.Duration()
-}
-
-// GetCone returns the Source's directional volume cones by inner angle, outer angle,
-// and outer volume.
-func (s *Source) GetCone() (float32, float32, float32) {
-	if s.isValid() {
-		c := s.source.Cone()
-		return mgl32.DegToRad(float32(c.InnerAngle)), mgl32.DegToRad(float32(c.OuterAngle)), c.OuterVolume
-	}
-	return mgl32.DegToRad(float32(s.cone.InnerAngle)), mgl32.DegToRad(float32(s.cone.OuterAngle)), s.cone.OuterVolume
-}
-
-// GetDirection returns the direction of the Source with a vector of x, y, z
-func (s *Source) GetDirection() (float32, float32, float32) {
-	if s.isValid() {
-		d := s.source.Direction()
-		return d[0], d[1], d[2]
-	}
-	return s.direction[0], s.direction[1], s.direction[2]
 }
 
 // GetPitch returns the current pitch of the Source in the range 0.0, 1.0
@@ -199,46 +137,12 @@ func (s *Source) GetPitch() float32 {
 	return s.pitch
 }
 
-// GetPosition returns the position of the Source in a point x, y, z
-func (s *Source) GetPosition() (float32, float32, float32) {
-	if s.isValid() {
-		vec := s.source.Position()
-		return vec[0], vec[1], vec[2]
-	}
-	return s.position[0], s.position[1], s.position[2]
-}
-
-// GetRolloff returns the rolloff factor of the source.
-func (s *Source) GetRolloff() float32 {
-	if s.isValid() {
-		return s.source.Rolloff()
-	}
-	return s.rolloffFactor
-}
-
-// GetVelocity returns the velocity of the Source with a vector x, y, x
-func (s *Source) GetVelocity() (float32, float32, float32) {
-	if s.isValid() {
-		vec := s.source.Velocity()
-		return vec[0], vec[1], vec[2]
-	}
-	return s.velocity[0], s.velocity[1], s.velocity[2]
-}
-
 // GetVolume returns the current volume of the Source.
 func (s *Source) GetVolume() float32 {
 	if s.isValid() {
 		return s.source.Gain()
 	}
 	return s.volume
-}
-
-// GetVolumeLimits returns the volume limits of the source, min, max.
-func (s *Source) GetVolumeLimits() (float32, float32) {
-	if s.isValid() {
-		return s.source.MinGain(), s.source.MaxGain()
-	}
-	return s.minVolume, s.maxVolume
 }
 
 // GetState returns the playing state of the source.
@@ -268,15 +172,6 @@ func (s *Source) IsPlaying() bool {
 	return false
 }
 
-// IsRelative returns whether the Source's position and direction are relative
-// to the listener.
-func (s *Source) IsRelative() bool {
-	if s.isValid() {
-		return s.source.Relative()
-	}
-	return s.relative
-}
-
 // IsStatic returns whether the Source is static or stream.
 func (s *Source) IsStatic() bool {
 	return s.isStatic
@@ -288,34 +183,6 @@ func (s *Source) IsStopped() bool {
 		return s.GetState() == Stopped
 	}
 	return true
-}
-
-// SetAttenuationDistances sets the reference and maximum attenuation distances of the Source.
-func (s *Source) SetAttenuationDistances(ref, max float32) {
-	s.referenceDistance = ref
-	s.maxDistance = max
-	s.reset()
-}
-
-// SetCone sets the Source's directional volume cones with the inner angle, outer
-// angle, and outer volume
-func (s *Source) SetCone(innerAngle, outerAngle, outerVolume float32) {
-	s.cone = al.Cone{
-		InnerAngle:  int32(mgl32.RadToDeg(innerAngle)),
-		OuterAngle:  int32(mgl32.RadToDeg(outerAngle)),
-		OuterVolume: outerVolume,
-	}
-	s.reset()
-}
-
-// SetDirection sets the direction of the Source with the vector x, y, z
-func (s *Source) SetDirection(x, y, z float32) {
-	if s.GetChannels() > 1 {
-		panic("This spatial audio functionality is only available for mono Sources. Ensure the Source is not multi-channel before calling this function.")
-	}
-
-	s.direction = al.Vector{x, y, z}
-	s.reset()
 }
 
 // SetLooping sets whether the Source should loop when the source is complete.
@@ -330,41 +197,9 @@ func (s *Source) SetPitch(p float32) {
 	s.reset()
 }
 
-// SetPosition sets the position of the Source at the point x, y, z
-func (s *Source) SetPosition(x, y, z float32) {
-	s.position = al.Vector{x, y, z}
-	s.reset()
-}
-
-// SetRelative sets whether the Source's position and direction are relative to
-// the listener.
-func (s *Source) SetRelative(isRelative bool) {
-	s.relative = isRelative
-	s.reset()
-}
-
-// SetRolloff sets the rolloff factor.
-func (s *Source) SetRolloff(rolloff float32) {
-	s.rolloffFactor = rolloff
-	s.reset()
-}
-
-// SetVelocity sets the velocity of the Source with the vector x, y, z
-func (s *Source) SetVelocity(x, y, z float32) {
-	s.velocity = al.Vector{x, y, z}
-	s.reset()
-}
-
 // SetVolume sets the current volume of the Source.
 func (s *Source) SetVolume(v float32) {
 	s.volume = v
-	s.reset()
-}
-
-// SetVolumeLimits sets the volume limits of the source both min and max
-func (s *Source) SetVolumeLimits(min, max float32) {
-	s.minVolume = min
-	s.maxVolume = max
 	s.reset()
 }
 

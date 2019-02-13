@@ -106,5 +106,4 @@ func (buffer *vertexBuffer) loadVolatile() bool {
 
 func (buffer *vertexBuffer) unloadVolatile() {
 	gl.DeleteBuffer(buffer.vbo)
-	buffer.vbo.Value = 0
 }

@@ -10,7 +10,8 @@ TODO:
 - [x] minimize everything, this is for myself I don't need all this extra
 - [x] remove sdl and use https://github.com/goxjs/glfw
 - [x] change out specific opengl for https://github.com/goxjs/gl
-- [ ] reimlement input with mapping key to event
+- [x] reimlement input with mapping key to event
+- [x] fix default non fullscreen scaling
 - [ ] use glua for scripting https://github.com/yuin/gopher-lua
 - [ ] cross compile https://github.com/karalabe/xgo
 

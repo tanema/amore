@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/tanema/amore/audio/al"
+	"github.com/tanema/amore/audio/openal/al"
 	"github.com/tanema/amore/file"
 )
 

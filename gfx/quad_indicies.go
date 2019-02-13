@@ -23,7 +23,7 @@ func (buffer *indexBuffer) bind() {
 
 func (buffer *indexBuffer) unbind() {
 	if buffer.isBound {
-		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.Buffer{Value: 0})
+		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.Buffer{})
 	}
 	buffer.isBound = false
 }
@@ -44,7 +44,6 @@ func (buffer *indexBuffer) loadVolatile() bool {
 
 func (buffer *indexBuffer) unloadVolatile() {
 	gl.DeleteBuffer(buffer.ibo)
-	buffer.ibo.Value = 0
 }
 
 /**

@@ -1,10 +1,10 @@
-package audio
+package openal
 
 import (
 	"sync"
 	"time"
 
-	"github.com/tanema/amore/audio/al"
+	"github.com/tanema/amore/audio/openal/al"
 )
 
 const maxSources = 64
@@ -18,6 +18,50 @@ type audioPool struct {
 	sources      [maxSources]al.Source
 	available    []al.Source
 	playing      map[al.Source]*Source
+}
+
+// init will open the audio interface.
+func init() {
+	if err := al.OpenDevice(); err != nil {
+		panic(err)
+	}
+}
+
+// GetVolume returns the master volume.
+func GetVolume() float32 { return al.ListenerGain() }
+
+// SetVolume sets the master volume
+func SetVolume(gain float32) {
+	al.SetListenerGain(gain)
+}
+
+// PauseAll will pause all sources
+func PauseAll() {
+	for _, source := range pool.playing {
+		source.Pause()
+	}
+}
+
+// PlayAll will play all sources
+func PlayAll() {
+	for _, source := range pool.playing {
+		source.Play()
+	}
+}
+
+// RewindAll will rewind all sources
+func RewindAll() {
+	for _, source := range pool.playing {
+		source.Rewind()
+	}
+}
+
+// StopAll stop all sources
+func StopAll() {
+	for _, source := range pool.playing {
+		source.Stop()
+	}
+	pool.playing = make(map[al.Source]*Source)
 }
 
 // createPool generates a new pool and gets the max sources.
@@ -77,19 +121,6 @@ func (p *audioPool) getSourceCount() int {
 	return len(p.playing)
 }
 
-// play will play a source in the pool
-// if source is nil it will play all
-func (p *audioPool) play(source *Source) bool {
-	if source == nil {
-		success := true
-		for _, source := range p.playing {
-			success = success && source.Play()
-		}
-		return success
-	}
-	return source.Play()
-}
-
 // claim will take an openAL source for playing with an amore source
 func (p *audioPool) claim(source *Source) bool {
 	if len(p.available) > 0 {
@@ -105,53 +136,4 @@ func (p *audioPool) release(source *Source) {
 	p.available = append(p.available, source.source)
 	delete(p.playing, source.source)
 	source.source = 0
-}
-
-// stop will stop a playing source in the pool
-// if source is nil it will stop all
-func (p *audioPool) stop(source *Source) {
-	if source == nil {
-		for _, source := range p.playing {
-			source.Stop()
-		}
-		p.playing = make(map[al.Source]*Source)
-	} else {
-		source.Stop()
-	}
-}
-
-// pause will pause a playing source in the pool
-// if source is nil it will pause all
-func (p *audioPool) pause(source *Source) {
-	if source == nil {
-		for _, source := range p.playing {
-			source.Pause()
-		}
-	} else {
-		source.Pause()
-	}
-}
-
-// resume will resume a stopped source in the pool
-// if source is nil it will resume all
-func (p *audioPool) resume(source *Source) {
-	if source == nil {
-		for _, source := range p.playing {
-			source.Resume()
-		}
-	} else {
-		source.Resume()
-	}
-}
-
-// rewind will resume a stopped source in the pool
-// if source is nil it will rewind all
-func (p *audioPool) rewind(source *Source) {
-	if source == nil {
-		for _, source := range p.playing {
-			source.Rewind()
-		}
-	} else {
-		source.Rewind()
-	}
 }

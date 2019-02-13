@@ -92,9 +92,7 @@ func (shader *Shader) mapUniforms() {
 			}
 		}
 
-		if u.Location.Value != -1 {
-			shader.uniforms[u.Name] = u
-		}
+		shader.uniforms[u.Name] = u
 	}
 }
 
