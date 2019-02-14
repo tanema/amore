@@ -26,7 +26,7 @@ func draw() {
 	gfx.SetColor(1, 1, 1, 1)
 	gfx.Print(fmt.Sprintf("fps: %v", amore.GetFPS()), 0, 0)
 	gfx.Rect("fill", 300, 300, 480, 440)
-	//gfx.Draw(img, 300, 300)
+	gfx.Draw(img, 300, 300)
 
 	gfx.SetLineWidth(2)
 	gfx.SetLineJoin(gfx.LineJoinBevel)
