@@ -46,11 +46,6 @@ var (
 	shaderTexCoord      = gl.Attrib{Value: 1}
 	shaderColor         = gl.Attrib{Value: 2}
 	shaderConstantColor = gl.Attrib{Value: 3}
-
-	shaderPosFlag           = uint32(1 << uint32(shaderPos.Value))
-	shaderTexCoordFlag      = uint32(1 << uint32(shaderTexCoord.Value))
-	shaderColorFlag         = uint32(1 << uint32(shaderColor.Value))
-	shaderConstantColorFlag = uint32(1 << uint32(shaderConstantColor.Value))
 )
 
 // Draw modes

@@ -79,7 +79,7 @@ func (polyline *polyLine) render(coords []float32) {
 
 	prepareDraw(nil)
 	bindTexture(glState.defaultTexture)
-	useVertexAttribArrays(shaderPosFlag)
+	useVertexAttribArrays(shaderPos)
 
 	buffer := newVertexBuffer(len(vertices), vertices, UsageStatic)
 	buffer.bind()

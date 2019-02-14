@@ -103,7 +103,7 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 	} else {
 		prepareDraw(nil)
 		bindTexture(glState.defaultTexture)
-		useVertexAttribArrays(shaderPosFlag)
+		useVertexAttribArrays(shaderPos)
 
 		buffer := newVertexBuffer(len(coords), coords, UsageStatic)
 		buffer.bind()
@@ -151,7 +151,7 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 	} else {
 		prepareDraw(nil)
 		bindTexture(glState.defaultTexture)
-		useVertexAttribArrays(shaderPosFlag)
+		useVertexAttribArrays(shaderPos)
 
 		buffer := newVertexBuffer(len(coords), coords, UsageStatic)
 		buffer.bind()
@@ -167,7 +167,7 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 func Points(coords ...float32) {
 	prepareDraw(nil)
 	bindTexture(glState.defaultTexture)
-	useVertexAttribArrays(shaderPosFlag)
+	useVertexAttribArrays(shaderPos)
 
 	buffer := newVertexBuffer(len(coords), coords, UsageStatic)
 	buffer.bind()
@@ -204,7 +204,7 @@ func Polygon(mode DrawMode, coords []float32) {
 	} else {
 		prepareDraw(nil)
 		bindTexture(glState.defaultTexture)
-		useVertexAttribArrays(shaderPosFlag)
+		useVertexAttribArrays(shaderPos)
 
 		buffer := newVertexBuffer(len(coords), coords, UsageStatic)
 		buffer.bind()

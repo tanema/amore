@@ -39,9 +39,6 @@ func InitContext(window *glfw.Window) {
 		return
 	}
 
-	// Okay, setup OpenGL.
-	gl.ContextWatcher.OnMakeCurrent(nil)
-
 	//Get system info
 	glState.defaultFBO = gl.GetBoundFramebuffer()
 	gl.GetIntegerv(gl.VIEWPORT, glState.viewport)
@@ -57,7 +54,7 @@ func InitContext(window *glfw.Window) {
 	glcolor := []float32{1.0, 1.0, 1.0, 1.0}
 	gl.VertexAttrib4fv(shaderColor, glcolor)
 	gl.VertexAttrib4fv(shaderConstantColor, glcolor)
-	useVertexAttribArrays(0)
+	useVertexAttribArrays()
 
 	// Enable blending
 	gl.Enable(gl.BLEND)
@@ -79,10 +76,10 @@ func InitContext(window *glfw.Window) {
 	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
 	glState.curTextureUnit = int(curgltextureunit - gl.TEXTURE0)
 	// Retrieve currently bound textures for each texture unit.
-	for i := 0; i < len(glState.boundTextures); i++ {
-		gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(i)))
-		glState.boundTextures[i] = gl.Texture{Value: uint32(gl.GetInteger(gl.TEXTURE_BINDING_2D))}
-	}
+	// for i := 0; i < len(glState.boundTextures); i++ {
+	//	gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(i)))
+	//	glState.boundTextures[i] = gl.Texture{Value: uint32(gl.GetInteger(gl.TEXTURE_BINDING_2D))}
+	// }
 	gl.ActiveTexture(gl.Enum(curgltextureunit))
 	createDefaultTexture()
 	setTextureUnit(0)
@@ -103,7 +100,6 @@ func deInit(w *glfw.Window) {
 	gl.DeleteTexture(glState.defaultTexture)
 	glState.defaultTexture = gl.Texture{}
 	glState.initialized = false
-	gl.ContextWatcher.OnDetach()
 }
 
 func callbackHandlers(window *glfw.Window) {
@@ -150,34 +146,27 @@ func prepareDraw(model *mgl32.Mat4) {
 // useVertexAttribArrays will enable the vertex attrib array for the flags passed
 // and if the flags were not passed it will disabled them. This make sure that only
 // those attributes are enabled.
-func useVertexAttribArrays(arraybits uint32) {
-	diff := arraybits ^ glState.enabledAttribArrays
-
-	if diff == 0 {
-		return
+func useVertexAttribArrays(enabledAttribs ...gl.Attrib) {
+	attribs := map[gl.Attrib]bool{
+		shaderPos:           false,
+		shaderTexCoord:      false,
+		shaderColor:         false,
+		shaderConstantColor: false,
 	}
 
-	// Max 32 attributes. As of when this was written, no GL driver exposes more
-	// than 32. Lets hope that doesn't change...
-	for i := uint32(0); i < 32; i++ {
-		bit := uint32(1 << i)
-		if (diff & bit) > 0 {
-			if (arraybits & bit) > 0 {
-				gl.EnableVertexAttribArray(gl.Attrib{Value: uint(i)})
-			} else {
-				gl.DisableVertexAttribArray(gl.Attrib{Value: uint(i)})
+	for _, enabledAttrib := range enabledAttribs {
+		attribs[enabledAttrib] = true
+	}
+
+	for attrib, enabled := range attribs {
+		if enabled {
+			gl.EnableVertexAttribArray(attrib)
+		} else {
+			gl.DisableVertexAttribArray(attrib)
+			if attrib == shaderColor {
+				gl.VertexAttrib4f(shaderColor, 1.0, 1.0, 1.0, 1.0)
 			}
 		}
-	}
-
-	glState.enabledAttribArrays = arraybits
-
-	// glDisableVertexAttribArray will make the constant value for a vertex
-	// attribute undefined. We rely on the per-vertex color attribute being
-	// white when no per-vertex color is used, so we set it here.
-	// FIXME: Is there a better place to do this?
-	if (diff&shaderColorFlag) > 0 && (arraybits&shaderColorFlag) == 0 {
-		gl.VertexAttrib4f(shaderColor, 1.0, 1.0, 1.0, 1.0)
 	}
 }
 

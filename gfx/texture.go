@@ -261,7 +261,7 @@ func (texture *Texture) unloadVolatile() {
 func (texture *Texture) drawv(model *mgl32.Mat4, vertices []float32) {
 	prepareDraw(model)
 	bindTexture(texture.getHandle())
-	useVertexAttribArrays(shaderPosFlag | shaderTexCoordFlag)
+	useVertexAttribArrays(shaderPos, shaderTexCoord)
 
 	buffer := newVertexBuffer(len(vertices), vertices, UsageStatic)
 	buffer.bind()

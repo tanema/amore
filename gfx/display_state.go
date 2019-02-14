@@ -40,7 +40,6 @@ type openglState struct {
 	currentShader          *Shader
 	textureCounters        []int
 	writingToStencil       bool
-	enabledAttribArrays    uint32
 }
 
 // newDisplayState initializes a display states default values
