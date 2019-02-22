@@ -11,10 +11,7 @@ TODO:
 - [x] remove sdl and use https://github.com/goxjs/glfw
 - [x] change out specific opengl for https://github.com/goxjs/gl
 - [x] reimlement input with mapping key to event
-- [ ] goxjs file loading?
-  - config
-  - assets
-  - asset bundle
+- [ ] goxjs file loading glfw.Open()
 - [ ] fix default non fullscreen scaling
 - [ ] use glua for scripting https://github.com/yuin/gopher-lua
 - [ ] cross compile https://github.com/karalabe/xgo
