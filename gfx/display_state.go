@@ -10,9 +10,9 @@ import (
 type displayState struct {
 	color            []float32
 	backgroundColor  []float32
-	blendMode        BlendMode
+	blendMode        string
 	lineWidth        float32
-	lineJoin         LineJoin
+	lineJoin         string
 	pointSize        float32
 	scissor          bool
 	scissorBox       []int32
@@ -45,11 +45,11 @@ type openglState struct {
 // newDisplayState initializes a display states default values
 func newDisplayState() displayState {
 	return displayState{
-		blendMode:      BlendModeAlpha,
+		blendMode:      "alpha",
 		pointSize:      5,
 		stencilCompare: CompareAlways,
 		lineWidth:      1,
-		lineJoin:       LineJoinMiter,
+		lineJoin:       "miter",
 		shader:         defaultShader,
 		font:           defaultFont,
 		defaultFilter:  newFilter(),

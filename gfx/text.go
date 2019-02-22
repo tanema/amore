@@ -1,7 +1,6 @@
 package gfx
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -12,82 +11,28 @@ type (
 		strings   []string
 		colors    [][]float32
 		wrapLimit float32
-		align     AlignMode
+		align     string
 		batches   map[*rasterizer]*SpriteBatch
 		width     float32
 		height    float32
 	}
 )
 
-// Print will print a string in the current font. It accepts the normal drawable arguments
-func Print(fs string, argv ...float32) {
-	text, err := NewText(GetFont(), fs)
-	if err != nil {
-		return
-	}
-	text.Draw(argv...)
-}
-
-// Printc will print out a colored string. It accepts the normal drawable arguments
-func Printc(strs []string, colors [][]float32, argv ...float32) {
-	text, err := NewColorText(GetFont(), strs, colors)
-	if err != nil {
-		return
-	}
-	text.Draw(argv...)
+// Print will print out a colored string. It accepts the normal drawable arguments
+func Print(strs []string, colors [][]float32, argv ...float32) {
+	NewText(GetFont(), strs, colors, -1, "left").Draw(argv...)
 }
 
 // Printf will print out a string with a wrap limit and alignment. It accepts the
 // normal drawable arguments
-func Printf(fs string, wrapLimit float32, align AlignMode, argv ...float32) {
-	text, err := NewTextExt(GetFont(), fs, wrapLimit, align)
-	if err != nil {
-		return
-	}
-	text.Draw(argv...)
+func Printf(strs []string, colors [][]float32, wrapLimit float32, align string, argv ...float32) {
+	NewText(GetFont(), strs, colors, wrapLimit, align).Draw(argv...)
 }
 
-// Printfc will print out a colored string with a wrap limit and alignment. It
-// accepts the normal drawable arguments
-func Printfc(strs []string, colors [][]float32, wrapLimit float32, align AlignMode, argv ...float32) {
-	text, err := NewColorTextExt(GetFont(), strs, colors, wrapLimit, align)
-	if err != nil {
-		return
-	}
-	text.Draw(argv...)
-}
-
-// NewText will create a left aligned text element with the provided font and text.
-func NewText(font *Font, text string) (*Text, error) {
-	return NewTextExt(font, text, -1, AlignLeft)
-}
-
-// NewTextExt will create a text object with the provided font and text. A wrap
-// and alignment can be provided as well. If wrapLimit is < 0 it will not wrap
-func NewTextExt(font *Font, text string, wrapLimit float32, align AlignMode) (*Text, error) {
-	if text == "" {
-		return nil, fmt.Errorf("Cannot create an text object with blank string")
-	}
-	return NewColorTextExt(font, []string{text}, [][]float32{{1, 1, 1, 1}}, wrapLimit, align)
-}
-
-// NewColorText will create a left aligned colored string
-func NewColorText(font *Font, strs []string, colors [][]float32) (*Text, error) {
-	return NewColorTextExt(font, strs, colors, -1, AlignLeft)
-}
-
-// NewColorTextExt will create a colored text object with the provided font and
+// NewText will create a colored text object with the provided font and
 // text. A wrap and alignment can be provided as well. If wrapLimit is < 0 it will
 // not wrap
-func NewColorTextExt(font *Font, strs []string, colors [][]float32, wrapLimit float32, align AlignMode) (*Text, error) {
-	if len(strs) == 0 {
-		return nil, fmt.Errorf("Nothing to print")
-	}
-
-	if len(strs) != len(colors) {
-		return nil, fmt.Errorf("Improper countof strings to colors")
-	}
-
+func NewText(font *Font, strs []string, colors [][]float32, wrapLimit float32, align string) *Text {
 	newText := &Text{
 		font:      font,
 		strings:   strs,
@@ -96,16 +41,14 @@ func NewColorTextExt(font *Font, strs []string, colors [][]float32, wrapLimit fl
 		align:     align,
 		batches:   make(map[*rasterizer]*SpriteBatch),
 	}
-
 	registerVolatile(newText)
-
-	return newText, nil
+	return newText
 }
 
 func (text *Text) loadVolatile() bool {
 	length := len(strings.Join(text.strings, ""))
 	for _, rast := range text.font.rasterizers {
-		text.batches[rast] = NewSpriteBatch(rast.texture, length)
+		text.batches[rast] = NewSpriteBatch(rast.texture, length, UsageDynamic)
 	}
 	text.generate()
 	return true
@@ -131,12 +74,12 @@ func (text *Text) generate() {
 		}
 
 		switch text.align {
-		case AlignLeft:
-		case AlignRight:
+		case "left":
+		case "right":
 			gx = text.wrapLimit - l.width
-		case AlignCenter:
+		case "center":
 			gx = (text.wrapLimit - l.width) / 2.0
-		case AlignJustify:
+		case "justify":
 			amountOfSpace := float32(l.spaceCount-1) * spacing
 			widthWithoutSpace := l.width - amountOfSpace
 			spacing = (text.wrapLimit - widthWithoutSpace) / float32(l.spaceCount)
@@ -191,13 +134,8 @@ func (text *Text) SetFont(f *Font) {
 	text.loadVolatile()
 }
 
-// Set will set the string to be rendered by this text object
-func (text *Text) Set(t string) {
-	text.Setc([]string{t}, [][]float32{{1, 1, 1, 1}})
-}
-
-// Setc will set the string and colors for this text object to be rendered.
-func (text *Text) Setc(strs []string, colors [][]float32) {
+// Set will set the string and colors for this text object to be rendered.
+func (text *Text) Set(strs []string, colors [][]float32) {
 	text.strings = strs
 	text.colors = colors
 	text.generate()

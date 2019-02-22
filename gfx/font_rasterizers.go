@@ -78,9 +78,8 @@ func newRasterizer(face font.Face, runeSets ...[]rune) *rasterizer {
 }
 
 func (rast *rasterizer) loadVolatile() bool {
-	var err error
-	rast.texture, err = newImageTexture(rast.atlasImg, false)
-	return err == nil
+	rast.texture = newImageTexture(rast.atlasImg, false)
+	return true
 }
 
 func (rast *rasterizer) unloadVolatile() {}

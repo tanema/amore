@@ -10,7 +10,7 @@ import (
 const linesParallelEPS float32 = 0.05
 
 type polyLine struct {
-	join      LineJoin
+	join      string
 	halfwidth float32
 }
 
@@ -44,7 +44,7 @@ func abs(a float32) float32 {
 	return a
 }
 
-func newPolyLine(join LineJoin, lineWidth float32) polyLine {
+func newPolyLine(join string, lineWidth float32) polyLine {
 	newPolyline := polyLine{
 		join:      join,
 		halfwidth: lineWidth * 0.5,
@@ -90,7 +90,7 @@ func (polyline *polyLine) render(coords []float32) {
 }
 
 func (polyline *polyLine) renderEdge(sleeve, current, next []float32) []float32 {
-	if polyline.join == LineJoinBevel {
+	if polyline.join == "bevel" {
 		return polyline.renderBevelEdge(sleeve, current, next)
 	}
 	return polyline.renderMiterEdge(sleeve, current, next)

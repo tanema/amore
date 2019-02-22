@@ -22,13 +22,8 @@ type SpriteBatch struct {
 	rangeMax    int
 }
 
-// NewSpriteBatch will generate a new batch with the size provided and bind the texture to it.
-func NewSpriteBatch(text ITexture, size int) *SpriteBatch {
-	return NewSpriteBatchExt(text, size, UsageDynamic)
-}
-
-// NewSpriteBatchExt is like NewSpriteBatch but allows you to set the usage.
-func NewSpriteBatchExt(texture ITexture, size int, usage Usage) *SpriteBatch {
+// NewSpriteBatch is like NewSpriteBatch but allows you to set the usage.
+func NewSpriteBatch(texture ITexture, size int, usage Usage) *SpriteBatch {
 	return &SpriteBatch{
 		size:        size,
 		texture:     texture,

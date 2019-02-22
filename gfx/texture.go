@@ -77,21 +77,17 @@ func newTexture(width, height int32, mipmaps bool) *Texture {
 	return newTexture
 }
 
-// newImageTexture will generate a texture from an image. It will automatically
-// upload the image data to the texture.
-func newImageTexture(img image.Image, mipmaps bool) (*Texture, error) {
+func newImageTexture(img image.Image, mipmaps bool) *Texture {
 	bounds := img.Bounds()
 	newTexture := newTexture(int32(bounds.Dx()), int32(bounds.Dy()), mipmaps)
-	//generate a uniform image and upload to vram
-	rgba := image.NewRGBA(img.Bounds())
+	rgba := image.NewRGBA(img.Bounds()) //generate a uniform image and upload to vram
 	draw.Draw(rgba, bounds, img, image.Point{0, 0}, draw.Src)
 	bindTexture(newTexture.getHandle())
 	gl.TexImage2D(gl.TEXTURE_2D, 0, bounds.Dx(), bounds.Dy(), gl.RGBA, gl.UNSIGNED_BYTE, rgba.Pix)
-
 	if newTexture.mipmaps {
 		newTexture.generateMipmaps()
 	}
-	return newTexture, nil
+	return newTexture
 }
 
 // getHandle will return the gl texutre handle
@@ -101,14 +97,29 @@ func (texture *Texture) getHandle() gl.Texture {
 
 // generate both the x, y coords at origin and the uv coords.
 func (texture *Texture) generateVerticies() {
-	w := float32(texture.GetWidth())
-	h := float32(texture.GetHeight())
+	w := float32(texture.Width)
+	h := float32(texture.Height)
 	texture.vertices = []float32{
 		0, 0, 0, 0,
 		0, h, 0, 1,
 		w, 0, 1, 0,
 		w, h, 1, 1,
 	}
+}
+
+// GetWidth will return the height of the texture.
+func (texture *Texture) GetWidth() int32 {
+	return texture.Width
+}
+
+// GetHeight will return the height of the texture.
+func (texture *Texture) GetHeight() int32 {
+	return texture.Height
+}
+
+// GetDimensions will return the width and height of the texture.
+func (texture *Texture) GetDimensions() (int32, int32) {
+	return texture.Width, texture.Height
 }
 
 // getVerticies will return the verticies generated when this texture was created.
@@ -225,21 +236,6 @@ func (texture *Texture) validateFilter() bool {
 	}
 
 	return true
-}
-
-// GetWidth will return the width of the texture.
-func (texture *Texture) GetWidth() int32 {
-	return texture.Width
-}
-
-// GetHeight will return the height of the texture.
-func (texture *Texture) GetHeight() int32 {
-	return texture.Height
-}
-
-// GetDimensions will return the width and height of the texture.
-func (texture *Texture) GetDimensions() (int32, int32) {
-	return texture.Width, texture.Height
 }
 
 // loadVolatile satisfies the volatile interface, so that it can be unloaded

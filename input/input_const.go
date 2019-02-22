@@ -1,4 +1,4 @@
-package amore
+package input
 
 import (
 	"github.com/goxjs/glfw"

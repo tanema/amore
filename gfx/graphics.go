@@ -12,61 +12,23 @@ import (
 	"github.com/goxjs/gl"
 )
 
-type (
-	// Drawable interface defines all objects that can be drawn. Inputs are as follows
-	// x, y, r, sx, sy, ox, oy, kx, ky
-	// x, y are position
-	// r is rotation
-	// sx, sy is the scale, if sy is not given sy will equal sx
-	// ox, oy are offset
-	// kx, ky are the shear. If ky is not given ky will equal kx
-	Drawable interface {
-		Draw(args ...float32)
-	}
-	// QuadDrawable interface defines all objects that can be drawn with a quad.
-	// Inputs are as follows
-	// quad is the quad to crop the texture
-	// x, y, r, sx, sy, ox, oy, kx, ky
-	// x, y are position
-	// r is rotation
-	// sx, sy is the scale, if sy is not given sy will equal sx
-	// ox, oy are offset
-	// kx, ky are the shear. If ky is not given ky will equal kx
-	QuadDrawable interface {
-		Drawq(quad *Quad, args ...float32)
-	}
-)
-
 // this is the default amount of points to allow a circle or arc to use when
 // generating points
-const defaultPointCount = 30
+//const defaultPointCount = 30
 
 // Circle will draw a circle at x, y with a radius as specified.
-// The drawmode specifies either a fill or line draw
-func Circle(mode DrawMode, x, y, radius float32) {
-	Circlep(mode, x, y, radius, defaultPointCount)
-}
-
-// Circlep will draw a circle at x, y with a radius as specified.
 // points specifies how many points should be generated in the arc.
 // If it is lower it will look jagged. If it is higher it will hit performace.
 // The drawmode specifies either a fill or line draw
-func Circlep(mode DrawMode, x, y, radius float32, points int) {
-	Ellipsep(mode, x, y, radius, radius, points)
+func Circle(mode string, x, y, radius float32, points int) {
+	Ellipse(mode, x, y, radius, radius, points)
 }
 
-// Arc will draw a part of a circle at the point x, y with the radius provied.
-// The arc will start at angle1 (radians) and end at angle2 (radians)
-// The drawmode specifies either a fill or line draw
-func Arc(mode DrawMode, x, y, radius, angle1, angle2 float32) {
-	Arcp(mode, x, y, radius, angle1, angle2, defaultPointCount)
-}
-
-// Arcp is like Arc except that you can define how many points you want to generate
+// Arc is like Arc except that you can define how many points you want to generate
 // the arc.
 // If it is lower it will look jagged. If it is higher it will hit performace.
 // The drawmode specifies either a fill or line draw
-func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
+func Arc(mode string, x, y, radius, angle1, angle2 float32, points int) {
 	// Nothing to display with no points or equal angles. (Or is there with line mode?)
 	if points <= 0 || angle1 == angle2 {
 		return
@@ -74,7 +36,7 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 
 	// Oh, you want to draw a circle?
 	if math.Abs(float64(angle1-angle2)) >= (2.0 * math.Pi) {
-		Circlep(mode, x, y, radius, points)
+		Circle(mode, x, y, radius, points)
 		return
 	}
 
@@ -98,7 +60,7 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 		coords[2*(i+1)+1] = y + radius*float32(math.Sin(float64(phi)))
 	}
 
-	if mode == LINE {
+	if mode == "line" {
 		PolyLine(coords)
 	} else {
 		prepareDraw(nil)
@@ -116,18 +78,10 @@ func Arcp(mode DrawMode, x, y, radius, angle1, angle2 float32, points int) {
 
 // Ellipse will draw a circle at x, y with a radius as specified.
 // radiusx and radiusy will specify how much the width will be along those axis
-// If it is lower it will look jagged. If it is higher it will hit performace.
-// The drawmode specifies either a fill or line draw
-func Ellipse(mode DrawMode, x, y, radiusx, radiusy float32) {
-	Ellipsep(mode, x, y, radiusx, radiusy, defaultPointCount)
-}
-
-// Ellipsep will draw a circle at x, y with a radius as specified.
-// radiusx and radiusy will specify how much the width will be along those axis
 // points specifies how many points should be generated in the arc.
 // If it is lower it will look jagged. If it is higher it will hit performace.
 // The drawmode specifies either a fill or line draw
-func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
+func Ellipse(mode string, x, y, radiusx, radiusy float32, points int) {
 	twoPi := math.Pi * 2.0
 	if points <= 0 {
 		points = 1
@@ -146,7 +100,7 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 	coords[2*points+0] = coords[0]
 	coords[2*points+1] = coords[1]
 
-	if mode == LINE {
+	if mode == "line" {
 		PolyLine(coords)
 	} else {
 		prepareDraw(nil)
@@ -164,7 +118,7 @@ func Ellipsep(mode DrawMode, x, y, radiusx, radiusy float32, points int) {
 
 // Points will draw a point on the screen at x, y position. The size of the point
 // is dependant on the point size set with SetPointSize.
-func Points(coords ...float32) {
+func Points(coords []float32) {
 	prepareDraw(nil)
 	bindTexture(glState.defaultTexture)
 	useVertexAttribArrays(shaderPos)
@@ -177,11 +131,6 @@ func Points(coords ...float32) {
 	gl.DrawArrays(gl.POINTS, 0, len(coords)/2)
 }
 
-// Line is a short form of Polyline so you can enter your params not in an array
-func Line(args ...float32) {
-	PolyLine(args)
-}
-
 // PolyLine will draw a line with an array in the form of x1, y1, x2, y2, x3, y3, ..... xn, yn
 func PolyLine(coords []float32) {
 	polyline := newPolyLine(states.back().lineJoin, states.back().lineWidth)
@@ -191,15 +140,15 @@ func PolyLine(coords []float32) {
 // Rect draws a rectangle with the top left corner at x, y with the specified width
 // and height
 // The drawmode specifies either a fill or line draw
-func Rect(mode DrawMode, x, y, width, height float32) {
+func Rect(mode string, x, y, width, height float32) {
 	Polygon(mode, []float32{x, y, x, y + height, x + width, y + height, x + width, y})
 }
 
 // Polygon will draw a closed polygon with an array in the form of x1, y1, x2, y2, x3, y3, ..... xn, yn
 // The drawmode specifies either a fill or line draw
-func Polygon(mode DrawMode, coords []float32) {
+func Polygon(mode string, coords []float32) {
 	coords = append(coords, coords[0], coords[1])
-	if mode == LINE {
+	if mode == "line" {
 		PolyLine(coords)
 	} else {
 		prepareDraw(nil)
@@ -216,7 +165,7 @@ func Polygon(mode DrawMode, coords []float32) {
 }
 
 // NewScreenshot will take a screenshot of the screen and convert it to an image.Image
-func NewScreenshot() image.Image {
+func NewScreenshot() *Image {
 	// Temporarily unbind the currently active canvas (glReadPixels reads the active framebuffer, not the main one.)
 	canvas := GetCanvas()
 	SetCanvas(nil)
@@ -235,33 +184,9 @@ func NewScreenshot() image.Image {
 
 	// Re-bind the active canvas, if necessary.
 	SetCanvas(canvas)
-
-	return screenshot
-}
-
-// Draw calls draw on any drawable object with the inputs
-// Inputs are as follows
-// x, y, r, sx, sy, ox, oy, kx, ky
-// x, y are position
-// r is rotation
-// sx, sy is the scale, if sy is not given sy will equal sx
-// ox, oy are offset
-// kx, ky are the shear. If ky is not given ky will equal kx
-func Draw(drawable Drawable, args ...float32) {
-	drawable.Draw(args...)
-}
-
-// Drawq will draw any object that can have a quad applied to it
-// Inputs are as follows
-// quad is the quad to crop the texture
-// x, y, r, sx, sy, ox, oy, kx, ky
-// x, y are position
-// r is rotation
-// sx, sy is the scale, if sy is not given sy will equal sx
-// ox, oy are offset
-// kx, ky are the shear. If ky is not given ky will equal kx
-func Drawq(drawable QuadDrawable, quad *Quad, args ...float32) {
-	drawable.Drawq(quad, args...)
+	newImage := &Image{Texture: newImageTexture(screenshot, false)}
+	registerVolatile(newImage)
+	return newImage
 }
 
 // Normalized an array of floats into these params if they exist
@@ -349,31 +274,6 @@ func generateModelMatFromArgs(args []float32) *mgl32.Mat4 {
 	mat[13] = y - ox*mat[1] - oy*mat[5]
 
 	return &mat
-}
-
-func padColor(args []float32) (float32, float32, float32, float32) {
-	var r, g, b, a float32 = 1, 1, 1, 1
-
-	if args == nil || len(args) == 0 {
-		return r, g, b, a
-	}
-
-	argsLength := len(args)
-	switch argsLength {
-	case 4:
-		a = args[3]
-		fallthrough
-	case 3:
-		b = args[2]
-		fallthrough
-	case 2:
-		g = args[1]
-		fallthrough
-	case 1:
-		r = args[0]
-	}
-
-	return r, g, b, a
 }
 
 func f32Bytes(values []float32) []byte {

@@ -58,7 +58,7 @@ func InitContext(window *glfw.Window) {
 
 	// Enable blending
 	gl.Enable(gl.BLEND)
-	SetBlendMode(BlendModeAlpha)
+	SetBlendMode("alpha")
 	// Auto-generated mipmaps should be the best quality possible
 	gl.Hint(gl.GENERATE_MIPMAP_HINT, gl.NICEST)
 	// Set pixel row alignment
@@ -275,10 +275,15 @@ func GetHeight() float32 {
 	return float32(screenHeight)
 }
 
+// GetDimensions will return the width and height of screen
+func GetDimensions() (float32, float32) {
+	return float32(screenWidth), float32(screenHeight)
+}
+
 // Clear will clear everything already rendered to the screen and set is all to
 // the r, g, b, a provided.
-func Clear(vals ...float32) {
-	gl.ClearColor(padColor(vals))
+func Clear(r, g, b, a float32) {
+	gl.ClearColor(r, g, b, a)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
@@ -334,34 +339,12 @@ func Rotate(angle float32) {
 // (2, 2) for example would mean making everything twice as large in both x- and y-directions. Scaling by a negative value flips the coordinate system in the corresponding direction, which also means everything will be drawn flipped or upside down, or both. Scaling by zero is not a useful operation.
 // Scale and translate are not commutative operations, therefore, calling them
 // in different orders will change the outcome. Scaling lasts until drawing completes
-func Scale(args ...float32) {
-	if args == nil || len(args) == 0 {
-		args = []float32{1}
-	}
-	var sx, sy float32
-	sx = args[0]
-	if len(args) > 1 {
-		sy = args[1]
-	} else {
-		sy = sx
-	}
-
+func Scale(sx, sy float32) {
 	glState.viewStack.LeftMul(mgl32.Scale3D(sx, sy, 1))
 }
 
 // Shear shears the coordinate system.
-func Shear(args ...float32) {
-	if args == nil || len(args) == 0 {
-		args = []float32{0}
-	}
-	var kx, ky float32
-	kx = args[0]
-	if len(args) > 1 {
-		ky = args[1]
-	} else {
-		ky = kx
-	}
-
+func Shear(kx, ky float32) {
 	glState.viewStack.LeftMul(mgl32.ShearX3D(kx, ky))
 }
 
@@ -389,46 +372,17 @@ func Pop() {
 // dimensions of the scissor is unaffected by graphical transformations
 // (translate, scale, ...). if no arguments are given it will disable the scissor.
 // if x, y, w, h are given it will enable the scissor
-func SetScissor(args ...int32) {
-	if args == nil {
-		gl.Disable(gl.SCISSOR_TEST)
-		states.back().scissor = false
-	} else if len(args) == 4 {
-		x, y, width, height := args[0], args[1], args[2], args[3]
-		gl.Enable(gl.SCISSOR_TEST)
-		if glState.currentCanvas != nil {
-			gl.Scissor(x, y, width, height)
-		} else {
-			// With no Canvas active, we need to compensate for glScissor starting
-			// from the lower left of the viewport instead of the top left.
-			gl.Scissor(x, glState.viewport[3]-(y+height), width, height)
-		}
-		states.back().scissorBox = []int32{x, y, width, height}
-		states.back().scissor = true
+func SetScissor(x, y, width, height int32) {
+	gl.Enable(gl.SCISSOR_TEST)
+	if glState.currentCanvas != nil {
+		gl.Scissor(x, y, width, height)
+	} else {
+		// With no Canvas active, we need to compensate for glScissor starting
+		// from the lower left of the viewport instead of the top left.
+		gl.Scissor(x, glState.viewport[3]-(y+height), width, height)
 	}
-}
-
-// IntersectScissor sets the scissor to the rectangle created by the intersection
-// of the specified rectangle with the existing scissor. If no scissor is active
-// yet, it behaves like SetScissor. The scissor limits the drawing area to a
-// specified rectangle. This affects all graphics calls, including Clear. The
-// dimensions of the scissor is unaffected by graphical transformations (translate, scale, ...).
-func IntersectScissor(x, y, width, height int32) {
-	rect := states.back().scissorBox
-
-	if !states.back().scissor {
-		rect[0] = 0
-		rect[1] = 0
-		rect[2] = math.MaxInt32
-		rect[3] = math.MaxInt32
-	}
-
-	x1 := int32(math.Max(float64(rect[0]), float64(x)))
-	y1 := int32(math.Max(float64(rect[1]), float64(y)))
-	x2 := int32(math.Min(float64(rect[0]+rect[2]), float64(x+width)))
-	y2 := int32(math.Min(float64(rect[1]+rect[3]), float64(y+height)))
-
-	SetScissor(x1, y1, int32(math.Max(0, float64(x2-x1))), int32(math.Max(0, float64(y2-y1))))
+	states.back().scissorBox = []int32{x, y, width, height}
+	states.back().scissor = true
 }
 
 // ClearScissor will disable all set scissors.
@@ -437,18 +391,7 @@ func ClearScissor() {
 	states.back().scissor = false
 }
 
-// Stencil draws geometry as a stencil. The geometry drawn by the supplied function
-// sets invisible stencil values of pixels, instead of setting pixel colors.
-// The stencil values of pixels can act like a mask / stencil - SetStencilTest can
-// be used afterward to determine how further rendering is affected by the stencil
-// values in each pixel. Each Canvas has its own per-pixel stencil values. Stencil
-// values are within the range of [0, 1]. This stencil has the defaults of
-// StencilAction: STENCIL_REPLACE, value: 1, keepvalues: true
-func Stencil(stencilFunc func()) {
-	StencilExt(stencilFunc, StencilReplace, 1, false)
-}
-
-// StencilExt operates like stencil but with access to change the stencil action,
+// Stencil operates like stencil but with access to change the stencil action,
 // value, and keepvalues.
 //
 // action: How to modify any stencil values of pixels that are touched by what's
@@ -460,7 +403,8 @@ func Stencil(stencilFunc func()) {
 // keepvalues: True to preserve old stencil values of pixels, false to re-set
 // every pixel's stencil value to 0 before executing the stencil function. Clear
 // will also re-set all stencil values.
-func StencilExt(stencilFunc func(), action StencilAction, value int32, keepvalues bool) {
+func Stencil(stencilFunc func(), action StencilAction, value int32, keepvalues bool) {
+	// StencilReplace, 1, false
 	glState.writingToStencil = true
 	if !keepvalues {
 		gl.Clear(gl.STENCIL_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -476,7 +420,8 @@ func StencilExt(stencilFunc func(), action StencilAction, value int32, keepvalue
 	stencilFunc()
 
 	glState.writingToStencil = false
-	SetColorMask(states.back().colorMask)
+	mask := states.back().colorMask
+	SetColorMask(mask.r, mask.g, mask.b, mask.a)
 	SetStencilTest(states.back().stencilCompare, states.back().stencilTestValue)
 }
 
@@ -522,14 +467,15 @@ func GetScissor() (x, y, w, h int32) {
 }
 
 // SetColorMask will set a mask for each r, g, b, and alpha component.
-func SetColorMask(mask ColorMask) {
-	gl.ColorMask(mask.r, mask.g, mask.b, mask.a)
-	states.back().colorMask = mask
+func SetColorMask(r, g, b, a bool) {
+	gl.ColorMask(r, g, b, a)
+	states.back().colorMask = ColorMask{r, g, b, a}
 }
 
 // GetColorMask will return the current color mask
-func GetColorMask() ColorMask {
-	return states.back().colorMask
+func GetColorMask() (bool, bool, bool, bool) {
+	mask := states.back().colorMask
+	return mask.r, mask.g, mask.b, mask.a
 }
 
 // SetLineWidth changes the width in pixels that the lines will render when using
@@ -539,7 +485,7 @@ func SetLineWidth(width float32) {
 }
 
 // SetLineJoin will change how each line joins. options are None, Bevel or Miter.
-func SetLineJoin(join LineJoin) {
+func SetLineJoin(join string) {
 	states.back().lineJoin = join
 }
 
@@ -549,7 +495,7 @@ func GetLineWidth() float32 {
 }
 
 // GetLineJoin will return the current line join. Default line join is miter.
-func GetLineJoin() LineJoin {
+func GetLineJoin() string {
 	return states.back().lineJoin
 }
 
@@ -586,9 +532,8 @@ func GetBackgroundColor() []float32 {
 }
 
 // SetColor will sets the color used for drawing.
-func SetColor(vals ...float32) {
-	states.back().color = vals
-	r, g, b, a := padColor(vals)
+func SetColor(r, g, b, a float32) {
+	states.back().color = []float32{r, g, b, a}
 	gl.VertexAttrib4f(shaderConstantColor, r, g, b, a)
 }
 
@@ -635,7 +580,7 @@ func GetCanvas() *Canvas {
 
 // SetBlendMode sets the blending mode. Blending modes are different ways to do
 // color blending. See BlendMode constants to see how they operate.
-func SetBlendMode(mode BlendMode) {
+func SetBlendMode(mode string) {
 	fn := gl.FUNC_ADD
 	srcRGB := gl.ONE
 	srcA := gl.ONE
@@ -643,39 +588,41 @@ func SetBlendMode(mode BlendMode) {
 	dstA := gl.ZERO
 
 	switch mode {
-	case BlendModeAlpha:
-		srcRGB = gl.SRC_ALPHA
-		srcA = gl.ONE
-		dstRGB = gl.ONE_MINUS_SRC_ALPHA
-		dstA = gl.ONE_MINUS_SRC_ALPHA
-	case BlendModeMultiplicative:
+	case "multiplicative":
 		srcRGB = gl.DST_COLOR
 		srcA = gl.DST_COLOR
 		dstRGB = gl.ZERO
 		dstA = gl.ZERO
-	case BlendModePremultiplied:
+	case "premultiplied":
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_ALPHA
 		dstA = gl.ONE_MINUS_SRC_ALPHA
-	case BlendModeSubtractive:
+	case "subtractive":
 		fn = gl.FUNC_REVERSE_SUBTRACT
-	case BlendModeAdditive:
+	case "additive":
 		srcRGB = gl.SRC_ALPHA
 		srcA = gl.SRC_ALPHA
 		dstRGB = gl.ONE
 		dstA = gl.ONE
-	case BlendModeScreen:
+	case "screen":
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ONE_MINUS_SRC_COLOR
 		dstA = gl.ONE_MINUS_SRC_COLOR
 		break
-	case BlendModeReplace:
+	case "replace":
 		srcRGB = gl.ONE
 		srcA = gl.ONE
 		dstRGB = gl.ZERO
 		dstA = gl.ZERO
+	case "alpha":
+		fallthrough
+	default:
+		srcRGB = gl.SRC_ALPHA
+		srcA = gl.ONE
+		dstRGB = gl.ONE_MINUS_SRC_ALPHA
+		dstA = gl.ONE_MINUS_SRC_ALPHA
 	}
 
 	gl.BlendEquation(gl.Enum(fn))
@@ -690,14 +637,4 @@ func SetDefaultFilter(min, mag FilterMode, anisotropy float32) {
 		mag:        mag,
 		anisotropy: float32(math.Min(math.Max(float64(anisotropy), 1.0), float64(maxAnisotropy))),
 	}
-}
-
-// SetDefaultFilterF sets the default scaling filters used with Images, Canvases, and Fonts.
-func SetDefaultFilterF(f Filter) {
-	states.back().defaultFilter = f
-}
-
-// GetDefaultFilter returns the scaling filters used with Images, Canvases, and Fonts.
-func GetDefaultFilter() Filter {
-	return states.back().defaultFilter
 }
