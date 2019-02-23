@@ -2,6 +2,21 @@ package gfx
 
 import "github.com/goxjs/gl"
 
+// UniformType is the data type of a uniform
+type UniformType int
+
+//uniform types for shaders
+const (
+	UniformFloat UniformType = iota
+	UniformInt
+	UniformBool
+	UniformSampler
+	UniformUnknown
+	UniformBase UniformType = iota
+	UniformVec
+	UniformMat
+)
+
 // uniform represents a uniform in the shaders
 type uniform struct {
 	Location   gl.Uniform

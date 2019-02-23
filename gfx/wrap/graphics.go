@@ -257,7 +257,6 @@ func gfxSetBlendMode(ls *lua.LState) int {
 	return 0
 }
 
-//SetDefaultFilter
 //func gfxGetStencilTest(ls *lua.LState) int {
 //	return 0
 //}

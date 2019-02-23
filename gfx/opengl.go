@@ -2,7 +2,6 @@ package gfx
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl32/matstack"
@@ -23,12 +22,12 @@ var (
 	modelIdent             = mgl32.Ident4()
 	defaultShader          *Shader
 	defaultFace, _         = font.Bold(20)
-	defaultFont            = NewFont(defaultFace)
+	defaultFont            = newFont(defaultFace)
 
 	glState = openglState{
 		viewport: make([]int32, 4),
 	}
-	states = displayStateStack{newDisplayState()}
+	states = displayStateStack{stack: []displayState{newDisplayState()}}
 )
 
 // InitContext will initiate the opengl context with a viewport in the size of
@@ -44,6 +43,9 @@ func InitContext(window *glfw.Window) {
 	gl.GetIntegerv(gl.VIEWPORT, glState.viewport)
 	// And the current scissor - but we need to compensate for GL scissors
 	// starting at the bottom left instead of top left.
+	fmt.Println(states)
+	fmt.Println(states.back())
+	fmt.Println(states.back().scissorBox)
 	gl.GetIntegerv(gl.SCISSOR_BOX, states.back().scissorBox)
 	states.back().scissorBox[1] = glState.viewport[3] - (states.back().scissorBox[1] + states.back().scissorBox[3])
 
@@ -628,13 +630,4 @@ func SetBlendMode(mode string) {
 	gl.BlendEquation(gl.Enum(fn))
 	gl.BlendFuncSeparate(gl.Enum(srcRGB), gl.Enum(dstRGB), gl.Enum(srcA), gl.Enum(dstA))
 	states.back().blendMode = mode
-}
-
-// SetDefaultFilter sets the default scaling filters used with Images, Canvases, and Fonts.
-func SetDefaultFilter(min, mag FilterMode, anisotropy float32) {
-	states.back().defaultFilter = Filter{
-		min:        min,
-		mag:        mag,
-		anisotropy: float32(math.Min(math.Max(float64(anisotropy), 1.0), float64(maxAnisotropy))),
-	}
 }

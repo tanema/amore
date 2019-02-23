@@ -7,6 +7,7 @@ import (
 	"github.com/goxjs/glfw"
 	"github.com/yuin/gopher-lua"
 
+	"github.com/tanema/amore/file"
 	"github.com/tanema/amore/gfx"
 )
 
@@ -57,25 +58,35 @@ func Run(entrypoint string) error {
 		return err
 	}
 
-	luaState := lua.NewState()
-	defer luaState.Close()
+	ls := lua.NewState()
+	defer ls.Close()
 
 	gfx.InitContext(win.Window)
-	importGlobals(luaState, win.Window)
-	importModules(luaState)
-	runHooks(luaState, win.Window)
+	importGlobals(ls, win.Window)
+	importModules(ls)
+	runHooks(ls, win.Window)
 
-	if err := luaState.DoFile(entrypoint); err != nil {
+	entryfile, err := file.Open(entrypoint)
+	if err != nil {
 		return err
 	}
 
-	if load := luaState.GetGlobal("load"); load != nil {
-		if err := luaState.CallByParam(lua.P{Fn: load, Protect: true}); err != nil {
+	if fn, err := ls.Load(entryfile, entrypoint); err != nil {
+		return err
+	} else {
+		ls.Push(fn)
+		if err := ls.PCall(0, lua.MultRet, nil); err != nil {
 			return err
 		}
 	}
 
-	return gameloop(luaState, win)
+	if load := ls.GetGlobal("load"); load != nil {
+		if err := ls.CallByParam(lua.P{Fn: load, Protect: true}); err != nil {
+			return err
+		}
+	}
+
+	return gameloop(ls, win)
 }
 
 func importGlobals(ls *lua.LState, win *glfw.Window) {

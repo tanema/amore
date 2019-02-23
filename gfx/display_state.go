@@ -60,21 +60,23 @@ func newDisplayState() displayState {
 }
 
 // displayStateStack is a simple stack for keeping track of display state.
-type displayStateStack []displayState
+type displayStateStack struct {
+	stack []displayState
+}
 
 // push a new element onto the top of the stack
-func (stack *displayStateStack) push(state displayState) {
-	*stack = append(*stack, state)
+func (s *displayStateStack) push(state displayState) {
+	s.stack = append(s.stack, state)
 }
 
 // take the top element off the stack
-func (stack *displayStateStack) pop() displayState {
+func (s *displayStateStack) pop() displayState {
 	var state displayState
-	state, *stack = (*stack)[len(*stack)-1], (*stack)[:len(*stack)-1]
+	state, s.stack = s.stack[len(s.stack)-1], s.stack[:len(s.stack)-1]
 	return state
 }
 
 // get the top element in the stack
-func (stack *displayStateStack) back() *displayState {
-	return &(*stack)[len(*stack)-1]
+func (s *displayStateStack) back() *displayState {
+	return &s.stack[len(s.stack)-1]
 }

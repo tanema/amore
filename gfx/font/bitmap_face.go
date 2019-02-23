@@ -11,7 +11,6 @@ import (
 
 // BitmapFace holds data for a bitmap font face to satisfy the font.Face interface
 type BitmapFace struct {
-	file.File
 	img     image.Image
 	glyphs  map[rune]glyphData
 	advance fixed.Int26_6
@@ -25,7 +24,7 @@ type glyphData struct {
 
 // NewBitmapFace will load up an image font face for creating a font in graphics
 func NewBitmapFace(filepath, glyphHints string) (font.Face, error) {
-	imgFile, err := file.NewFile(filepath)
+	imgFile, err := file.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +38,6 @@ func NewBitmapFace(filepath, glyphHints string) (font.Face, error) {
 	glyphRuneHints := []rune(glyphHints)
 	advance := img.Bounds().Dx() / len(glyphRuneHints)
 	newFace := BitmapFace{
-		File:    imgFile,
 		img:     img,
 		glyphs:  make(map[rune]glyphData),
 		advance: fixed.I(advance),
@@ -117,4 +115,9 @@ func (face BitmapFace) Kern(r0, r1 rune) fixed.Int26_6 {
 // Metrics returns the metrics for this Face.
 func (face BitmapFace) Metrics() font.Metrics {
 	return face.metrics
+}
+
+// Close to satisfy face interface
+func (face BitmapFace) Close() error {
+	return nil
 }

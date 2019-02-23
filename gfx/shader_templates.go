@@ -6,12 +6,17 @@ import (
 
 const (
 	shaderSyntax = `
-#version 120
+//#version 120
 #define number float
 #define Image sampler2D
 #define extern uniform
 #define Texel texture2D
-#pragma optionNV(strict on)
+//#pragma optionNV(strict on)
+
+#ifdef GL_ES
+	precision highp float;
+#endif
+
 `
 	//Uniforms shared by the vertex and pixel shader stages.
 	shaderUniforms = `

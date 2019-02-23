@@ -1,8 +1,6 @@
 package gfx
 
-import (
-	"github.com/goxjs/gl"
-)
+import "github.com/goxjs/gl"
 
 type (
 	// WrapMode is used for setting texture/image/canvas wrap
@@ -15,16 +13,8 @@ type (
 	// The pixels of an object will be drawn if the comparison succeeds, for each
 	// pixel that the object touches.
 	CompareMode uint32
-	// UniformType is the data type of a uniform
-	UniformType int
-	// MeshDrawMode specifies the tesselation of the mesh points
-	MeshDrawMode uint32
 	// Usage is used for sprite batch usage, and specifies if it is static, dynamic, or stream
 	Usage uint32
-	// ParticleDistribution specifies which direction particle will be send in when spawned
-	ParticleDistribution int
-	// ParticleInsertion specifies which level a particle will be inserted on spawn.
-	ParticleInsertion int
 )
 
 // ColorMask contains an rgba color mask
@@ -32,8 +22,7 @@ type ColorMask struct {
 	r, g, b, a bool
 }
 
-var (
-	//opengl attribute variables
+var ( //opengl attribute variables
 	shaderPos           = gl.Attrib{Value: 0}
 	shaderTexCoord      = gl.Attrib{Value: 1}
 	shaderColor         = gl.Attrib{Value: 2}
@@ -73,18 +62,6 @@ const (
 	CompareNotequal CompareMode = 0x0205
 	CompareLequal   CompareMode = 0x0206
 	CompareAlways   CompareMode = 0x0207
-)
-
-//uniform types for shaders
-const (
-	UniformFloat UniformType = iota
-	UniformInt
-	UniformBool
-	UniformSampler
-	UniformUnknown
-	UniformBase UniformType = iota
-	UniformVec
-	UniformMat
 )
 
 // spritebatch usage

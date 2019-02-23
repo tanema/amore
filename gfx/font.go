@@ -11,21 +11,13 @@ type Font struct {
 }
 
 // NewFont rasterizes a ttf font and returns a pointer to a new Font
-func NewFont(face font.Face, runeSets ...[]rune) *Font {
-	if runeSets == nil || len(runeSets) == 0 {
-		runeSets = append(runeSets, font.ASCII, font.Latin)
-	}
-	return &Font{rasterizers: []*rasterizer{newRasterizer(face, runeSets...)}}
-}
-
-// NewTTFFont rasterizes a ttf font and returns a pointer to a new Font
-func NewTTFFont(filename string, fontSize float32, runeSets ...[]rune) (*Font, error) {
+func NewFont(filename string, fontSize float32, runeSets ...[]rune) (*Font, error) {
 	face, err := font.NewTTFFace(filename, fontSize)
 	if err != nil {
 		return nil, err
 	}
 	runeSets = append(runeSets, font.ASCII, font.Latin)
-	return NewFont(face, runeSets...), nil
+	return newFont(face, runeSets...), nil
 }
 
 // NewImageFont rasterizes an image using the glyphHints. The glyphHints should
@@ -37,7 +29,14 @@ func NewImageFont(filename, glyphHints string) (*Font, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewFont(face, []rune(glyphHints)), nil
+	return newFont(face, []rune(glyphHints)), nil
+}
+
+func newFont(face font.Face, runeSets ...[]rune) *Font {
+	if runeSets == nil || len(runeSets) == 0 {
+		runeSets = append(runeSets, font.ASCII, font.Latin)
+	}
+	return &Font{rasterizers: []*rasterizer{newRasterizer(face, runeSets...)}}
 }
 
 // SetLineHeight sets the height between lines

@@ -64,7 +64,9 @@ var graphicsMetaTables = runtime.LuaMetaTable{
 		"getfont":       gfxTextGetFont,
 		"setfont":       gfxTextSetFont,
 	},
-	"Font": {},
+	"Font": {
+		// getWidth, getHeight, setFallback
+	},
 }
 
 func init() {

@@ -31,7 +31,7 @@ func (img *Image) loadVolatile() bool {
 		return false
 	}
 
-	imgFile, err := file.NewFile(img.filePath)
+	imgFile, err := file.Open(img.filePath)
 	if err != nil {
 		return false
 	}
