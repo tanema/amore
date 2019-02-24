@@ -43,9 +43,6 @@ func InitContext(window *glfw.Window) {
 	gl.GetIntegerv(gl.VIEWPORT, glState.viewport)
 	// And the current scissor - but we need to compensate for GL scissors
 	// starting at the bottom left instead of top left.
-	fmt.Println(states)
-	fmt.Println(states.back())
-	fmt.Println(states.back().scissorBox)
 	gl.GetIntegerv(gl.SCISSOR_BOX, states.back().scissorBox)
 	states.back().scissorBox[1] = glState.viewport[3] - (states.back().scissorBox[1] + states.back().scissorBox[3])
 

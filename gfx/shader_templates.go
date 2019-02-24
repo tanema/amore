@@ -60,14 +60,6 @@ void main() {
 	gl_FragColor = effect(VaryingColor, _tex0_, VaryingTexCoord.st, pixelcoord);
 }`
 
-	footerMultiCanvas = `
-void main() {
-	// fix crashing issue in OSX when _tex0_ is unused within effect()
-	float dummy = Texel(_tex0_, vec2(.5)).r;
-	vec2 pixelcoord = vec2(gl_FragCoord.x, (gl_FragCoord.y * ScreenSize.z) + ScreenSize.w);
-	effects(VaryingColor, _tex0_, VaryingTexCoord.st, pixelcoord);
-}`
-
 	defaultVertexShaderCode = `
 vec4 position(mat4 transform, vec4 vertpos) {
 	return transform * vertpos;

@@ -321,7 +321,7 @@ func createVertexCode(code string) string {
 	return templateWriter.String()
 }
 
-func createPixelCode(code string, isMulticanvas bool) string {
+func createPixelCode(code string) string {
 	codes := struct {
 		Syntax, Header, Uniforms, Line, Footer, Code string
 	}{
@@ -331,11 +331,7 @@ func createPixelCode(code string, isMulticanvas bool) string {
 		Code:     code,
 	}
 
-	if isMulticanvas {
-		codes.Footer = footerMultiCanvas
-	} else {
-		codes.Footer = pixelFooter
-	}
+	codes.Footer = pixelFooter
 
 	var templateWriter bytes.Buffer
 	err := shaderTemplate.Execute(&templateWriter, codes)
@@ -351,14 +347,9 @@ func isVertexCode(code string) bool {
 	return match
 }
 
-func isPixelCode(code string) (bool, bool) {
-	if match, _ := regexp.MatchString(`vec4\s+effect\s*\(`, code); match {
-		return true, false
-	} else if match, _ := regexp.MatchString(`vec4\s+effects\s*\(`, code); match {
-		// function for rendering to multiple canvases simultaneously
-		return true, true
-	}
-	return false, false
+func isPixelCode(code string) bool {
+	match, _ := regexp.MatchString(`vec4\s+effect\s*\(`, code)
+	return match
 }
 
 //convert paths to strings of code
@@ -368,7 +359,7 @@ func pathsToCode(paths ...string) []string {
 	if paths != nil {
 		for _, path := range paths {
 			//if this is not code it must be a path
-			isPixel, _ := isPixelCode(path)
+			isPixel := isPixelCode(path)
 			if !isVertexCode(path) && !isPixel {
 				code = append(code, file.ReadString(path))
 			} else { //it is code!
@@ -382,21 +373,17 @@ func pathsToCode(paths ...string) []string {
 func shaderCodeToGLSL(code ...string) (string, string) {
 	vertexcode := defaultVertexShaderCode
 	pixelcode := defaultPixelShaderCode
-	isMulticanvas := false // whether pixel code has "effects" function instead of "effect"
 
 	for _, shaderCode := range code {
 		if isVertexCode(shaderCode) {
 			vertexcode = shaderCode
 		}
-
-		ispixel, isMultiCanvas := isPixelCode(shaderCode)
-		if ispixel {
+		if isPixelCode(shaderCode) {
 			pixelcode = shaderCode
-			isMulticanvas = isMultiCanvas
 		}
 	}
 
-	return createVertexCode(vertexcode), createPixelCode(pixelcode, isMulticanvas)
+	return createVertexCode(vertexcode), createPixelCode(pixelcode)
 }
 
 func compileCode(shaderType gl.Enum, src string) gl.Shader {
