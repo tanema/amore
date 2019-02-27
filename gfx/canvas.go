@@ -117,28 +117,24 @@ func (canvas *Canvas) stopGrab(switchingToOtherCanvas bool) error {
 
 // NewImageData will create an image from the canvas data. It will return an error
 // only if the dimensions given are invalid
-func (canvas *Canvas) NewImageData(x, y, w, h int32) (image.Image, error) {
+func (canvas *Canvas) NewImageData(x, y, w, h int32) (*Image, error) {
 	if x < 0 || y < 0 || w <= 0 || h <= 0 || (x+w) > canvas.width || (y+h) > canvas.height {
 		return nil, fmt.Errorf("invalid ImageData rectangle dimensions")
 	}
-
 	prevCanvas := GetCanvas()
 	SetCanvas(canvas)
-
 	screenshot := image.NewRGBA(image.Rect(int(x), int(y), int(w), int(h)))
 	stride := int32(screenshot.Stride)
 	pixels := make([]byte, len(screenshot.Pix))
 	gl.ReadPixels(pixels, int(x), int(y), int(w), int(h), gl.RGBA, gl.UNSIGNED_BYTE)
-
 	for y := int32(0); y < h; y++ {
 		i := (h - 1 - y) * stride
 		copy(screenshot.Pix[y*stride:], pixels[i:i+w*4])
 	}
-
 	SetCanvas(prevCanvas)
-
-	// The new ImageData now owns the pixel data, so we don't delete it here.
-	return screenshot, nil
+	newImage := &Image{Texture: newImageTexture(screenshot, false)}
+	registerVolatile(newImage)
+	return newImage, nil
 }
 
 // checkCreateStencil if a stencil is set on a canvas then we need to create

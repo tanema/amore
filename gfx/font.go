@@ -11,13 +11,12 @@ type Font struct {
 }
 
 // NewFont rasterizes a ttf font and returns a pointer to a new Font
-func NewFont(filename string, fontSize float32, runeSets ...[]rune) (*Font, error) {
+func NewFont(filename string, fontSize float32) (*Font, error) {
 	face, err := font.NewTTFFace(filename, fontSize)
 	if err != nil {
 		return nil, err
 	}
-	runeSets = append(runeSets, font.ASCII, font.Latin)
-	return newFont(face, runeSets...), nil
+	return newFont(face, font.ASCII, font.Latin), nil
 }
 
 // NewImageFont rasterizes an image using the glyphHints. The glyphHints should

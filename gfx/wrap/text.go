@@ -72,8 +72,7 @@ func gfxPrintf(ls *lua.LState) int {
 func gfxNewText(ls *lua.LState) int {
 	str, clrs := extractPrintable(ls, 2)
 	text := gfx.NewText(toFont(ls, 1), str, clrs, toFloatD(ls, 3, -1), toStringD(ls, 4, "left"))
-	ls.Push(toUD(ls, "Text", text))
-	return 1
+	return returnUD(ls, "Text", text)
 }
 
 func gfxTextDraw(ls *lua.LState) int {
@@ -110,9 +109,7 @@ func gfxTextGetDimensions(ls *lua.LState) int {
 }
 
 func gfxTextGetFont(ls *lua.LState) int {
-	txt := toText(ls, 1)
-	ls.Push(toUD(ls, "Font", txt.GetFont()))
-	return 1
+	return returnUD(ls, "Font", toText(ls, 1).GetFont())
 }
 
 func gfxTextSetFont(ls *lua.LState) int {

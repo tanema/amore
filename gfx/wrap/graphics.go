@@ -42,8 +42,7 @@ func gfxPolygon(ls *lua.LState) int {
 }
 
 func gfxScreenShot(ls *lua.LState) int {
-	ls.Push(toUD(ls, "Image", gfx.NewScreenshot()))
-	return 1
+	return returnUD(ls, "Image", gfx.NewScreenshot())
 }
 
 func gfxGetViewport(ls *lua.LState) int {
@@ -248,12 +247,20 @@ func gfxSetFont(ls *lua.LState) int {
 }
 
 func gfxGetFont(ls *lua.LState) int {
-	ls.Push(toUD(ls, "Font", gfx.GetFont()))
-	return 1
+	return returnUD(ls, "Font", gfx.GetFont())
 }
 
 func gfxSetBlendMode(ls *lua.LState) int {
 	gfx.SetBlendMode(extractBlendmode(ls, 1))
+	return 0
+}
+
+func gfxGetCanvas(ls *lua.LState) int {
+	return returnUD(ls, "Canvas", gfx.GetCanvas())
+}
+
+func gfxSetCanvas(ls *lua.LState) int {
+	gfx.SetCanvas(toCanvas(ls, 1))
 	return 0
 }
 
@@ -265,4 +272,4 @@ func gfxSetBlendMode(ls *lua.LState) int {
 //	//ClearStencilTest
 //	return 0
 //}
-// Stencil, SetShader, GetCanvas, SetCanvas,
+// Stencil, SetShader,

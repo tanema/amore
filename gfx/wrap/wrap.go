@@ -44,16 +44,22 @@ var graphicsFunctions = runtime.LuaFuncs{
 	"setblendmode":       gfxSetBlendMode,
 
 	// metatable entries
-	"newimage": gfxNewImage,
-	"newtext":  gfxNewText,
+	"newimage":  gfxNewImage,
+	"newtext":   gfxNewText,
+	"newfont":   gfxNewFont,
+	"newquad":   gfxNewQuad,
+	"newcanvas": gfxNewCanvas,
 }
 
 var graphicsMetaTables = runtime.LuaMetaTable{
 	"Image": {
-		"draw":          gfxImageDraw,
-		"getwidth":      gfxImageGetWidth,
-		"getheigth":     gfxImageGetHeight,
-		"getDimensions": gfxImageGetDimensions,
+		"draw":          gfxTextureDraw,
+		"drawq":         gfxTextureDrawq,
+		"getwidth":      gfxTextureGetWidth,
+		"getheigth":     gfxTextureGetHeight,
+		"getDimensions": gfxTextureGetDimensions,
+		"setwrap":       gfxTextureSetWrap,
+		"setfilter":     gfxTextureSetFilter,
 	},
 	"Text": {
 		"set":           gfxTextSet,
@@ -65,8 +71,29 @@ var graphicsMetaTables = runtime.LuaMetaTable{
 		"setfont":       gfxTextSetFont,
 	},
 	"Font": {
-		// getWidth, getHeight, setFallback
+		"getwidth":    gfxFontGetWidth,
+		"getheight":   gfxFontGetHeight,
+		"setfallback": gfxFontSetFallback,
+		"getwrap":     gfxFontGetWrap,
 	},
+	"Quad": {
+		"getwidth":    gfxQuadGetWidth,
+		"geteheight":  gfxQuadGetHeight,
+		"getviewport": gfxQuadGetViewport,
+		"setviewport": gfxQuadSetViewport,
+	},
+	"Canvas": {
+		"newimage":      gfxCanvasNewImage,
+		"draw":          gfxTextureDraw,
+		"drawq":         gfxTextureDrawq,
+		"getwidth":      gfxTextureGetWidth,
+		"getheigth":     gfxTextureGetHeight,
+		"getDimensions": gfxTextureGetDimensions,
+		"setwrap":       gfxTextureSetWrap,
+		"setfilter":     gfxTextureSetFilter,
+	},
+	"SpriteBatch": {},
+	"Shader":      {},
 }
 
 func init() {

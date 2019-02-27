@@ -1,6 +1,10 @@
 package wrap
 
-import "github.com/yuin/gopher-lua"
+import (
+	"github.com/yuin/gopher-lua"
+
+	"github.com/tanema/amore/gfx"
+)
 
 func extractCoords(ls *lua.LState, offset int) []float32 {
 	coords := extractFloatArray(ls, offset)
@@ -105,11 +109,12 @@ func extractFloatArray(ls *lua.LState, offset int) []float32 {
 	return args
 }
 
-func toUD(ls *lua.LState, metatable string, item interface{}) *lua.LUserData {
+func returnUD(ls *lua.LState, metatable string, item interface{}) int {
 	f := ls.NewUserData()
 	f.Value = item
 	ls.SetMetatable(f, ls.GetTypeMetatable(metatable))
-	return f
+	ls.Push(f)
+	return 1
 }
 
 func extractColor(ls *lua.LState, offset int) (r, g, b, a float32) {
@@ -129,4 +134,60 @@ func extractColor(ls *lua.LState, offset int) (r, g, b, a float32) {
 		return args[0], args[0], args[0], 1
 	}
 	return 1, 1, 1, 1
+}
+
+func toWrap(ls *lua.LState, offset int) gfx.WrapMode {
+	wrapStr := toStringD(ls, offset, "clamp")
+	switch wrapStr {
+	case "clamp":
+		return gfx.WrapClamp
+	case "repeat":
+		return gfx.WrapRepeat
+	case "mirror":
+		return gfx.WrapMirroredRepeat
+	default:
+		ls.ArgError(offset, "invalid wrap mode")
+	}
+	return gfx.WrapClamp
+}
+
+func fromWrap(mode gfx.WrapMode) string {
+	switch mode {
+	case gfx.WrapRepeat:
+		return "repeat"
+	case gfx.WrapMirroredRepeat:
+		return "mirror"
+	case gfx.WrapClamp:
+		fallthrough
+	default:
+		return "clamp"
+	}
+}
+
+func toFilter(ls *lua.LState, offset int) gfx.FilterMode {
+	wrapStr := toStringD(ls, offset, "near")
+	switch wrapStr {
+	case "none":
+		return gfx.FilterNone
+	case "near":
+		return gfx.FilterNearest
+	case "linear":
+		return gfx.FilterLinear
+	default:
+		ls.ArgError(offset, "invalid filter mode")
+	}
+	return gfx.FilterNearest
+}
+
+func fromFilter(mode gfx.FilterMode) string {
+	switch mode {
+	case gfx.FilterLinear:
+		return "linear"
+	case gfx.FilterNone:
+		return "none"
+	case gfx.FilterNearest:
+		fallthrough
+	default:
+		return "near"
+	}
 }

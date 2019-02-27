@@ -12,6 +12,7 @@ TODO:
 - [x] change out specific opengl for https://github.com/goxjs/gl
 - [x] reimlement input with mapping key to event
 - [x] goxjs file loading glfw.Open()
+- [ ] antialiasing
 - [ ] fix default non fullscreen scaling
 - [ ] fix web runtime
     - [ ] font rendering
