@@ -264,12 +264,36 @@ func gfxSetCanvas(ls *lua.LState) int {
 	return 0
 }
 
-//func gfxGetStencilTest(ls *lua.LState) int {
-//	return 0
-//}
+func gfxGetStencilTest(ls *lua.LState) int {
+	mode, value := gfx.GetStencilTest()
+	ls.Push(lua.LString(fromCompareMode(mode)))
+	ls.Push(lua.LNumber(value))
+	return 2
+}
 
-//func gfxSetStencilTest(ls *lua.LState) int {
-//	//ClearStencilTest
-//	return 0
-//}
-// Stencil, SetShader,
+func gfxSetStencilTest(ls *lua.LState) int {
+	wrapStr := toStringD(ls, 1, "")
+	if wrapStr == "" {
+		gfx.ClearStencilTest()
+		return 0
+	}
+	gfx.SetStencilTest(toCompareMode(wrapStr, 1), int32(toInt(ls, 2)))
+	return 0
+}
+
+func gfxStencil(ls *lua.LState) int {
+	fn := ls.ToFunction(1)
+	if fn == lua.LNil {
+		ls.ArgError(1, "a function is required for a stencil")
+	}
+	fnWrap := func() {
+		ls.CallByParam(lua.P{Fn: fn, Protect: true})
+	}
+	gfx.Stencil(fnWrap, toStencilAction(toStringD(ls, 2, "replace"), 2), int32(toIntD(ls, 3, 1)), ls.ToBool(4))
+	return 0
+}
+
+func gfxSetShader(ls *lua.LState) int {
+	gfx.SetShader(toShader(ls, 1))
+	return 0
+}

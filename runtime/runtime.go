@@ -80,7 +80,7 @@ func Run(entrypoint string) error {
 		}
 	}
 
-	if load := ls.GetGlobal("load"); load != nil {
+	if load := ls.GetGlobal("onload"); load != lua.LNil {
 		if err := ls.CallByParam(lua.P{Fn: load, Protect: true}); err != nil {
 			return err
 		}

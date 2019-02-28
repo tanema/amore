@@ -42,13 +42,18 @@ var graphicsFunctions = runtime.LuaFuncs{
 	"getfont":            gfxGetFont,
 	"setfont":            gfxSetFont,
 	"setblendmode":       gfxSetBlendMode,
+	"getstenciltest":     gfxGetStencilTest,
+	"setstenciltest":     gfxSetStencilTest,
+	"stencil":            gfxStencil,
+	"setshader":          gfxSetShader,
 
 	// metatable entries
-	"newimage":  gfxNewImage,
-	"newtext":   gfxNewText,
-	"newfont":   gfxNewFont,
-	"newquad":   gfxNewQuad,
-	"newcanvas": gfxNewCanvas,
+	"newimage":       gfxNewImage,
+	"newtext":        gfxNewText,
+	"newfont":        gfxNewFont,
+	"newquad":        gfxNewQuad,
+	"newcanvas":      gfxNewCanvas,
+	"newspritebatch": gfxNewSpriteBatch,
 }
 
 var graphicsMetaTables = runtime.LuaMetaTable{
@@ -92,8 +97,24 @@ var graphicsMetaTables = runtime.LuaMetaTable{
 		"setwrap":       gfxTextureSetWrap,
 		"setfilter":     gfxTextureSetFilter,
 	},
-	"SpriteBatch": {},
-	"Shader":      {},
+	"SpriteBatch": {
+		"add":           gfxSpriteBatchAdd,
+		"addq":          gfxSpriteBatchAddq,
+		"set":           gfxSpriteBatchSet,
+		"setq":          gfxSpriteBatchSetq,
+		"clear":         gfxSpriteBatchClear,
+		"settexture":    gfxSpriteBatchSetTexture,
+		"gettexture":    gfxSpriteBatchGetTexture,
+		"setcolor":      gfxSpriteBatchSetColor,
+		"getcolor":      gfxSpriteBatchGetColor,
+		"getcount":      gfxSpriteBatchGetCount,
+		"setbuffersize": gfxSpriteBatchSetBufferSize,
+		"getbuffersize": gfxSpriteBatchGetBufferSize,
+		"setdrawrange":  gfxSpriteBatchSetDrawRange,
+		"getdrawrange":  gfxSpriteBatchGetDrawRange,
+		"draw":          gfxSpriteBatchDraw,
+	},
+	"Shader": {},
 }
 
 func init() {

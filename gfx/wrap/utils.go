@@ -191,3 +191,90 @@ func fromFilter(mode gfx.FilterMode) string {
 		return "near"
 	}
 }
+
+func toUsage(ls *lua.LState, offset int) gfx.Usage {
+	wrapStr := toStringD(ls, offset, "dynamic")
+	switch wrapStr {
+	case "dynamic":
+		return gfx.UsageDynamic
+	case "static":
+		return gfx.UsageStatic
+	case "stream":
+		return gfx.UsageStream
+	default:
+		ls.ArgError(offset, "invalid usage mode")
+	}
+	return gfx.UsageDynamic
+}
+
+func fromUsage(mode gfx.Usage) string {
+	switch mode {
+	case gfx.UsageStatic:
+		return "static"
+	case gfx.UsageStream:
+		return "stream"
+	case gfx.UsageDynamic:
+		fallthrough
+	default:
+		return "dynamic"
+	}
+}
+
+func toCompareMode(wrapStr string, offset int) gfx.CompareMode {
+	switch wrapStr {
+	case "always":
+		return gfx.CompareAlways
+	case "greater":
+		return gfx.CompareGreater
+	case "equal":
+		return gfx.CompareEqual
+	case "gequal":
+		return gfx.CompareGequal
+	case "less":
+		return gfx.CompareLess
+	case "nequal":
+		return gfx.CompareNotequal
+	case "lequal":
+		return gfx.CompareLequal
+	}
+	return gfx.CompareAlways
+}
+
+func fromCompareMode(mode gfx.CompareMode) string {
+	switch mode {
+	case gfx.CompareLequal:
+		return "lequal"
+	case gfx.CompareNotequal:
+		return "nequal"
+	case gfx.CompareLess:
+		return "less"
+	case gfx.CompareGequal:
+		return "gequal"
+	case gfx.CompareEqual:
+		return "equal"
+	case gfx.CompareGreater:
+		return "greater"
+	case gfx.CompareAlways:
+		fallthrough
+	default:
+		return "always"
+	}
+}
+
+func toStencilAction(wrapStr string, offset int) gfx.StencilAction {
+	switch wrapStr {
+	case "replace":
+		return gfx.StencilReplace
+	case "increment":
+		return gfx.StencilIncrement
+	case "decrement":
+		return gfx.StencilDecrement
+	case "incrementwrap":
+		return gfx.StencilIncrementWrap
+	case "decrementwrap":
+		return gfx.StencilDecrementWrap
+	case "invert":
+		return gfx.StencilInvert
+	}
+	return gfx.StencilReplace
+}
