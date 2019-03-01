@@ -115,6 +115,15 @@ func (shader *Shader) attach(temporary bool) {
 	}
 }
 
+// GetUniformType will return the type and count if it exists and false if it doesn't
+func (shader *Shader) GetUniformType(name string) (UniformType, bool) {
+	u, ok := shader.uniforms[name]
+	if ok {
+		return u.BaseType, ok
+	}
+	return UniformType(-1), false
+}
+
 func (shader *Shader) getUniformAndCheck(name string, expected UniformType, count int) (uniform, error) {
 	u, ok := shader.uniforms[name]
 	if !ok {
@@ -358,9 +367,11 @@ func pathsToCode(paths ...string) []string {
 	code := []string{}
 	if paths != nil {
 		for _, path := range paths {
+			if path == "" {
+				continue
+			}
 			//if this is not code it must be a path
-			isPixel := isPixelCode(path)
-			if !isVertexCode(path) && !isPixel {
+			if !isVertexCode(path) && !isPixelCode(path) {
 				code = append(code, file.ReadString(path))
 			} else { //it is code!
 				code = append(code, path)

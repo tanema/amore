@@ -109,6 +109,22 @@ func extractFloatArray(ls *lua.LState, offset int) []float32 {
 	return args
 }
 
+func extractIntArray(ls *lua.LState, offset int) []int32 {
+	args := []int32{}
+	for x := ls.Get(offset); x != nil; offset++ {
+		val := ls.Get(offset)
+		if lv, ok := val.(lua.LNumber); ok {
+			args = append(args, int32(lv))
+		} else if val.Type() == lua.LTNil {
+			break
+		} else {
+			ls.ArgError(offset, "argument wrong type, should be number")
+		}
+	}
+
+	return args
+}
+
 func returnUD(ls *lua.LState, metatable string, item interface{}) int {
 	f := ls.NewUserData()
 	f.Value = item

@@ -54,6 +54,7 @@ var graphicsFunctions = runtime.LuaFuncs{
 	"newquad":        gfxNewQuad,
 	"newcanvas":      gfxNewCanvas,
 	"newspritebatch": gfxNewSpriteBatch,
+	"newshader":      gfxNewShader,
 }
 
 var graphicsMetaTables = runtime.LuaMetaTable{
@@ -114,7 +115,9 @@ var graphicsMetaTables = runtime.LuaMetaTable{
 		"getdrawrange":  gfxSpriteBatchGetDrawRange,
 		"draw":          gfxSpriteBatchDraw,
 	},
-	"Shader": {},
+	"Shader": {
+		"send": gfxShaderSend,
+	},
 }
 
 func init() {
