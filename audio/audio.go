@@ -3,11 +3,34 @@
 package audio
 
 import (
+	"time"
+
 	"github.com/tanema/amore/audio/openal"
 )
 
 // Source is an playable audio source
-type Source = openal.Source
+type Source interface {
+	IsFinished() bool
+	GetDuration() time.Duration
+	GetPitch() float32
+	GetVolume() float32
+	GetState() string
+	IsLooping() bool
+	IsPaused() bool
+	IsPlaying() bool
+	IsStatic() bool
+	IsStopped() bool
+	SetLooping(loop bool)
+	SetPitch(p float32)
+	SetVolume(v float32)
+	Play() bool
+	Pause()
+	Resume()
+	Rewind()
+	Seek(time.Duration)
+	Stop()
+	Tell() time.Duration
+}
 
 // NewSource creates a new Source from a file at the path provided. If you
 // specify a static source it will all be buffered into a single buffer. If
@@ -15,7 +38,7 @@ type Source = openal.Source
 // This allows a smaller memory footprint while playing bigger music files. You
 // may want a static file if the sound is less than 2 seconds. It allows for faster
 // cleaning playing of shorter sounds like footsteps.
-func NewSource(filepath string, static bool) (*Source, error) {
+func NewSource(filepath string, static bool) (Source, error) {
 	return openal.NewSource(filepath, static)
 }
 

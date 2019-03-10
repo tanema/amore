@@ -26,18 +26,6 @@ type Source struct {
 	offsetBytes  int32
 }
 
-// State indicates the current playing state of the source.
-type State int
-
-// Audio States
-const (
-	Unknown = State(0)
-	Initial = State(al.Initial)
-	Playing = State(al.Playing)
-	Paused  = State(al.Paused)
-	Stopped = State(al.Stopped)
-)
-
 // NewSource creates a new Source from a file at the path provided. If you
 // specify a static source it will all be buffered into a single buffer. If
 // false then it will create many buffers a cycle through them with data chunks.
@@ -146,9 +134,19 @@ func (s *Source) GetVolume() float32 {
 }
 
 // GetState returns the playing state of the source.
-//     source.GetState() == audio.Playing
-func (s *Source) GetState() State {
-	return State(s.source.State())
+func (s *Source) GetState() string {
+	switch s.source.State() {
+	case al.Initial:
+		return "initial"
+	case al.Playing:
+		return "playing"
+	case al.Paused:
+		return "paused"
+	case al.Stopped:
+		return "stopped"
+	default:
+		return "unknown"
+	}
 }
 
 // IsLooping returns whether the Source will loop.
@@ -159,7 +157,7 @@ func (s *Source) IsLooping() bool {
 // IsPaused returns whether the Source is paused.
 func (s *Source) IsPaused() bool {
 	if s.isValid() {
-		return s.GetState() == Paused
+		return s.GetState() == "paused"
 	}
 	return false
 }
@@ -167,7 +165,7 @@ func (s *Source) IsPaused() bool {
 // IsPlaying returns whether the Source is playing.
 func (s *Source) IsPlaying() bool {
 	if s.isValid() {
-		return s.GetState() == Playing
+		return s.GetState() == "playing"
 	}
 	return false
 }
@@ -180,7 +178,7 @@ func (s *Source) IsStatic() bool {
 // IsStopped returns whether the Source is stopped.
 func (s *Source) IsStopped() bool {
 	if s.isValid() {
-		return s.GetState() == Stopped
+		return s.GetState() == "stopped"
 	}
 	return true
 }

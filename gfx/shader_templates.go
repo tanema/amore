@@ -4,29 +4,21 @@ import (
 	"text/template"
 )
 
-const (
-	shaderSyntax = `
-//#version 120
-#define number float
-#define Image sampler2D
-#define extern uniform
-#define Texel texture2D
-//#pragma optionNV(strict on)
-
+var (
+	shaderTemplate, _ = template.New("shader").Parse(`
 #ifdef GL_ES
 	precision highp float;
 #endif
-
-`
-	//Uniforms shared by the vertex and pixel shader stages.
-	shaderUniforms = `
-uniform mat4 ProjectionMat;
-uniform mat4 ViewMat;
-uniform mat4 ModelMat;
-uniform mat4 PreMulMat;
+uniform mat4 TransformMat;
 uniform vec4 ScreenSize;
-`
+{{.Header}}
+#line 1
+{{.Code}}
+{{.Footer}}
+`)
+)
 
+const (
 	vertexHeader = `
 attribute vec4 VertexPosition;
 attribute vec4 VertexTexCoord;
@@ -37,46 +29,33 @@ varying vec4 VaryingColor;
 uniform float PointSize;
 `
 
+	defaultVertexShaderCode = `
+vec4 position(mat4 transformMatrix, vec4 vertexPosition) {
+	return transformMatrix * vertexPosition;
+}`
+
 	vertexFooter = `
 void main() {
 	VaryingTexCoord = VertexTexCoord;
 	VaryingColor = VertexColor * ConstantColor;
 	gl_PointSize = PointSize;
-	gl_Position = position(PreMulMat, VertexPosition);
+	gl_Position = position(TransformMat, VertexPosition);
 }`
 
-	pixelHeader = `
-#define Canvases gl_FragData
+	fragmentHeader = `
 varying vec4 VaryingTexCoord;
 varying vec4 VaryingColor;
-uniform sampler2D _tex0_;
+uniform sampler2D Texture0;
 `
 
-	pixelFooter = `
+	defaultFragmentShaderCode = `
+vec4 effect(vec4 color, sampler2D texture, vec2 textureCoordinate, vec2 pixcoord) {
+	return texture2D(texture, textureCoordinate) * color;
+}`
+
+	fragmentFooter = `
 void main() {
-	// fix crashing issue in OSX when _tex0_ is unused within effect()
-	float dummy = Texel(_tex0_, vec2(.5)).r;
 	vec2 pixelcoord = vec2(gl_FragCoord.x, (gl_FragCoord.y * ScreenSize.z) + ScreenSize.w);
-	gl_FragColor = effect(VaryingColor, _tex0_, VaryingTexCoord.st, pixelcoord);
+	gl_FragColor = effect(VaryingColor, Texture0, VaryingTexCoord.st, pixelcoord);
 }`
-
-	defaultVertexShaderCode = `
-vec4 position(mat4 transform, vec4 vertpos) {
-	return transform * vertpos;
-}`
-
-	defaultPixelShaderCode = `
-vec4 effect(vec4 vcolor, Image tex, vec2 texcoord, vec2 pixcoord) {
-	return Texel(tex, texcoord) * vcolor;
-}`
-)
-
-var (
-	shaderTemplate, _ = template.New("shader").Parse(`{{.Syntax}}
-{{.Header}}
-{{.Uniforms}}
-#line 1
-{{.Code}}
-{{.Footer}}
-`)
 )

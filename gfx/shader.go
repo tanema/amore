@@ -16,7 +16,7 @@ import (
 // Shader is a glsl program that can be applied while drawing.
 type Shader struct {
 	vertexCode     string
-	pixelCode      string
+	fragmentCode   string
 	program        gl.Program
 	uniforms       map[string]uniform // uniform location buffer map
 	texUnitPool    map[string]int
@@ -28,14 +28,14 @@ type Shader struct {
 func NewShader(paths ...string) *Shader {
 	newShader := &Shader{}
 	code := pathsToCode(paths...)
-	newShader.vertexCode, newShader.pixelCode = shaderCodeToGLSL(code...)
+	newShader.vertexCode, newShader.fragmentCode = shaderCodeToGLSL(code...)
 	registerVolatile(newShader)
 	return newShader
 }
 
 func (shader *Shader) loadVolatile() bool {
 	vert := compileCode(gl.VERTEX_SHADER, shader.vertexCode)
-	frag := compileCode(gl.FRAGMENT_SHADER, shader.pixelCode)
+	frag := compileCode(gl.FRAGMENT_SHADER, shader.fragmentCode)
 	shader.program = gl.CreateProgram()
 	shader.texUnitPool = make(map[string]int)
 	shader.activeTexUnits = make([]gl.Texture, maxTextureUnits)
@@ -310,44 +310,13 @@ func (shader *Shader) getTextureUnit(name string) int {
 	return shader.texUnitPool[name]
 }
 
-func createVertexCode(code string) string {
-	codes := struct {
-		Syntax, Header, Uniforms, Code, Footer string
-	}{
-		Syntax:   shaderSyntax,
-		Header:   vertexHeader,
-		Uniforms: shaderUniforms,
-		Code:     code,
-		Footer:   vertexFooter,
-	}
-
+func createCode(header, code, footer string) string {
 	var templateWriter bytes.Buffer
-	err := shaderTemplate.Execute(&templateWriter, codes)
-	if err != nil {
+	if err := shaderTemplate.Execute(&templateWriter, struct {
+		Header, Code, Footer string
+	}{Header: header, Code: code, Footer: footer}); err != nil {
 		panic(err)
 	}
-
-	return templateWriter.String()
-}
-
-func createPixelCode(code string) string {
-	codes := struct {
-		Syntax, Header, Uniforms, Line, Footer, Code string
-	}{
-		Syntax:   shaderSyntax,
-		Header:   pixelHeader,
-		Uniforms: shaderUniforms,
-		Code:     code,
-	}
-
-	codes.Footer = pixelFooter
-
-	var templateWriter bytes.Buffer
-	err := shaderTemplate.Execute(&templateWriter, codes)
-	if err != nil {
-		panic(err)
-	}
-
 	return templateWriter.String()
 }
 
@@ -356,7 +325,7 @@ func isVertexCode(code string) bool {
 	return match
 }
 
-func isPixelCode(code string) bool {
+func isFragmentCode(code string) bool {
 	match, _ := regexp.MatchString(`vec4\s+effect\s*\(`, code)
 	return match
 }
@@ -371,7 +340,7 @@ func pathsToCode(paths ...string) []string {
 				continue
 			}
 			//if this is not code it must be a path
-			if !isVertexCode(path) && !isPixelCode(path) {
+			if !isVertexCode(path) && !isFragmentCode(path) {
 				code = append(code, file.ReadString(path))
 			} else { //it is code!
 				code = append(code, path)
@@ -383,18 +352,16 @@ func pathsToCode(paths ...string) []string {
 
 func shaderCodeToGLSL(code ...string) (string, string) {
 	vertexcode := defaultVertexShaderCode
-	pixelcode := defaultPixelShaderCode
-
+	fragmentCode := defaultFragmentShaderCode
 	for _, shaderCode := range code {
 		if isVertexCode(shaderCode) {
 			vertexcode = shaderCode
 		}
-		if isPixelCode(shaderCode) {
-			pixelcode = shaderCode
+		if isFragmentCode(shaderCode) {
+			fragmentCode = shaderCode
 		}
 	}
-
-	return createVertexCode(vertexcode), createPixelCode(pixelcode)
+	return createCode(vertexHeader, vertexcode, vertexFooter), createCode(fragmentHeader, fragmentCode, fragmentFooter)
 }
 
 func compileCode(shaderType gl.Enum, src string) gl.Shader {

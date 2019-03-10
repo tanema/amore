@@ -45,7 +45,7 @@ const bufferSize = 128 * 1024
 // are wav, ogg, and flac. If there is an error retrieving the file or decoding it,
 // will return that error.
 func Decode(filepath string) (*Decoder, error) {
-	src, err := file.NewFile(filepath)
+	src, err := file.Open(filepath)
 	if err != nil {
 		return nil, err
 	}

@@ -54,12 +54,15 @@ func gfxGetViewport(ls *lua.LState) int {
 
 func gfxSetViewport(ls *lua.LState) int {
 	viewport := extractCoords(ls, 1)
-	if len(viewport) == 2 {
-		gfx.SetViewport(0, 0, int32(viewport[0]), int32(viewport[1]))
+	if len(viewport) == 0 {
+		w, h := gfx.GetDimensions()
+		gfx.SetViewportSize(int32(w), int32(h))
+	} else if len(viewport) == 2 {
+		gfx.SetViewportSize(int32(viewport[0]), int32(viewport[1]))
 	} else if len(viewport) == 4 {
 		gfx.SetViewport(int32(viewport[0]), int32(viewport[1]), int32(viewport[2]), int32(viewport[3]))
 	} else {
-		ls.ArgError(1, "either provide (x, y, w, h) or (w, h)")
+		ls.ArgError(1, "either provide (x, y, w, h) or (w, h) nothing at all to reset the viewport")
 	}
 	return 0
 }

@@ -74,11 +74,6 @@ func InitContext(window *glfw.Window) {
 	glState.boundTextures = make([]gl.Texture, maxTextureUnits)
 	curgltextureunit := gl.GetInteger(gl.ACTIVE_TEXTURE)
 	glState.curTextureUnit = int(curgltextureunit - gl.TEXTURE0)
-	// Retrieve currently bound textures for each texture unit.
-	// for i := 0; i < len(glState.boundTextures); i++ {
-	//	gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + uint32(i)))
-	//	glState.boundTextures[i] = gl.Texture{Value: uint32(gl.GetInteger(gl.TEXTURE_BINDING_2D))}
-	// }
 	gl.ActiveTexture(gl.Enum(curgltextureunit))
 	createDefaultTexture()
 	setTextureUnit(0)
@@ -104,7 +99,7 @@ func deInit(w *glfw.Window) {
 func callbackHandlers(window *glfw.Window) {
 	window.SetCloseCallback(deInit)
 	window.SetFramebufferSizeCallback(func(w *glfw.Window, width int, height int) {
-		SetViewport(0, 0, int32(width), int32(height))
+		SetViewportSize(int32(width), int32(height))
 	})
 }
 
@@ -130,10 +125,10 @@ func prepareDraw(model *mgl32.Mat4) {
 
 	pmMat := glState.projectionStack.Peek().Mul4(glState.viewStack.Peek().Mul4(*model))
 
-	glState.currentShader.SendMat4("ProjectionMat", glState.projectionStack.Peek())
-	glState.currentShader.SendMat4("ViewMat", glState.viewStack.Peek())
-	glState.currentShader.SendMat4("ModelMat", *model)
-	glState.currentShader.SendMat4("PreMulMat", pmMat)
+	// glState.currentShader.SendMat4("ProjectionMat", glState.projectionStack.Peek())
+	// glState.currentShader.SendMat4("ViewMat", glState.viewStack.Peek())
+	// glState.currentShader.SendMat4("ModelMat", *model)
+	glState.currentShader.SendMat4("TransformMat", pmMat)
 	if glState.currentCanvas != nil {
 		glState.currentShader.SendFloat("ScreenSize", float32(screenWidth), float32(screenHeight), 1, 0)
 	} else {
@@ -251,16 +246,12 @@ func SetViewportSize(w, h int32) {
 // directly with opengl and used by the framework. Only use this if you know what
 // you are doing
 func SetViewport(x, y, w, h int32) {
-	screenWidth = w
-	screenHeight = h
-	// Set the viewport to top-left corner.
-	if glState.currentCanvas == nil {
-		gl.Viewport(int(y), int(x), int(screenWidth), int(screenHeight))
-		glState.viewport = []int32{y, x, screenWidth, screenHeight}
-		glState.projectionStack.Load(mgl32.Ortho(float32(x), float32(screenWidth), float32(screenHeight), float32(y), -1, 1))
-		if states.back().scissor {
-			SetScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
-		}
+	screenWidth, screenHeight = w, h
+	gl.Viewport(int(y), int(x), int(w), int(h))
+	glState.viewport = []int32{y, x, w, h}
+	glState.projectionStack.Load(mgl32.Ortho(float32(x), float32(w), float32(h), float32(y), -1, 1))
+	if states.back().scissor {
+		SetScissor(states.back().scissorBox[0], states.back().scissorBox[1], states.back().scissorBox[2], states.back().scissorBox[3])
 	}
 }
 

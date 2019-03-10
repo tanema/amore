@@ -7,6 +7,7 @@ import (
 	"github.com/mitchellh/cli"
 
 	// These are lua wrapped code that will be made accessible to lua
+	_ "github.com/tanema/amore/audio"
 	_ "github.com/tanema/amore/gfx/wrap"
 	_ "github.com/tanema/amore/input"
 
